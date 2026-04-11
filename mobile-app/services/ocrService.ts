@@ -1,56 +1,70 @@
 /**
  * OCR Service
- * Menggunakan OCR.space API (free) untuk ekstrak teks dari foto struk
- * Docs: https://ocr.space/ocrapi
+ * Menggunakan Google Cloud Vision API untuk ekstrak teks dari foto struk (Gold Standard OCR)
+ * Docs: https://cloud.google.com/vision/docs/ocr
  */
 import type { OcrResult, ParsedReceiptData } from '@/constants/types';
 
-const OCR_API_URL = 'https://api.ocr.space/parse/image';
-const OCR_API_KEY = process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY ?? 'helloworld';
+const OCR_API_URL = 'https://vision.googleapis.com/v1/images:annotate';
+const OCR_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_VISION_API_KEY ?? '';
 
 /**
- * Kirim gambar base64 ke OCR.space dan dapat teks hasilnya
+ * Kirim gambar base64 ke Google Vision API dan dapatkan anotasi teks lengkap
  */
-export async function extractTextFromImage(
-  base64Image: string,
-  mimeType: 'image/jpeg' | 'image/png' = 'image/jpeg'
-): Promise<OcrResult> {
-  const formData = new FormData();
-  formData.append('base64Image', `data:${mimeType};base64,${base64Image}`);
-  formData.append('language', 'eng');
-  formData.append('isOverlayRequired', 'false');
-  formData.append('detectOrientation', 'true');
-  formData.append('scale', 'true');
-  formData.append('OCREngine', '2'); // Engine 2 lebih akurat untuk angka
+export async function extractTextFromImage(base64Image: string): Promise<OcrResult> {
+  if (!OCR_API_KEY) {
+    throw new Error('API Key Google Vision API belum di-set di file .env');
+  }
 
-  const response = await fetch(OCR_API_URL, {
+  const payload = {
+    requests: [
+      {
+        image: {
+          content: base64Image,
+        },
+        features: [
+          {
+            type: 'TEXT_DETECTION',
+          },
+        ],
+      },
+    ],
+  };
+
+  const response = await fetch(`${OCR_API_URL}?key=${OCR_API_KEY}`, {
     method: 'POST',
     headers: {
-      apikey: OCR_API_KEY,
+      'Content-Type': 'application/json',
     },
-    body: formData,
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    throw new Error(`OCR API error: ${response.status} ${response.statusText}`);
+    const errorBody = await response.text();
+    throw new Error(`Google Vision API error: ${response.status} - ${errorBody}`);
   }
 
   const result: OcrResult = await response.json();
 
-  if (result.IsErroredOnProcessing) {
-    throw new Error('OCR gagal memproses gambar. Coba lagi dengan foto yang lebih jelas.');
+  // Handle Google Vision specific API layer errors
+  if (result.responses && result.responses[0]?.error) {
+    throw new Error(`Vision API Error: ${result.responses[0].error.message}`);
   }
 
   return result;
 }
 
 /**
- * Parse teks OCR untuk ekstrak nominal dan tanggal dari struk
- * Menggunakan regex pattern umum pada struk Indonesia
+ * Parse teks OCR Google Vision untuk ekstrak nominal dan tanggal dari struk
+ * Mensupport struk Indonesia
  */
 export function parseReceiptText(ocrResult: OcrResult): ParsedReceiptData {
-  const rawText =
-    ocrResult.ParsedResults?.[0]?.ParsedText ?? ocrResult.ParsedText ?? '';
+  // Ambil raw string text lengkap hasil scan Google Vision
+  const rawText = ocrResult.responses?.[0]?.fullTextAnnotation?.text ?? '';
+
+  if (!rawText) {
+    return { amount: null, date: null, rawText: 'Tidak ada teks terdeteksi.' };
+  }
 
   // --- Parse Nominal ---
   // Pattern: "Rp 50.000", "Rp50000", "Total: 50.000", "TOTAL 50000"
@@ -64,7 +78,7 @@ export function parseReceiptText(ocrResult: OcrResult): ParsedReceiptData {
   for (const pattern of amountPatterns) {
     const match = rawText.match(pattern);
     if (match) {
-      // Ambil angka terakhir yang match (biasanya total ada di bawah)
+      // Ambil angka terakhir yang match (karena biasanya "total" ada di porsi paling bawah struk)
       const lastMatch = match[match.length - 1];
       const cleaned = lastMatch.replace(/[^\d]/g, '');
       const parsed = parseInt(cleaned, 10);
@@ -104,7 +118,7 @@ export async function scanReceipt(base64Image: string): Promise<ParsedReceiptDat
     const ocrResult = await extractTextFromImage(base64Image);
     return parseReceiptText(ocrResult);
   } catch (error) {
-    console.error('[OCR Service] Error:', error);
+    console.error('[OCR Service Google Vision] Error:', error);
     throw error;
   }
 }

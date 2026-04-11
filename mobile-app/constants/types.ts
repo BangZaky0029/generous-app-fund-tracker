@@ -91,13 +91,14 @@ export type AddDonationForm = {
 // ========== OCR TYPES ==========
 
 export type OcrResult = {
-  ParsedText: string;
-  ParsedResults?: {
-    ParsedText: string;
-    ErrorMessage: string;
+  responses: {
+    fullTextAnnotation?: {
+      text: string;
+    };
+    error?: {
+      message: string;
+    };
   }[];
-  OCRExitCode: number;
-  IsErroredOnProcessing: boolean;
 };
 
 export type ParsedReceiptData = {
