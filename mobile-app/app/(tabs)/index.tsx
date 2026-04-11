@@ -2,14 +2,14 @@
  * Dashboard Screen — Bento Grid Layout 2026
  * Menampilkan seluruh data dana secara real-time
  */
-import React, { useCallback, useEffect } from 'react';
+import React from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
   RefreshControl, ActivityIndicator, TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Bell, LogOut, RefreshCw } from 'lucide-react-native';
+import { LogOut, RefreshCw } from 'lucide-react-native';
 import { useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
 import { HeroCard } from '@/components/bento/HeroCard';
 import { ChartCard } from '@/components/bento/ChartCard';
@@ -28,31 +28,10 @@ export default function DashboardScreen() {
 
   const { user, isAdmin, signOut } = useAuthContext();
 
-  // Redirect ke login jika belum auth
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.replace('/(auth)/login');
-    }
-  }, [user, isLoading]);
-
-  const handleSignOut = useCallback(async () => {
+  const handleSignOut = async () => {
     await signOut();
     router.replace('/(auth)/login');
-  }, [signOut]);
-
-  const formatLastUpdated = () => {
-    if (!lastUpdated) return '—';
-    return lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
-
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={AppColors.accent.emerald} />
-        <Text style={styles.loadingText}>Agentic core memuat data...</Text>
-      </View>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -96,7 +75,9 @@ export default function DashboardScreen() {
         <View style={styles.agentBar}>
           <View style={styles.agentDot} />
           <Text style={styles.agentText}>
-            🤖 Agentic Core aktif · Diperbarui {formatLastUpdated()}
+            🤖 Agentic Core aktif · {lastUpdated
+              ? lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+              : 'Memuat...'}
           </Text>
         </View>
 
