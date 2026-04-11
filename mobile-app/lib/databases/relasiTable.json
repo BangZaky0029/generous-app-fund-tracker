@@ -1,0 +1,8 @@
+[
+    {
+        "table_name": "expenses",
+        "column_name": "admin_id",
+        "foreign_table_name": "profiles",
+        "foreign_column_name": "id"
+    }
+]

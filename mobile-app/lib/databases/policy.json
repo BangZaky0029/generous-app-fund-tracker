@@ -1,0 +1,149 @@
+[
+    {
+        "table_name": "donations",
+        "column_name": "id",
+        "data_type": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+    },
+    {
+        "table_name": "donations",
+        "column_name": "donator_name",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": "'Anonymous'::text"
+    },
+    {
+        "table_name": "donations",
+        "column_name": "amount",
+        "data_type": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+    },
+    {
+        "table_name": "donations",
+        "column_name": "message",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "donations",
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "YES",
+        "column_default": "now()"
+    },
+    {
+        "table_name": "expenses",
+        "column_name": "id",
+        "data_type": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+    },
+    {
+        "table_name": "expenses",
+        "column_name": "admin_id",
+        "data_type": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "expenses",
+        "column_name": "amount",
+        "data_type": "numeric",
+        "is_nullable": "NO",
+        "column_default": "0"
+    },
+    {
+        "table_name": "expenses",
+        "column_name": "category",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "expenses",
+        "column_name": "description",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "expenses",
+        "column_name": "receipt_url",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "expenses",
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "YES",
+        "column_default": "now()"
+    },
+    {
+        "table_name": "fund_summary",
+        "column_name": "id",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "nextval('fund_summary_id_seq'::regclass)"
+    },
+    {
+        "table_name": "fund_summary",
+        "column_name": "category",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "fund_summary",
+        "column_name": "total_spent",
+        "data_type": "numeric",
+        "is_nullable": "YES",
+        "column_default": "0"
+    },
+    {
+        "table_name": "fund_summary",
+        "column_name": "percentage_of_total",
+        "data_type": "numeric",
+        "is_nullable": "YES",
+        "column_default": "0"
+    },
+    {
+        "table_name": "fund_summary",
+        "column_name": "last_updated",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "YES",
+        "column_default": "now()"
+    },
+    {
+        "table_name": "profiles",
+        "column_name": "id",
+        "data_type": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "profiles",
+        "column_name": "full_name",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "profiles",
+        "column_name": "role",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": "'donatur'::text"
+    },
+    {
+        "table_name": "profiles",
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "YES",
+        "column_default": "now()"
+    }
+]
