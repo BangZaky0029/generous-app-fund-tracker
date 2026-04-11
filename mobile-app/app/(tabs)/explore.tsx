@@ -1,112 +1,263 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+/**
+ * Explore Screen — About App
+ * Menampilkan informasi tentang aplikasi Generous Fund Tracker
+ */
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Bot, Database, Camera, ShieldCheck, Zap, GitBranch } from 'lucide-react-native';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { AppColors, AppFonts, AppSpacing, AppRadius } from '@/constants/theme';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+type FeatureItemProps = {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  color: string;
+};
 
-export default function TabTwoScreen() {
+function FeatureItem({ icon, title, description, color }: FeatureItemProps) {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <GlassCard accentColor={color} style={styles.featureCard} padding={AppSpacing.md}>
+      <View style={styles.featureRow}>
+        <View style={[styles.featureIcon, { backgroundColor: `${color}18` }]}>
+          {icon}
+        </View>
+        <View style={styles.featureContent}>
+          <Text style={styles.featureTitle}>{title}</Text>
+          <Text style={styles.featureDesc}>{description}</Text>
+        </View>
+      </View>
+    </GlassCard>
+  );
+}
+
+export default function AboutScreen() {
+  return (
+    <SafeAreaView style={styles.root} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.logoBadge}>
+            <ShieldCheck size={28} color={AppColors.accent.emerald} />
+          </View>
+          <Text style={styles.appName}>Generous</Text>
+          <Text style={styles.version}>Transparent Fund Tracker v1.0</Text>
+          <Text style={styles.tagline}>
+            Sistem pelacakan dana berbasis Agentic AI yang transparan dan real-time
+          </Text>
+        </View>
+
+        {/* Features */}
+        <Text style={styles.sectionTitle}>Fitur Utama</Text>
+
+        <FeatureItem
+          icon={<Bot size={20} color={AppColors.accent.emerald} />}
+          title="Agentic Core (useFundTracker)"
+          description="Hook AI yang subscribe ke Supabase Realtime. Auto-kalkulasi persentase saat ada transaksi baru — tanpa refresh!"
+          color={AppColors.accent.emerald}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
+        <FeatureItem
+          icon={<Camera size={20} color={AppColors.accent.electric} />}
+          title="OCR Receipt Scanner"
+          description="Foto struk → AI (OCR.space) ekstrak nominal otomatis → auto-fill form pengeluaran."
+          color={AppColors.accent.electric}
         />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+        <FeatureItem
+          icon={<Database size={20} color={AppColors.accent.blue} />}
+          title="Supabase Realtime Backend"
+          description="PostgreSQL dengan Row Level Security. Channel realtime subscribe ke tabel expenses & donations."
+          color={AppColors.accent.blue}
+        />
+        <FeatureItem
+          icon={<ShieldCheck size={20} color={AppColors.accent.amber} />}
+          title="Agent Verified Badges"
+          description="Setiap pengeluaran yang tercatat sistem mendapat badge 'Agent Verified' sebagai jaminan transparansi."
+          color={AppColors.accent.amber}
+        />
+        <FeatureItem
+          icon={<Zap size={20} color={AppColors.accent.red} />}
+          title="Bento Grid 2026 UI"
+          description="Layout bento box dengan glassmorphism cards, progress bar animasi, dan dark mode Midnight Navy."
+          color={AppColors.accent.red}
+        />
+
+        {/* Tech Stack */}
+        <Text style={styles.sectionTitle}>Tech Stack</Text>
+        <GlassCard variant="elevated" style={styles.stackCard}>
+          {[
+            ['Framework', 'React Native (Expo Router)'],
+            ['Styling', 'StyleSheet + Design Tokens 2026'],
+            ['Backend', 'Supabase (PostgreSQL + Realtime)'],
+            ['OCR', 'OCR.space API (Free Tier)'],
+            ['Charts', 'react-native-gifted-charts'],
+            ['Icons', 'Lucide React Native'],
+            ['Animation', 'react-native-reanimated v4'],
+          ].map(([label, value]) => (
+            <View key={label} style={styles.stackRow}>
+              <Text style={styles.stackLabel}>{label}</Text>
+              <Text style={styles.stackValue}>{value}</Text>
+            </View>
+          ))}
+        </GlassCard>
+
+        {/* Categories */}
+        <Text style={styles.sectionTitle}>Kategori Dana</Text>
+        <GlassCard variant="elevated" style={styles.stackCard}>
+          {[
+            ['🚛 Logistik',     AppColors.accent.amber],
+            ['⚙️ Operasional',  AppColors.accent.blue],
+            ['❤️ Kesehatan',    AppColors.accent.red],
+            ['🎓 Edukasi',      AppColors.accent.emerald],
+            ['📦 Lainnya',      AppColors.accent.violet],
+          ].map(([name, color]) => (
+            <View key={name as string} style={styles.catRow}>
+              <View style={[styles.catDot, { backgroundColor: color as string }]} />
+              <Text style={[styles.catName, { color: color as string }]}>{name as string}</Text>
+            </View>
+          ))}
+        </GlassCard>
+
+        <View style={styles.footer}>
+          <GitBranch size={12} color={AppColors.text.tertiary} />
+          <Text style={styles.footerText}>
+            Dibuat untuk mata kuliah Pemrograman Mobile 2026
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  root: {
+    flex: 1,
+    backgroundColor: AppColors.bg.primary,
   },
-  titleContainer: {
+  scroll: {
+    paddingHorizontal: AppSpacing.base,
+    paddingTop: AppSpacing.base,
+    paddingBottom: AppSpacing['3xl'],
+  },
+  header: {
+    alignItems: 'center',
+    paddingVertical: AppSpacing.xl,
+    marginBottom: AppSpacing.base,
+  },
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: AppRadius['2xl'],
+    backgroundColor: `${AppColors.accent.emerald}15`,
+    borderWidth: 1,
+    borderColor: `${AppColors.accent.emerald}30`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: AppSpacing.md,
+  },
+  appName: {
+    color: AppColors.text.primary,
+    fontSize: AppFonts.sizes['2xl'],
+    fontWeight: AppFonts.weights.extrabold,
+    letterSpacing: -0.5,
+  },
+  version: {
+    color: AppColors.accent.emerald,
+    fontSize: AppFonts.sizes.xs,
+    marginTop: 4,
+    marginBottom: AppSpacing.sm,
+  },
+  tagline: {
+    color: AppColors.text.secondary,
+    fontSize: AppFonts.sizes.sm,
+    textAlign: 'center',
+    lineHeight: 20,
+    paddingHorizontal: AppSpacing.lg,
+  },
+  sectionTitle: {
+    color: AppColors.text.primary,
+    fontSize: AppFonts.sizes.md,
+    fontWeight: AppFonts.weights.bold,
+    marginBottom: AppSpacing.sm,
+    marginTop: AppSpacing.sm,
+  },
+  featureCard: {
+    marginBottom: AppSpacing.sm,
+  },
+  featureRow: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'flex-start',
+    gap: AppSpacing.md,
+  },
+  featureIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: AppRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  featureContent: {
+    flex: 1,
+  },
+  featureTitle: {
+    color: AppColors.text.primary,
+    fontSize: AppFonts.sizes.base,
+    fontWeight: AppFonts.weights.semibold,
+    marginBottom: 4,
+  },
+  featureDesc: {
+    color: AppColors.text.secondary,
+    fontSize: AppFonts.sizes.sm,
+    lineHeight: 18,
+  },
+  stackCard: {
+    marginBottom: AppSpacing.base,
+    gap: AppSpacing.sm,
+  },
+  stackRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 2,
+  },
+  stackLabel: {
+    color: AppColors.text.secondary,
+    fontSize: AppFonts.sizes.sm,
+  },
+  stackValue: {
+    color: AppColors.text.primary,
+    fontSize: AppFonts.sizes.sm,
+    fontWeight: AppFonts.weights.medium,
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: AppSpacing.sm,
+  },
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: AppSpacing.sm,
+    paddingVertical: 4,
+  },
+  catDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  catName: {
+    fontSize: AppFonts.sizes.base,
+    fontWeight: AppFonts.weights.medium,
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: AppSpacing.xl,
+  },
+  footerText: {
+    color: AppColors.text.tertiary,
+    fontSize: AppFonts.sizes.xs,
   },
 });
