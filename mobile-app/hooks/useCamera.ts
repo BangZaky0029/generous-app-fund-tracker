@@ -19,6 +19,7 @@ type CameraState = {
 type CameraActions = {
   openCamera: () => Promise<void>;
   openGallery: () => Promise<void>;
+  processImage: (uri: string) => Promise<void>;
   clearCapture: () => void;
 };
 
@@ -135,6 +136,7 @@ export function useCamera(): CameraState & CameraActions {
     ...state,
     openCamera,
     openGallery,
+    processImage,
     clearCapture,
   };
 }

@@ -8,7 +8,7 @@ import {
   RefreshControl, ActivityIndicator, TouchableOpacity,
 } from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LogOut, RefreshCw } from 'lucide-react-native';
 import { useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
 import { HeroCard } from '@/components/bento/HeroCard';
@@ -33,10 +33,15 @@ export default function DashboardScreen() {
     router.replace('/(auth)/login');
   };
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: insets.bottom + 100 }
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -142,7 +147,7 @@ export default function DashboardScreen() {
       {isAdmin && (
         <FAB onPress={() => router.push('/modal/add-expense')} />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -1,19 +1,22 @@
 /**
  * Add Expense Modal
- * Form tambah pengeluaran + scan struk (OCR)
+ * Form tambah pengeluaran + scan struk (Custom OCR Camera)
  * Admin Only
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  X, Camera, Image as ImageIcon, ScanLine,
+  X, Camera as CameraIcon, Image as ImageIcon, ScanLine,
   CheckCircle, AlertCircle,
 } from 'lucide-react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing } from 'react-native-reanimated';
+
 import { createExpense } from '@/services/expenseService';
 import { useAuthContext } from '@/context/FundTrackerContext';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
@@ -25,15 +28,42 @@ import type { ExpenseCategory } from '@/constants/types';
 export default function AddExpenseModal() {
   const { user, isAdmin } = useAuthContext();
   const { refetch } = useFundTrackerContext();
+  const insets = useSafeAreaInsets();
+
   const {
     isScanning, capturedUri, parsedData, error: ocrError,
-    openCamera, openGallery, clearCapture,
+    openGallery, processImage, clearCapture,
   } = useCamera();
+
+  const [permission, requestPermission] = useCameraPermissions();
+  const [showCustomCamera, setShowCustomCamera] = useState(false);
+  const cameraRef = useRef<CameraView>(null);
 
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('Logistik');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Animation for scanner line
+  const scanLineY = useSharedValue(0);
+  const animatedScanLine = useAnimatedStyle(() => ({
+    transform: [{ translateY: scanLineY.value }],
+  }));
+
+  useEffect(() => {
+    if (showCustomCamera) {
+      scanLineY.value = withRepeat(
+        withSequence(
+          withTiming(250, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    } else {
+      scanLineY.value = 0;
+    }
+  }, [showCustomCamera]);
 
   // Auto-fill dari OCR data (Agentic auto-fill!)
   useEffect(() => {
@@ -46,6 +76,32 @@ export default function AddExpenseModal() {
       );
     }
   }, [parsedData]);
+
+  const handleOpenCamera = async () => {
+    if (!permission?.granted) {
+      const { granted } = await requestPermission();
+      if (!granted) {
+        Alert.alert('Izin Ditolak', 'Aplikasi butuh izin kamera untuk memindai struk.');
+        return;
+      }
+    }
+    setShowCustomCamera(true);
+  };
+
+  const handleCapture = async () => {
+    if (!cameraRef.current) return;
+    try {
+      const photo = await cameraRef.current.takePictureAsync({ base64: false, quality: 0.8 });
+      setShowCustomCamera(false);
+      if (photo?.uri) {
+        await processImage(photo.uri);
+      }
+    } catch (e) {
+      Alert.alert('Error', 'Gagal mengambil gambar');
+      console.error(e);
+      setShowCustomCamera(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!user?.id) {
@@ -71,7 +127,6 @@ export default function AddExpenseModal() {
         receiptLocalUri: capturedUri,
       });
 
-      // Trigger refetch di context (realtime juga akan trigger otomatis)
       refetch();
 
       Alert.alert(
@@ -87,8 +142,44 @@ export default function AddExpenseModal() {
     }
   };
 
+  // ===== CUSTOM CAMERA VIEW =====
+  if (showCustomCamera) {
+    return (
+      <View style={styles.cameraRoot}>
+        <CameraView style={StyleSheet.absoluteFillObject} ref={cameraRef} facing="back">
+          <View style={[styles.cameraOverlay, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+            {/* Header */}
+            <View style={styles.cameraHeader}>
+              <TouchableOpacity style={styles.cameraCloseBtn} onPress={() => setShowCustomCamera(false)}>
+                <X size={24} color="#FFF" />
+              </TouchableOpacity>
+              <Text style={styles.cameraTitle}>Scan Struk Belanja</Text>
+              <View style={{ width: 44 }} />
+            </View>
+
+            {/* Scan Frame */}
+            <View style={styles.scanFrameWrap}>
+              <View style={styles.scanFrame}>
+                <Animated.View style={[styles.scanLine, animatedScanLine]} />
+              </View>
+              <Text style={styles.scanHint}>Posisikan struk penuh di dalam kotak</Text>
+            </View>
+
+            {/* Capture Button */}
+            <View style={styles.cameraFooter}>
+              <TouchableOpacity style={styles.captureCircleOuter} onPress={handleCapture}>
+                <View style={styles.captureCircleInner} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </CameraView>
+      </View>
+    );
+  }
+
+  // ===== MAIN FORM VIEW =====
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+    <View style={[styles.root, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -131,10 +222,10 @@ export default function AddExpenseModal() {
               <View style={styles.captureButtons}>
                 <TouchableOpacity
                   style={[styles.captureBtn, { flex: 1 }]}
-                  onPress={openCamera}
+                  onPress={handleOpenCamera}
                   disabled={isScanning}
                 >
-                  <Camera size={18} color={AppColors.accent.electric} />
+                  <CameraIcon size={18} color={AppColors.accent.electric} />
                   <Text style={styles.captureBtnText}>Kamera</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -250,7 +341,7 @@ export default function AddExpenseModal() {
           <View style={{ height: AppSpacing['2xl'] }} />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -258,6 +349,85 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: AppColors.bg.primary,
+  },
+  cameraRoot: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  cameraOverlay: {
+    flex: 1,
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  cameraHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: AppSpacing.lg,
+    paddingVertical: AppSpacing.md,
+  },
+  cameraCloseBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraTitle: {
+    color: '#FFF',
+    fontSize: AppFonts.sizes.lg,
+    fontWeight: AppFonts.weights.bold,
+  },
+  scanFrameWrap: {
+    alignItems: 'center',
+  },
+  scanFrame: {
+    width: 250,
+    height: 350,
+    borderWidth: 2,
+    borderColor: AppColors.accent.electric,
+    borderRadius: AppRadius.lg,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  scanLine: {
+    height: 3,
+    width: '100%',
+    backgroundColor: AppColors.accent.electric,
+    shadowColor: AppColors.accent.electric,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  scanHint: {
+    color: '#FFF',
+    fontSize: AppFonts.sizes.sm,
+    marginTop: AppSpacing.lg,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 8,
+    borderRadius: AppRadius.full,
+  },
+  cameraFooter: {
+    alignItems: 'center',
+    paddingBottom: AppSpacing['3xl'],
+  },
+  captureCircleOuter: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 4,
+    borderColor: '#FFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureCircleInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFF',
   },
   header: {
     flexDirection: 'row',

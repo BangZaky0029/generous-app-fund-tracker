@@ -7,7 +7,7 @@ import {
   View, Text, StyleSheet, FlatList,
   ActivityIndicator, RefreshControl, TextInput,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Search, ShieldCheck } from 'lucide-react-native';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
 import { ExpenseItem } from '@/components/feed/ExpenseItem';
@@ -38,8 +38,10 @@ export default function TransparencyScreen() {
 
   const keyExtractor = useCallback((item: Expense) => item.id, []);
 
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -116,7 +118,10 @@ export default function TransparencyScreen() {
           data={filtered}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: insets.bottom + 80 }
+          ]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -128,7 +133,7 @@ export default function TransparencyScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

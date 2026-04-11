@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bot, Database, Camera, ShieldCheck, Zap, GitBranch } from 'lucide-react-native';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { AppColors, AppFonts, AppSpacing, AppRadius } from '@/constants/theme';
@@ -33,9 +33,17 @@ function FeatureItem({ icon, title, description, color }: FeatureItemProps) {
 }
 
 export default function AboutScreen() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={styles.root} edges={['top']}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+    <View style={[styles.root, { paddingTop: insets.top }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: insets.bottom + 80 }
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Header */}
         <View style={styles.header}>
@@ -49,8 +57,36 @@ export default function AboutScreen() {
           </Text>
         </View>
 
+        {/* Tutorial / Cara Kerja */}
+        <Text style={styles.sectionTitle}>Panduan Penggunaan</Text>
+        
+        <FeatureItem
+          icon={<ShieldCheck size={20} color={AppColors.accent.emerald} />}
+          title="1. Role (Admin vs Donatur)"
+          description="Aplikasi memiliki 2 role: Donatur & Admin. Donatur hanya bisa melihat feed transaksi (transparan), sedangkan Admin bertugas melaporkan pengeluaran."
+          color={AppColors.accent.emerald}
+        />
+        <FeatureItem
+          icon={<Camera size={20} color={AppColors.accent.electric} />}
+          title="2. Melaporkan Pengeluaran (Admin)"
+          description="Klik tombol navigasi tambah (+) di Dashboard. Sistem akan meminta Anda mengambil foto struk belanja untuk dimuat."
+          color={AppColors.accent.electric}
+        />
+        <FeatureItem
+          icon={<Zap size={20} color={AppColors.accent.amber} />}
+          title="3. OCR Auto-Fill & Proses"
+          description="AI kami akan memindai struk (OCR) dan otomatis mengisi nominal transaksi. Setelah dicek dan disubmit, data langsung masuk ke backend."
+          color={AppColors.accent.amber}
+        />
+        <FeatureItem
+          icon={<Bot size={20} color={AppColors.accent.blue} />}
+          title="4. Agentic Update Otomatis"
+          description="Donatur tidak perlu me-refresh halaman! Setiap kali ada laporan pengeluaran, Agentic AI otomatis update persentase dan chart dalam sepersekian detik."
+          color={AppColors.accent.blue}
+        />
+
         {/* Features */}
-        <Text style={styles.sectionTitle}>Fitur Utama</Text>
+        <Text style={[styles.sectionTitle, { marginTop: AppSpacing.md }]}>Teknologi Utama</Text>
 
         <FeatureItem
           icon={<Bot size={20} color={AppColors.accent.emerald} />}
@@ -126,7 +162,7 @@ export default function AboutScreen() {
           </Text>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
