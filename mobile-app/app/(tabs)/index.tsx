@@ -58,9 +58,9 @@ export default function DashboardScreen() {
               Halo, {user?.profile?.full_name?.split(' ')[0] ?? 'User'} 👋
             </Text>
             <View style={styles.roleRow}>
-              <View style={[styles.roleBadge, { backgroundColor: isAdmin ? `${AppColors.accent.electric}20` : `${AppColors.accent.blue}20` }]}>
-                <Text style={[styles.roleText, { color: isAdmin ? AppColors.accent.electric : AppColors.accent.blue }]}>
-                  {isAdmin ? '🛡️ Admin' : '💚 Donatur'}
+              <View style={[styles.roleBadge, { backgroundColor: isAdmin ? `${AppColors.accent.electric}20` : `${AppColors.accent.amber}20` }]}>
+                <Text style={[styles.roleText, { color: isAdmin ? AppColors.accent.electric : AppColors.accent.amber }]}>
+                  {isAdmin ? '🛡️ Admin (Akses Penuh)' : '👀 Donatur (Read-Only)'}
                 </Text>
               </View>
             </View>
@@ -102,6 +102,28 @@ export default function DashboardScreen() {
           usagePercentage={usagePercentage}
           isLoading={isLoading}
         />
+
+        {/* Add Donation Button (Admin Only) */}
+        {isAdmin && (
+          <TouchableOpacity 
+            style={styles.donationBtn}
+            onPress={() => router.push('/modal/add-donation')}
+          >
+            <Text style={styles.donationBtnText}>+ Catat Pemasukan / Saldo Awal</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Mencegah kebingungan jika Saldo Rp 0 */}
+        {!isLoading && totalDonations === 0 && (
+          <GlassCard style={styles.emptyStateContainer} accentColor={AppColors.accent.amber}>
+             <Text style={styles.emptyStateTitle}>Saldo Sistem Kosong 📉</Text>
+             <Text style={styles.emptyStateDesc}>
+               {isAdmin 
+                 ? "Anda belum memasukkan data nominal kas/donasi yang diterima. Klik tombol 'Catat Pemasukan' di atas agar perhitungan sisa dana bisa berjalan." 
+                 : "Bendahara kelas/organisasi Anda belum mencatat dana pemasukan sama sekali di sistem."}
+             </Text>
+          </GlassCard>
+        )}
 
         {/* 2. Chart Row */}
         <View style={styles.row}>
@@ -268,5 +290,34 @@ const styles = StyleSheet.create({
   emptyText: {
     color: AppColors.text.secondary,
     fontSize: AppFonts.sizes.sm,
+  },
+  donationBtn: {
+    backgroundColor: `${AppColors.accent.emerald}15`,
+    borderWidth: 1,
+    borderColor: `${AppColors.accent.emerald}60`,
+    borderRadius: AppRadius.lg,
+    paddingVertical: AppSpacing.md,
+    alignItems: 'center',
+    marginBottom: AppSpacing.md,
+  },
+  donationBtnText: {
+    color: AppColors.accent.emerald,
+    fontWeight: AppFonts.weights.bold,
+    fontSize: AppFonts.sizes.sm,
+  },
+  emptyStateContainer: {
+    marginBottom: AppSpacing.md,
+    backgroundColor: `${AppColors.accent.amber}10`,
+  },
+  emptyStateTitle: {
+    color: AppColors.accent.amber,
+    fontSize: AppFonts.sizes.base,
+    fontWeight: AppFonts.weights.bold,
+    marginBottom: 4,
+  },
+  emptyStateDesc: {
+    color: AppColors.text.secondary,
+    fontSize: AppFonts.sizes.sm,
+    lineHeight: 20,
   },
 });

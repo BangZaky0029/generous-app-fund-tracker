@@ -1,28 +1,33 @@
 /**
  * Transparency Feed Screen
- * Daftar lengkap semua pengeluaran + Agent Verified badges
+ * Daftar lengkap semua pengeluaran & Pemasukan + Agent Verified badges
  */
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
-  ActivityIndicator, RefreshControl, TextInput,
+  ActivityIndicator, RefreshControl, TextInput, TouchableOpacity
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, ShieldCheck } from 'lucide-react-native';
+import { Search, ShieldCheck, ArrowDownCircle } from 'lucide-react-native';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
 import { ExpenseItem } from '@/components/feed/ExpenseItem';
+import { DonationItem } from '@/components/feed/DonationItem';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { AppColors, AppFonts, AppRadius, AppSpacing, CATEGORIES } from '@/constants/theme';
-import type { Expense, ExpenseCategory } from '@/constants/types';
+import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows, CATEGORIES } from '@/constants/theme';
+import type { Expense, Donation } from '@/constants/types';
 
 const ALL_CATEGORIES = ['Semua', ...CATEGORIES.map((c) => c.name)] as const;
 
 export default function TransparencyScreen() {
-  const { recentExpenses, isLoading, refetch } = useFundTrackerContext();
+  const { recentExpenses, recentDonations, isLoading, refetch } = useFundTrackerContext();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('Semua');
+  const [viewType, setViewType] = useState<'expense' | 'income'>('expense');
 
-  const filtered = recentExpenses.filter((exp) => {
+  const insets = useSafeAreaInsets();
+
+  // Filter Pengeluaran
+  const filteredExpenses = recentExpenses.filter((exp) => {
     const matchSearch =
       searchQuery === '' ||
       exp.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -31,28 +36,62 @@ export default function TransparencyScreen() {
     return matchSearch && matchFilter;
   });
 
-  const renderItem = useCallback(
+  // Filter Pemasukan
+  const filteredDonations = (recentDonations ?? []).filter((don) => {
+    const matchSearch =
+      searchQuery === '' ||
+      don.donator_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      don.message?.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchSearch;
+  });
+
+  const renderExpenseItem = useCallback(
     ({ item }: { item: Expense }) => <ExpenseItem expense={item} />,
     []
   );
 
-  const keyExtractor = useCallback((item: Expense) => item.id, []);
+  const renderDonationItem = useCallback(
+    ({ item }: { item: Donation }) => <DonationItem donation={item} />,
+    []
+  );
 
-  const insets = useSafeAreaInsets();
+  const keyExtractor = useCallback((item: { id: string }) => item.id, []);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Transparency Feed</Text>
+          <Text style={styles.title}>Riwayat Transaksi</Text>
           <View style={styles.verifiedRow}>
-            <ShieldCheck size={12} color={AppColors.accent.emerald} />
+            <ShieldCheck size={14} color={AppColors.accent.emerald} />
             <Text style={styles.verifiedText}>
-              {recentExpenses.length} pengeluaran terverifikasi agent
+              Buku besar kas terverifikasi sistem
             </Text>
           </View>
         </View>
+      </View>
+
+      {/* Segmented Control / Tab Switch */}
+      <View style={styles.segmentWrap}>
+        <TouchableOpacity 
+          style={[styles.segmentBtn, viewType === 'expense' && styles.segmentBtnActive]}
+          onPress={() => setViewType('expense')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.segmentText, viewType === 'expense' && styles.segmentTextActive]}>
+            Uang Keluar
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.segmentBtn, viewType === 'income' && styles.segmentBtnActive]}
+          onPress={() => setViewType('income')}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.segmentText, viewType === 'income' && styles.segmentTextActive]}>
+            Tanda Terima (Masuk)
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
@@ -61,64 +100,66 @@ export default function TransparencyScreen() {
         <TextInput
           value={searchQuery}
           onChangeText={setSearchQuery}
-          placeholder="Cari pengeluaran..."
+          placeholder={viewType === 'expense' ? "Cari pengeluaran..." : "Cari nama donatur..."}
           placeholderTextColor={AppColors.text.tertiary}
           style={styles.searchInput}
         />
       </View>
 
-      {/* Category Filter */}
-      <FlatList
-        horizontal
-        data={ALL_CATEGORIES}
-        keyExtractor={(item) => item}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterList}
-        renderItem={({ item }) => {
-          const isActive = activeFilter === item;
-          const catConfig = CATEGORIES.find((c) => c.name === item);
-          const color = catConfig?.color ?? AppColors.accent.emerald;
-          return (
-            <View
-              onTouchEnd={() => setActiveFilter(item)}
-              style={[
-                styles.filterChip,
-                isActive && { backgroundColor: `${color}20`, borderColor: `${color}50` },
-              ]}
-            >
-              <Text
+      {/* Category Filter — Hanya muncul di Uang Keluar */}
+      {viewType === 'expense' && (
+        <FlatList
+          horizontal
+          data={ALL_CATEGORIES}
+          keyExtractor={(item) => item}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterList}
+          renderItem={({ item }) => {
+            const isActive = activeFilter === item;
+            const catConfig = CATEGORIES.find((c) => c.name === item);
+            const color = catConfig?.color ?? AppColors.accent.electric;
+            return (
+              <View
+                onTouchEnd={() => setActiveFilter(item)}
                 style={[
-                  styles.filterText,
-                  isActive && { color },
+                  styles.filterChip,
+                  isActive && { backgroundColor: `${color}15`, borderColor: `${color}60` },
                 ]}
               >
-                {item}
-              </Text>
-            </View>
-          );
-        }}
-        style={styles.filterScroll}
-      />
+                <Text
+                  style={[
+                    styles.filterText,
+                    isActive && { color, fontWeight: AppFonts.weights.bold },
+                  ]}
+                >
+                  {item}
+                </Text>
+              </View>
+            );
+          }}
+          style={styles.filterScroll}
+        />
+      )}
 
-      {/* Expense List */}
+      {/* Data List */}
       {isLoading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator color={AppColors.accent.emerald} />
         </View>
-      ) : filtered.length === 0 ? (
+      ) : (viewType === 'expense' && filteredExpenses.length === 0) || (viewType === 'income' && filteredDonations.length === 0) ? (
         <GlassCard style={styles.emptyCard}>
           <Text style={styles.emptyText}>
-            {searchQuery || activeFilter !== 'Semua'
+            {searchQuery 
               ? '🔍 Tidak ada hasil yang cocok'
-              : '📭 Belum ada pengeluaran'}
+              : viewType === 'expense' ? '📭 Belum ada data pengeluaran' : '📭 Belum ada data saldo masuk'}
           </Text>
         </GlassCard>
       ) : (
-        <GlassCard padding={0} style={{ marginHorizontal: 16, marginBottom: insets.bottom + 80 }}>
+        <GlassCard padding={0} style={{ marginHorizontal: 16, marginBottom: insets.bottom + 80, flex: 1 }}>
           <FlatList
-            data={filtered}
+            data={viewType === 'expense' ? filteredExpenses : filteredDonations}
             keyExtractor={keyExtractor}
-            renderItem={renderItem}
+            renderItem={viewType === 'expense' ? renderExpenseItem : renderDonationItem as any}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
             refreshControl={
@@ -149,17 +190,46 @@ const styles = StyleSheet.create({
   title: {
     color: AppColors.text.primary,
     fontSize: AppFonts.sizes.xl,
-    fontWeight: AppFonts.weights.bold,
+    fontWeight: AppFonts.weights.extrabold,
   },
   verifiedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 2,
+    marginTop: 4,
   },
   verifiedText: {
-    color: AppColors.accent.emerald,
+    color: AppColors.text.secondary,
     fontSize: AppFonts.sizes.xs,
+  },
+  segmentWrap: {
+    flexDirection: 'row',
+    marginHorizontal: AppSpacing.base,
+    backgroundColor: AppColors.bg.tertiary,
+    borderRadius: AppRadius.lg,
+    padding: 4,
+    marginBottom: AppSpacing.md,
+    borderWidth: 1,
+    borderColor: AppColors.glass.border,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: AppSpacing.sm,
+    alignItems: 'center',
+    borderRadius: AppRadius.md,
+  },
+  segmentBtnActive: {
+    backgroundColor: AppColors.bg.secondary,
+    ...AppShadows.sm,
+  },
+  segmentText: {
+    color: AppColors.text.tertiary,
+    fontSize: AppFonts.sizes.sm,
+    fontWeight: AppFonts.weights.medium,
+  },
+  segmentTextActive: {
+    color: AppColors.text.primary,
+    fontWeight: AppFonts.weights.bold,
   },
   searchWrap: {
     flexDirection: 'row',
@@ -168,11 +238,12 @@ const styles = StyleSheet.create({
     marginHorizontal: AppSpacing.base,
     marginBottom: AppSpacing.sm,
     paddingHorizontal: AppSpacing.md,
-    height: 44,
+    height: 48,
     backgroundColor: AppColors.bg.secondary,
     borderRadius: AppRadius.xl,
     borderWidth: 1,
     borderColor: AppColors.glass.border,
+    ...AppShadows.sm,
   },
   searchInput: {
     flex: 1,
@@ -180,7 +251,8 @@ const styles = StyleSheet.create({
     fontSize: AppFonts.sizes.sm,
   },
   filterScroll: {
-    maxHeight: 42,
+    maxHeight: 44,
+    minHeight: 44,
     marginBottom: AppSpacing.sm,
   },
   filterList: {
@@ -190,11 +262,11 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     paddingHorizontal: AppSpacing.md,
-    paddingVertical: AppSpacing.xs,
+    paddingVertical: AppSpacing.sm,
     borderRadius: AppRadius.full,
     borderWidth: 1,
     borderColor: AppColors.glass.border,
-    backgroundColor: AppColors.glass.bg,
+    backgroundColor: AppColors.bg.secondary,
   },
   filterText: {
     color: AppColors.text.secondary,
@@ -208,7 +280,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: AppSpacing.base,
-    paddingTop: AppSpacing.sm,
+    paddingTop: AppSpacing.xs,
     paddingBottom: AppSpacing['3xl'],
   },
   emptyCard: {
