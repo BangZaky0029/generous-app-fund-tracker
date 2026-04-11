@@ -1,12 +1,11 @@
 /**
  * ExpenseItem — Feed Item untuk Transparency Screen
- * Menampilkan detail pengeluaran dengan Agent Verified badge
+ * Desain Fintech Clean List Row
  */
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Receipt, ChevronRight } from 'lucide-react-native';
 import { AgentBadge } from '@/components/ui/AgentBadge';
-import { GlassCard } from '@/components/ui/GlassCard';
 import { AppColors, AppFonts, AppRadius, AppSpacing, CATEGORIES } from '@/constants/theme';
 import type { Expense } from '@/constants/types';
 
@@ -30,118 +29,135 @@ export function ExpenseItem({ expense, onPress }: ExpenseItemProps) {
   };
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
-      <GlassCard style={styles.card} padding={AppSpacing.md} accentColor={color}>
-        <View style={styles.row}>
-          {/* Receipt Thumbnail or Icon */}
-          <View style={[styles.iconWrap, { backgroundColor: `${color}18` }]}>
-            {expense.receipt_url ? (
-              <Image source={{ uri: expense.receipt_url }} style={styles.thumbnail} />
-            ) : (
-              <Receipt size={20} color={color} />
-            )}
-          </View>
-
-          {/* Content */}
-          <View style={styles.content}>
-            <View style={styles.topRow}>
-              <View style={[styles.catBadge, { backgroundColor: `${color}20` }]}>
-                <Text style={[styles.catText, { color }]}>{expense.category}</Text>
-              </View>
-              <AgentBadge variant="verified" />
-            </View>
-
-            <Text style={styles.description} numberOfLines={1}>
-              {expense.description ?? 'Tidak ada keterangan'}
-            </Text>
-
-            <View style={styles.bottomRow}>
-              <Text style={[styles.amount, { color }]}>
-                Rp {expense.amount.toLocaleString('id-ID')}
-              </Text>
-              <Text style={styles.date}>{formatDate(expense.created_at)}</Text>
-            </View>
-
-            {expense.profiles?.full_name && (
-              <Text style={styles.admin}>
-                oleh {expense.profiles.full_name}
-              </Text>
-            )}
-          </View>
-
-          {onPress && (
-            <ChevronRight size={16} color={AppColors.text.tertiary} style={styles.chevron} />
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7} style={styles.container}>
+      <View style={styles.row}>
+        {/* Left: Icon or Thumbnail */}
+        <View style={[styles.iconWrap, { backgroundColor: `${color}15` }]}>
+          {expense.receipt_url ? (
+            <Image source={{ uri: expense.receipt_url }} style={styles.thumbnail} />
+          ) : (
+            <Receipt size={22} color={color} strokeWidth={2} />
           )}
         </View>
-      </GlassCard>
+
+        {/* Middle: Info */}
+        <View style={styles.content}>
+          <Text style={styles.description} numberOfLines={1}>
+            {expense.description ?? 'Tidak ada deskripsi'}
+          </Text>
+          <View style={styles.metaRow}>
+            <Text style={styles.date}>{formatDate(expense.created_at)}</Text>
+            {expense.profiles?.full_name && (
+              <>
+                <Text style={styles.dot}>•</Text>
+                <Text style={styles.admin} numberOfLines={1}>
+                  {expense.profiles.full_name.split(' ')[0]}
+                </Text>
+              </>
+            )}
+          </View>
+          <View style={{ alignSelf: 'flex-start', marginTop: 4 }}>
+            <AgentBadge variant="verified" />
+          </View>
+        </View>
+
+        {/* Right: Amount & Category */}
+        <View style={styles.rightSect}>
+          <Text style={[styles.amount, { color }]}>
+            - Rp {expense.amount.toLocaleString('id-ID')}
+          </Text>
+          <View style={[styles.catBadge, { backgroundColor: `${color}10` }]}>
+            <Text style={[styles.catText, { color }]}>{expense.category}</Text>
+          </View>
+        </View>
+
+        {onPress && (
+          <ChevronRight size={16} color={AppColors.text.tertiary} style={styles.chevron} />
+        )}
+      </View>
+      {/* Separator / Divider */}
+      <View style={styles.separator} />
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: AppSpacing.sm,
+  container: {
+    paddingTop: AppSpacing.md,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: AppSpacing.md,
+    paddingBottom: AppSpacing.md,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: AppColors.glass.border, // Sangat tipis dan soft
+    marginLeft: 60, // Align dengan teks konten
   },
   iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: AppRadius.md,
+    width: 48,
+    height: 48,
+    borderRadius: 24, // Bulat sempurna
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     flexShrink: 0,
   },
   thumbnail: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
   },
   content: {
     flex: 1,
-    gap: 4,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: AppSpacing.sm,
-  },
-  catBadge: {
-    paddingHorizontal: AppSpacing.sm,
-    paddingVertical: 2,
-    borderRadius: AppRadius.full,
-  },
-  catText: {
-    fontSize: 10,
-    fontWeight: AppFonts.weights.semibold,
+    justifyContent: 'center',
   },
   description: {
     color: AppColors.text.primary,
-    fontSize: AppFonts.sizes.sm,
-    fontWeight: AppFonts.weights.medium,
+    fontSize: AppFonts.sizes.base,
+    fontWeight: AppFonts.weights.semibold,
+    marginBottom: 2,
   },
-  bottomRow: {
+  metaRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  amount: {
-    fontSize: AppFonts.sizes.base,
-    fontWeight: AppFonts.weights.bold,
-  },
   date: {
+    color: AppColors.text.secondary,
+    fontSize: AppFonts.sizes.xs,
+  },
+  dot: {
     color: AppColors.text.tertiary,
     fontSize: AppFonts.sizes.xs,
+    marginHorizontal: 4,
   },
   admin: {
     color: AppColors.text.tertiary,
     fontSize: AppFonts.sizes.xs,
+    maxWidth: 80, // Hindari tertumpuk
+  },
+  rightSect: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  amount: {
+    fontSize: AppFonts.sizes.md,
+    fontWeight: AppFonts.weights.bold,
+  },
+  catBadge: {
+    paddingHorizontal: AppSpacing.sm,
+    paddingVertical: 2,
+    borderRadius: AppRadius.sm,
+  },
+  catText: {
+    fontSize: 9,
+    fontWeight: AppFonts.weights.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   chevron: {
-    alignSelf: 'center',
-    marginLeft: AppSpacing.xs,
+    marginLeft: 2,
   },
 });

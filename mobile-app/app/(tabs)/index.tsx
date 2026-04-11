@@ -15,7 +15,6 @@ import { HeroCard } from '@/components/bento/HeroCard';
 import { ChartCard } from '@/components/bento/ChartCard';
 import { CategoryCard } from '@/components/bento/CategoryCard';
 import { ExpenseItem } from '@/components/feed/ExpenseItem';
-import { FAB } from '@/components/ui/FAB';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { AppColors, AppFonts, AppSpacing, AppRadius } from '@/constants/theme';
 
@@ -134,19 +133,17 @@ export default function DashboardScreen() {
             <Text style={styles.emptyText}>📭 Belum ada pengeluaran tercatat</Text>
           </GlassCard>
         ) : (
-          recentExpenses.slice(0, 3).map((exp) => (
-            <ExpenseItem key={exp.id} expense={exp} />
-          ))
+          <GlassCard padding={0} style={{ marginBottom: AppSpacing.md }}>
+            {recentExpenses.slice(0, 3).map((exp) => (
+              <ExpenseItem key={exp.id} expense={exp} />
+            ))}
+          </GlassCard>
         )}
 
         {/* Bottom spacing untuk FAB */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* ===== FAB — Tambah Expense (Admin Only) ===== */}
-      {isAdmin && (
-        <FAB onPress={() => router.push('/modal/add-expense')} />
-      )}
     </View>
   );
 }

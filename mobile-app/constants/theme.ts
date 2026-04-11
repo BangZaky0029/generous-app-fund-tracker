@@ -1,48 +1,48 @@
 /**
  * 2026 Design System — Generous Fund Tracker
- * Bento Grid + Glassmorphism 2.0 | Dark Mode Only
+ * Clean Light Theme + Soft Neumorphism (Fintech Style)
  */
 
 export const AppColors = {
   // === BACKGROUNDS ===
   bg: {
-    primary: '#0F172A',      // Midnight Navy — layar utama
-    secondary: '#1E293B',    // Slate 800 — card base
-    tertiary: '#0D1B2E',     // Darker navy — navbar
+    primary: '#F8FAFC',      // Slate 50 — layar utama (off-white)
+    secondary: '#FFFFFF',    // Pure White — card base
+    tertiary: '#F1F5F9',     // Slate 100 — form input/navbar
   },
 
-  // === ACCENT COLORS ===
+  // === ACCENT COLORS (Soft Pastel Vibrancy) ===
   accent: {
-    emerald: '#10B981',      // Donasi / income
-    emeraldDim: '#065F46',   // Emerald background dim
-    blue: '#3B82F6',         // Info / chart
-    blueDim: '#1E3A5F',      // Blue background dim
-    electric: '#6366F1',     // Highlight interaksi
-    electricDim: '#312E81',  // Electric dim
-    amber: '#F59E0B',        // Logistik
-    amberdDim: '#78350F',    // Amber dim
-    red: '#EF4444',          // Kesehatan / danger
-    redDim: '#7F1D1D',       // Red dim
+    emerald: '#10B981',      // Donasi / Income (Vibrant Mint)
+    emeraldDim: '#D1FAE5',   // Very Soft Mint
+    blue: '#3B82F6',         // Info / chart (Bright Blue)
+    blueDim: '#DBEAFE',      // Very Soft Blue
+    electric: '#6366F1',     // Indigo / Kamera
+    electricDim: '#E0E7FF',  // Soft Indigo
+    amber: '#F59E0B',        // Logistik (Warm Mango)
+    amberdDim: '#FEF3C7',    // Soft Yellow
+    red: '#EF4444',          // Kesehatan / Out (Coral Red)
+    redDim: '#FEE2E2',       // Soft Red
     violet: '#8B5CF6',       // Lainnya
-    violetDim: '#4C1D95',    // Violet dim
+    violetDim: '#EDE9FE',    // Soft Lavender
   },
 
-  // === GLASSMORPHISM ===
+  // === GLASSMORPHISM / NEUMORPHISM (Light Mode) ===
   glass: {
-    bg: 'rgba(255, 255, 255, 0.04)',
-    bgHover: 'rgba(255, 255, 255, 0.08)',
-    border: 'rgba(255, 255, 255, 0.08)',
-    borderStrong: 'rgba(255, 255, 255, 0.15)',
-    shadow: 'rgba(0, 0, 0, 0.5)',
+    bg: '#FFFFFF',
+    bgHover: '#F8FAFC',
+    border: '#E2E8F0',       // Slate 200 — garis pinggir soft
+    borderStrong: '#CBD5E1', // Slate 300
+    shadow: 'rgba(15, 23, 42, 0.05)', // Bayangan hitam sangat samar
   },
 
   // === TEXT ===
   text: {
-    primary: '#F1F5F9',      // Teks utama
-    secondary: '#94A3B8',    // Teks muted
-    tertiary: '#475569',     // Teks sangat muted
-    white: '#FFFFFF',
-    inverse: '#0F172A',
+    primary: '#0F172A',      // Slate 900 — Judul & nominal
+    secondary: '#475569',    // Slate 600 — Deskripsi / Muted
+    tertiary: '#94A3B8',     // Slate 400 — Waktu / Hint
+    white: '#FFFFFF',        // Tetap putih untuk tombol berlatar warna
+    inverse: '#F8FAFC',
   },
 
   // === STATUS ===
@@ -105,7 +105,7 @@ export const AppSpacing = {
   '4xl': 48,
 };
 
-// === BORDER RADIUS (Bento Grid Style) ===
+// === BORDER RADIUS (Bento Grid / Neumorphism) ===
 export const AppRadius = {
   sm: 8,
   md: 12,
@@ -116,55 +116,55 @@ export const AppRadius = {
   full: 999,
 };
 
-// === SHADOWS ===
+// === SHADOWS (Light Theme Drop Shadows) ===
 export const AppShadows = {
   sm: {
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2, // Android
   },
   md: {
-    shadowColor: '#000',
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  lg: {
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 8,
   },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 15,
-  },
   emerald: {
     shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
     elevation: 8,
   },
 };
 
-// === LEGACY COMPAT (untuk hook useColorScheme bawaan Expo) ===
+// === LEGACY COMPAT ===
 export const Colors = {
   light: {
-    text: AppColors.text.inverse,
-    background: '#FFFFFF',
-    tint: AppColors.accent.blue,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: AppColors.accent.blue,
-  },
-  dark: {
     text: AppColors.text.primary,
     background: AppColors.bg.primary,
     tint: AppColors.accent.emerald,
     icon: AppColors.text.secondary,
     tabIconDefault: AppColors.text.tertiary,
     tabIconSelected: AppColors.accent.emerald,
+  },
+  dark: {
+    text: AppColors.text.inverse,
+    background: AppColors.bg.primary,
+    tint: AppColors.accent.electric,
+    icon: '#687076',
+    tabIconDefault: '#687076',
+    tabIconSelected: AppColors.accent.electric,
   },
 };
 

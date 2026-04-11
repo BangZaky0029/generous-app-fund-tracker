@@ -114,24 +114,23 @@ export default function TransparencyScreen() {
           </Text>
         </GlassCard>
       ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: insets.bottom + 80 }
-          ]}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={refetch}
-              tintColor={AppColors.accent.emerald}
-              colors={[AppColors.accent.emerald]}
-            />
-          }
-        />
+        <GlassCard padding={0} style={{ marginHorizontal: 16, marginBottom: insets.bottom + 80 }}>
+          <FlatList
+            data={filtered}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={refetch}
+                tintColor={AppColors.accent.emerald}
+                colors={[AppColors.accent.emerald]}
+              />
+            }
+          />
+        </GlassCard>
       )}
     </View>
   );
@@ -209,6 +208,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: AppSpacing.base,
+    paddingTop: AppSpacing.sm,
     paddingBottom: AppSpacing['3xl'],
   },
   emptyCard: {
