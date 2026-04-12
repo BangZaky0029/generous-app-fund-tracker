@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState, useMemo } from 'react';
 import { 
   View, Text, ScrollView, TouchableOpacity, 
   TextInput, Image, Modal, StyleSheet, 
@@ -7,19 +8,30 @@ import {
 import { 
   Search, Receipt, Calendar, 
   Trash2, Maximize2, X, Filter,
-  AlertCircle, Download, ExternalLink, Sparkles
+  AlertCircle, Download, ExternalLink, Sparkles, ArrowLeft,
+  LayoutGrid, List as ListIcon
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { AppColors, AppFonts, AppRadius, AppSpacing, CATEGORIES } from '@/constants/theme';
 import { deleteExpense } from '@/services/expenseService';
+import { deleteDonation } from '@/services/donationService';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
 export default function ManajemenBukti() {
-  const { recentExpenses, isLoading, refetch, showAlert } = useFundTrackerContext();
+  const { recentExpenses, recentDonations, isLoading, refetch, showAlert } = useFundTrackerContext();
+  const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
+
+  // Auto Refresh saat masuk ke layar ini
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [])
+  );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -34,28 +46,45 @@ export default function ManajemenBukti() {
     }).format(amount);
   };
 
-  // Logic: Search & Filter
-  const filteredExpenses = useMemo(() => {
-    return recentExpenses.filter(expense => {
-      const matchQuery = expense.description?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         expense.amount.toString().includes(searchQuery) ||
-                         expense.category.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchCategory = selectedCategory ? expense.category === selectedCategory : true;
-      return matchQuery && matchCategory;
-    });
-  }, [recentExpenses, searchQuery, selectedCategory]);
+  // Simplified Unified List Logic
+  const unifiedItems = useMemo(() => {
+    const expenses = recentExpenses.map(e => ({ ...e, type: 'expense' as const }));
+    const donations = recentDonations.map(d => ({ ...d, type: 'income' as const, category: 'Donasi' }));
+    
+    let combined = [...expenses, ...donations];
+    
+    // Global filter by Type
+    if (filterType === 'income') combined = combined.filter(i => i.type === 'income');
+    if (filterType === 'expense') combined = combined.filter(i => i.type === 'expense');
 
-  const handleDelete = async (id: string) => {
+    // Search and Category Filter
+    return combined.filter(item => {
+      const title = item.type === 'income' ? (item as any).donator_name : (item as any).description;
+      const matchQuery = title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                         item.amount.toString().includes(searchQuery) ||
+                         item.category.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchCategory = selectedCategory ? item.category === selectedCategory : true;
+      return matchQuery && matchCategory;
+    }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [recentExpenses, recentDonations, searchQuery, selectedCategory, filterType]);
+
+  const handleDelete = async (id: string, type: 'income' | 'expense') => {
+    const title = type === 'income' ? 'Donasi' : 'Pengeluaran';
     showAlert(
-      'Hapus Bukti Permanen',
-      'Apakah Anda yakin ingin menghapus data pengeluaran dan foto bukti ini? Tindakan ini akan menghapus aset dari server ledger.',
+      `Hapus ${title} Permanen`,
+      `Apakah Anda yakin ingin menghapus data ini? Tindakan ini akan menghapus aset bukti dari server ledger.`,
       'warning',
       async () => {
         setIsDeleting(id);
         try {
-          await deleteExpense(id);
+          if (type === 'income') {
+            await deleteDonation(id);
+          } else {
+            await deleteExpense(id);
+          }
           await refetch();
-          showAlert('Sukses', 'Aset berhasil dihapus dari cloud.', 'success');
+          showAlert('Sukses', 'Data berhasil dihapus dari cloud.', 'success');
         } catch (err) {
           showAlert('Error', 'Gagal menghapus data. Periksa koneksi agent.', 'error');
         } finally {
@@ -69,34 +98,87 @@ export default function ManajemenBukti() {
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.headerTitle}>Asset Gallery</Text>
-            <View style={styles.vaultBadge}>
-              <Sparkles size={10} color={AppColors.accent.emerald} />
-              <Text style={styles.vaultText}>Cloud Vault Verified</Text>
+          <View style={styles.headerTitleRow}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={20} color="#fff" />
+            </TouchableOpacity>
+            <View>
+              <Text style={styles.headerTitle}>Asset Gallery</Text>
+              <View style={styles.vaultBadge}>
+                <Sparkles size={10} color={AppColors.accent.emerald} />
+                <Text style={styles.vaultText}>Cloud Vault Verified</Text>
+              </View>
             </View>
           </View>
-          <View style={styles.statChip}>
-            <Text style={styles.statCount}>{filteredExpenses.length}</Text>
-            <Text style={styles.statLabel}>Items</Text>
+
+          <View style={styles.headerActions}>
+            <View style={styles.statChip}>
+              <Text style={styles.statCount}>{unifiedItems.length}</Text>
+              <Text style={styles.statLabel}>
+                {filterType === 'all' ? 'Total Aset' : filterType === 'income' ? 'Donasi' : 'Pengeluaran'}
+              </Text>
+            </View>
           </View>
         </View>
 
+        {/* Unified Tab Filter */}
+        <View style={styles.tabScrollWrapp}>
+           <TouchableOpacity 
+             onPress={() => setFilterType('all')}
+             style={[styles.tabItem, filterType === 'all' && styles.tabItemActive]}
+           >
+              <Text style={[styles.tabText, filterType === 'all' && styles.tabTextActive]}>Semua</Text>
+           </TouchableOpacity>
+           <TouchableOpacity 
+             onPress={() => setFilterType('income')}
+             style={[styles.tabItem, filterType === 'income' && styles.tabItemActive]}
+           >
+              <Text style={[styles.tabText, filterType === 'income' && styles.tabTextActive]}>Donasi</Text>
+           </TouchableOpacity>
+           <TouchableOpacity 
+             onPress={() => setFilterType('expense')}
+             style={[styles.tabItem, filterType === 'expense' && styles.tabItemActive]}
+           >
+              <Text style={[styles.tabText, filterType === 'expense' && styles.tabTextActive]}>Pengeluaran</Text>
+           </TouchableOpacity>
+        </View>
+
         {/* Floating Search Bar */}
-        <View style={styles.searchContainer}>
-          <Search size={18} color="#64748b" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Cari transaksi atau kategori..."
-            placeholderTextColor="#64748b"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery !== '' && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <X size={16} color="#64748b" />
+        {/* Floating Search Bar & Toggle */}
+        <View style={styles.searchRow}>
+          <View style={styles.searchContainer}>
+            <Search size={18} color="#64748b" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Cari transaksi..."
+              placeholderTextColor="#64748b"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery !== '' && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <X size={16} color="#64748b" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.layoutToggle}>
+            <TouchableOpacity 
+              onPress={() => setLayoutMode('grid')}
+              style={[styles.toggleBtn, layoutMode === 'grid' && styles.toggleBtnActive]}
+            >
+              <LayoutGrid size={16} color={layoutMode === 'grid' ? '#060e20' : '#64748b'} />
             </TouchableOpacity>
-          )}
+            <TouchableOpacity 
+              onPress={() => setLayoutMode('list')}
+              style={[styles.toggleBtn, layoutMode === 'list' && styles.toggleBtnActive]}
+            >
+              <ListIcon size={16} color={layoutMode === 'list' ? '#060e20' : '#64748b'} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Horizontal Category Filter */}
@@ -124,76 +206,138 @@ export default function ManajemenBukti() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {isLoading && filteredExpenses.length === 0 ? (
+        {isLoading && unifiedItems.length === 0 ? (
           <View style={styles.centerContent}>
             <ActivityIndicator size="large" color={AppColors.accent.emerald} />
             <Text style={styles.loadingText}>Menghubungkan ke Storage...</Text>
           </View>
-        ) : filteredExpenses.length > 0 ? (
-          <View style={styles.grid}>
-            {filteredExpenses.map((expense) => (
-              <GlassCard key={expense.id} style={styles.card}>
-                {/* Image Section */}
-                <TouchableOpacity 
-                  style={styles.imageContainer} 
-                  activeOpacity={0.9}
-                  onPress={() => expense.receipt_url && setPreviewImage(expense.receipt_url)}
-                >
-                  {expense.receipt_url ? (
-                    <Image source={{ uri: expense.receipt_url }} style={styles.image} />
-                  ) : (
-                    <View style={styles.noImage}>
-                      <Receipt size={32} color="rgba(255,255,255,0.05)" />
-                      <Text style={styles.noImageText}>Tanpa Bukti</Text>
-                    </View>
-                  )}
-                  
-                  {/* Overlay Tools */}
-                  <LinearGradient
-                    colors={['rgba(0,0,0,0.6)', 'transparent']}
-                    className="absolute top-0 left-0 right-0 h-16 p-3"
-                  >
-                    <View style={styles.cardHeader}>
-                       <View style={[styles.categoryBadge, { backgroundColor: CATEGORIES.find(c => c.name === expense.category)?.color + '30' }]}>
-                          <Text style={[styles.categoryBadgeText, { color: CATEGORIES.find(c => c.name === expense.category)?.color }]}>
-                            {expense.category}
+        ) : unifiedItems.length > 0 ? (
+          <View style={layoutMode === 'grid' ? styles.grid : styles.listList}>
+            {unifiedItems.map((item) => {
+              const isIncome = item.type === 'income';
+              const title = isIncome ? (item as any).donator_name : (item as any).description;
+              const accentColor = isIncome ? AppColors.accent.emerald : (CATEGORIES.find(c => c.name === item.category)?.color || '#fff');
+              
+              if (layoutMode === 'list') {
+                return (
+                  <GlassCard key={item.id} style={[styles.cardList, isIncome && styles.incomeCard]}>
+                    <TouchableOpacity 
+                      style={styles.imageContainerList} 
+                      onPress={() => item.receipt_url && setPreviewImage(item.receipt_url)}
+                    >
+                      {item.receipt_url ? (
+                        <Image source={{ uri: item.receipt_url }} style={styles.imageList} />
+                      ) : (
+                        <View style={styles.noImageList}>
+                          <Receipt size={20} color="rgba(255,255,255,0.05)" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+
+                    <View style={styles.cardBodyList}>
+                      <View style={styles.rowBetween}>
+                        <View style={[styles.categoryBadge, { backgroundColor: `${accentColor}20`, borderColor: `${accentColor}40` }]}>
+                          <Text style={[styles.categoryBadgeText, { color: accentColor }]}>
+                            {isIncome ? 'MASUK' : item.category}
                           </Text>
-                       </View>
-                       <TouchableOpacity 
-                          style={styles.deleteBtn}
-                          onPress={() => handleDelete(expense.id)}
-                          disabled={isDeleting === expense.id}
-                       >
-                          {isDeleting === expense.id ? (
-                             <ActivityIndicator size="small" color={AppColors.accent.red} />
-                          ) : (
-                             <Trash2 size={12} color="#fff" />
-                          )}
-                       </TouchableOpacity>
+                        </View>
+                        <Text style={[styles.expensePriceList, isIncome && { color: AppColors.accent.emerald }]}>
+                          {isIncome ? '+' : '-'}{formatRp(item.amount)}
+                        </Text>
+                      </View>
+                      
+                      <Text style={styles.expenseDescList} numberOfLines={1}>{title || 'Tanpa keterangan'}</Text>
+                      
+                      <View style={styles.cardFooterList}>
+                         <View style={styles.footerInfo}>
+                            <Calendar size={10} color="#64748b" />
+                            <Text style={styles.expenseDate}>
+                              {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </Text>
+                         </View>
+                         <TouchableOpacity 
+                            style={styles.deleteBtnSmall}
+                            onPress={() => handleDelete(item.id, item.type)}
+                            disabled={isDeleting === item.id}
+                         >
+                            {isDeleting === item.id ? (
+                               <ActivityIndicator size="small" color={AppColors.accent.red} />
+                            ) : (
+                               <Trash2 size={12} color="#94a3b8" />
+                            )}
+                         </TouchableOpacity>
+                      </View>
                     </View>
-                  </LinearGradient>
+                  </GlassCard>
+                );
+              }
 
-                  {expense.receipt_url && (
-                    <View style={styles.previewHint}>
-                       <Maximize2 size={10} color="#fff" />
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                {/* Content Section */}
-                <View style={styles.cardBody}>
-                   <Text style={styles.expensePrice}>{formatRp(expense.amount)}</Text>
-                   <Text style={styles.expenseDesc} numberOfLines={1}>{expense.description || 'Deskripsi kosong'}</Text>
-                   
-                   <View style={styles.cardFooter}>
-                      <Calendar size={10} color="#64748b" />
-                      <Text style={styles.expenseDate}>
-                        {new Date(expense.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                      </Text>
-                   </View>
-                </View>
-              </GlassCard>
-            ))}
+              return (
+                <GlassCard key={item.id} style={[styles.card, isIncome && styles.incomeCard]}>
+                  {/* Image Section */}
+                  <TouchableOpacity 
+                    style={styles.imageContainer} 
+                    activeOpacity={0.9}
+                    onPress={() => item.receipt_url && setPreviewImage(item.receipt_url)}
+                  >
+                    {item.receipt_url ? (
+                      <Image source={{ uri: item.receipt_url }} style={styles.image} />
+                    ) : (
+                      <View style={styles.noImage}>
+                        <Receipt size={32} color="rgba(255,255,255,0.05)" />
+                        <Text style={styles.noImageText}>Tanpa Bukti</Text>
+                      </View>
+                    )}
+                    
+                    {/* Overlay Tools */}
+                    <LinearGradient
+                      colors={['rgba(0,0,0,0.6)', 'transparent']}
+                      style={StyleSheet.absoluteFill}
+                    >
+                      <View style={styles.cardHeader}>
+                         <View style={[styles.categoryBadge, { backgroundColor: `${accentColor}30`, borderColor: `${accentColor}50` }]}>
+                            <Text style={[styles.categoryBadgeText, { color: accentColor }]}>
+                              {isIncome ? 'MASUK' : item.category}
+                            </Text>
+                         </View>
+                         <TouchableOpacity 
+                            style={[styles.deleteBtn, isIncome && { backgroundColor: 'rgba(239, 68, 68, 0.4)' }]}
+                            onPress={() => handleDelete(item.id, item.type)}
+                            disabled={isDeleting === item.id}
+                         >
+                            {isDeleting === item.id ? (
+                               <ActivityIndicator size="small" color={AppColors.accent.red} />
+                            ) : (
+                               <Trash2 size={12} color="#fff" />
+                            )}
+                         </TouchableOpacity>
+                      </View>
+                    </LinearGradient>
+  
+                    {item.receipt_url && (
+                      <View style={styles.previewHint}>
+                         <Maximize2 size={10} color="#fff" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+  
+                  {/* Content Section */}
+                  <View style={styles.cardBody}>
+                     <Text style={[styles.expensePrice, isIncome && { color: AppColors.accent.emerald }]}>
+                       {isIncome ? '+' : '-'}{formatRp(item.amount)}
+                     </Text>
+                     <Text style={styles.expenseDesc} numberOfLines={1}>{title || 'Tanpa keterangan'}</Text>
+                     
+                     <View style={styles.cardFooter}>
+                        <Calendar size={10} color="#64748b" />
+                        <Text style={styles.expenseDate}>
+                          {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                        </Text>
+                     </View>
+                  </View>
+                </GlassCard>
+              );
+            })}
           </View>
         ) : (
           <View style={styles.emptyState}>
@@ -262,6 +406,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 24,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
   headerTitle: {
     color: '#fff',
     fontSize: 28,
@@ -301,7 +460,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+  },
   searchContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#0f172a',
@@ -310,7 +476,6 @@ const styles = StyleSheet.create({
     height: 52,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
-    marginBottom: 20,
   },
   searchInput: {
     flex: 1,
@@ -342,6 +507,127 @@ const styles = StyleSheet.create({
   },
   filterTextActive: {
     color: '#002919',
+  },
+  tabScrollWrapp: {
+    flexDirection: 'row',
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  tabItemActive: {
+    backgroundColor: 'rgba(105, 246, 184, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(105, 246, 184, 0.2)',
+  },
+  tabText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tabTextActive: {
+    color: AppColors.accent.emerald,
+  },
+  incomeCard: {
+     borderColor: 'rgba(105, 246, 184, 0.1)',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  layoutToggle: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 16,
+    padding: 4,
+    height: 52,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  toggleBtn: {
+    width: 36,
+    height: 42,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleBtnActive: {
+    backgroundColor: '#69f6b8',
+  },
+  listList: {
+    gap: 12,
+  },
+  cardList: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 20,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.03)',
+  },
+  imageContainerList: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: '#0f172a',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageList: {
+    width: '100%',
+    height: '100%',
+  },
+  noImageList: {
+    opacity: 0.5,
+  },
+  cardBodyList: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  expensePriceList: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  expenseDescList: {
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '600',
+    marginVertical: 4,
+  },
+  cardFooterList: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  footerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  deleteBtnSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scroll: {
     padding: AppSpacing.base,

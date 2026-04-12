@@ -64,3 +64,12 @@ export async function createDonation(form: AddDonationForm): Promise<Donation> {
   if (error) throw new Error(error.message);
   return data as Donation;
 }
+// --- Hapus donasi ---
+export async function deleteDonation(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('donations')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw new Error(error.message);
+}

@@ -107,6 +107,7 @@ export default function AdminLayout() {
         options={{
           href: null,
           title: 'Input Pengeluaran',
+          tabBarStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
@@ -114,6 +115,7 @@ export default function AdminLayout() {
         options={{
           href: null,
           title: 'Catat Donasi',
+          tabBarStyle: { display: 'none' },
         }}
       />
     </Tabs>

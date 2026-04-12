@@ -6,17 +6,25 @@ import {
 import { 
   PlusCircle, Scan, Keyboard, 
   ArrowRight, ShieldCheck, Zap,
-  Info, Sparkles
+  Info, Sparkles, ArrowLeft
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows } from '@/constants/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
 
 export default function InputDashboard() {
-  const { showAlert } = useFundTrackerContext();
+  const { showAlert, refetch } = useFundTrackerContext();
+
+  // Auto Refresh saat masuk ke layar ini
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [])
+  );
   
   const handleOpenExpense = () => {
     router.push('/(admin)/add-expense');
@@ -38,10 +46,18 @@ export default function InputDashboard() {
     <SafeAreaView style={styles.root} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Action Center</Text>
-          <View style={styles.subHeaderRow}>
-            <Sparkles size={14} color={AppColors.accent.emerald} />
-            <Text style={styles.headerSubtitle}>Kelola Arus Dana Digital</Text>
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={20} color="#fff" />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Action Center</Text>
+            <View style={styles.subHeaderRow}>
+              <Sparkles size={14} color={AppColors.accent.emerald} />
+              <Text style={styles.headerSubtitle}>Kelola Arus Dana Digital</Text>
+            </View>
           </View>
         </View>
         
@@ -131,6 +147,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: AppSpacing.base,
     paddingTop: AppSpacing.xl,
     paddingBottom: AppSpacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   subHeaderRow: {
     flexDirection: 'row',

@@ -46,8 +46,8 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         await Promise.all([
           fetchTotalDonations(),
           fetchExpensesByCategory(),
-          fetchRecentExpenses(10),
-          fetchRecentDonations(5),
+          fetchRecentExpenses(20),
+          fetchRecentDonations(20),
         ]);
 
       // Hitung total expenses

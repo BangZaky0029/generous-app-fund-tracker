@@ -2,12 +2,12 @@
  * Add Expense Screen (Internal to Tabs)
  * Form tambah pengeluaran - Data diterima dari Scanner Utama atau Input Manual
  */
-import React, { useState, useEffect, useRef } from 'react';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Image, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, ScanLine, ArrowLeft } from 'lucide-react-native';
 
@@ -30,6 +30,19 @@ export default function AddExpenseScreen() {
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const processedUriRef = useRef<string | null>(null);
+
+  // Logic Reset Form saat masuk manual (Clean Start)
+  useFocusEffect(
+    useCallback(() => {
+      // Jika masuk ke layar ini TANPA membawa parameter foto baru dari kamera
+      if (!params.capturedUri) {
+        setAmount('');
+        setDescription('');
+        setCapturedUri(null);
+        processedUriRef.current = null;
+      }
+    }, [params.capturedUri])
+  );
 
   // Auto-fill data jika datang dari Kamera Scanner (Hanya jika ada data BARU)
   useEffect(() => {

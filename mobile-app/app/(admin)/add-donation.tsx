@@ -2,8 +2,8 @@
  * Add Donation Screen (Internal to Tabs)
  * Form tambah dana masuk (Donasi)
  */
-import { router, useLocalSearchParams } from 'expo-router';
-import { useState, useEffect, useRef } from 'react';
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Image,
@@ -28,6 +28,20 @@ export default function AddDonationScreen() {
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const processedUriRef = useRef<string | null>(null);
+
+  // Logic Reset Form saat masuk manual (Clean Start)
+  useFocusEffect(
+    useCallback(() => {
+      // Jika masuk ke layar ini TANPA membawa parameter foto baru dari kamera
+      if (!params.capturedUri) {
+        setDonatorName('');
+        setAmount('');
+        setMessage('');
+        setCapturedUri(null);
+        processedUriRef.current = null;
+      }
+    }, [params.capturedUri])
+  );
 
   // Tangkap foto dari Kamera Kustom
   useEffect(() => {
