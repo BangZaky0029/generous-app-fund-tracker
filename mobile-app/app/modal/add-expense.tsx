@@ -146,33 +146,32 @@ export default function AddExpenseModal() {
   if (showCustomCamera) {
     return (
       <View style={styles.cameraRoot}>
-        <CameraView style={StyleSheet.absoluteFillObject} ref={cameraRef} facing="back">
-          <View style={[styles.cameraOverlay, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-            {/* Header */}
-            <View style={styles.cameraHeader}>
-              <TouchableOpacity style={styles.cameraCloseBtn} onPress={() => setShowCustomCamera(false)}>
-                <X size={24} color="#FFF" />
-              </TouchableOpacity>
-              <Text style={styles.cameraTitle}>Scan Struk Belanja</Text>
-              <View style={{ width: 44 }} />
-            </View>
-
-            {/* Scan Frame */}
-            <View style={styles.scanFrameWrap}>
-              <View style={styles.scanFrame}>
-                <Animated.View style={[styles.scanLine, animatedScanLine]} />
-              </View>
-              <Text style={styles.scanHint}>Posisikan struk penuh di dalam kotak</Text>
-            </View>
-
-            {/* Capture Button */}
-            <View style={styles.cameraFooter}>
-              <TouchableOpacity style={styles.captureCircleOuter} onPress={handleCapture}>
-                <View style={styles.captureCircleInner} />
-              </TouchableOpacity>
-            </View>
+        <CameraView style={StyleSheet.absoluteFillObject} facing="back" ref={cameraRef} />
+        <View style={[StyleSheet.absoluteFillObject, styles.cameraOverlay, { paddingTop: insets.top, paddingBottom: insets.bottom }]} pointerEvents="box-none">
+          {/* Header */}
+          <View style={styles.cameraHeader} pointerEvents="box-none">
+            <TouchableOpacity style={styles.cameraCloseBtn} onPress={() => setShowCustomCamera(false)}>
+              <X size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.cameraTitle}>Scan Struk Belanja</Text>
+            <View style={{ width: 44 }} />
           </View>
-        </CameraView>
+
+          {/* Scan Frame */}
+          <View style={styles.scanFrameWrap} pointerEvents="none">
+            <View style={styles.scanFrame}>
+              <Animated.View style={[styles.scanLine, animatedScanLine]} />
+            </View>
+            <Text style={styles.scanHint}>Posisikan struk penuh di dalam kotak</Text>
+          </View>
+
+          {/* Capture Button */}
+          <View style={styles.cameraFooter} pointerEvents="box-none">
+            <TouchableOpacity style={styles.captureCircleOuter} onPress={handleCapture}>
+              <View style={styles.captureCircleInner} />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     );
   }

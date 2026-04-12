@@ -25,10 +25,12 @@ export default function RootLayout() {
             animation: 'fade',
           }}
         >
-          {/* Gatekeeper — halaman pertama yang dirender */}
           <Stack.Screen name="index" options={{ headerShown: false }} />
 
-          {/* Tab screens — hanya bisa diakses kalau sudah login */}
+          {/* Role-based screens */}
+          <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+          <Stack.Screen name="(donatur)" options={{ headerShown: false }} />
+          {/* Legacy fallback */}
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
           {/* Auth screens */}
