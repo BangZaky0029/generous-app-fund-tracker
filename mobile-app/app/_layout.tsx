@@ -30,8 +30,6 @@ export default function RootLayout() {
           {/* Role-based screens */}
           <Stack.Screen name="(admin)" options={{ headerShown: false }} />
           <Stack.Screen name="(donatur)" options={{ headerShown: false }} />
-          {/* Legacy fallback */}
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
           {/* Auth screens */}
           <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'none' }} />
