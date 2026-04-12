@@ -92,25 +92,56 @@ export function useAuth(): AuthState & AuthActions {
   }, [updateFromSession]);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(error.message);
+    console.log(`[useAuth] Attempting signIn for: ${email}...`);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        console.error('[useAuth] SignIn error:', error.message);
+        throw new Error(error.message);
+      }
+      console.log('[useAuth] SignIn success');
+    } catch (err) {
+      console.error('[useAuth] SignIn unexpected error:', err);
+      throw err;
+    }
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, fullName: string, role: 'donatur' | 'admin' = 'donatur') => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw new Error(error.message);
+    console.log(`[useAuth] Attempting signUp for: ${email}...`);
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      
+      if (error) {
+        console.error('[useAuth] SignUp Auth Error:', error.message);
+        throw new Error(error.message);
+      }
 
-    if (data.user) {
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: data.user.id,
-        full_name: fullName.trim(),
-        role: role,
-      });
-      if (profileError) console.error('[SignUp] Profile create error:', profileError.message);
+      if (data.user) {
+        console.log('[useAuth] Auth Success, creating profile...');
+        const { error: profileError } = await supabase.from('profiles').upsert({
+          id: data.user.id,
+          full_name: fullName.trim(),
+          role: role,
+        });
+
+        if (profileError) {
+          console.error('[useAuth] Profile creation error:', profileError.message);
+          // Kita tidak throw error di sini agar user tetap bisa login nanti jika auth-nya sudah berhasil
+          // Tapi kita log untuk debug.
+        } else {
+          console.log('[useAuth] Profile created successfully');
+        }
+      } else {
+        console.warn('[useAuth] SignUp success but no user returned (might need confirmation)');
+      }
+    } catch (err) {
+      console.error('[useAuth] SignUp unexpected error:', err);
+      throw err;
     }
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
+    console.log(`[useAuth] Requesting password reset for: ${email}...`);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'generous-app://reset-password',
     });
