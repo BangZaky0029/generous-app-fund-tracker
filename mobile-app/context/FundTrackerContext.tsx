@@ -1,13 +1,6 @@
 /**
  * FundTracker Context
  * Global provider untuk Auth + FundTracker
- *
- * POLA ARSITEKTUR:
- * - AppProvider membungkus seluruh app di _layout.tsx
- * - AuthContext selalu aktif (untuk cek session)
- * - FundTrackerContext hanya aktif kalau user sudah login (isAuthenticated)
- *   → mencegah fetch data saat belum ada session
- * - app/index.tsx bertindak sebagai gatekeeper routing
  */
 import React, { createContext, useContext, type ReactNode } from 'react';
 import { useFundTracker } from '@/hooks/useFundTracker';
@@ -15,9 +8,21 @@ import { useAuth } from '@/hooks/useAuth';
 import type { FundTrackerState, AuthUser } from '@/constants/types';
 import type { Session } from '@supabase/supabase-js';
 
+// ===== CUSTOM TYPES =====
+export type AlertConfig = {
+  visible: boolean;
+  title: string;
+  message: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  onConfirm?: () => void;
+};
+
 // ===== FUND TRACKER CONTEXT =====
 type FundTrackerContextType = FundTrackerState & {
   refetch: () => void;
+  alert: AlertConfig;
+  showAlert: (title: string, message: string, type: AlertConfig['type'], onConfirm?: () => void) => void;
+  hideAlert: () => void;
 };
 
 const EMPTY_FUND_STATE: FundTrackerContextType = {
@@ -32,12 +37,15 @@ const EMPTY_FUND_STATE: FundTrackerContextType = {
   error: null,
   lastUpdated: null,
   refetch: () => {},
+  alert: { visible: false, title: '', message: '', type: 'info' },
+  showAlert: () => {},
+  hideAlert: () => {},
 };
 
 const FundTrackerContext = createContext<FundTrackerContextType>(EMPTY_FUND_STATE);
 
 // ===== AUTH CONTEXT =====
-type AuthContextType = {
+export type AuthContextType = {
   user: AuthUser | null;
   session: Session | null;
   isLoading: boolean;
@@ -47,23 +55,42 @@ type AuthContextType = {
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  showAlert: (title: string, message: string, type: AlertConfig['type'], onConfirm?: () => void) => void;
+  hideAlert: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-
 // ===== COMBINED PROVIDER =====
 export function AppProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
-  
-  // NOTE: Selalu jalankan hook agar struktur pohon Context tidak pernah berganti tipe (mencegah crash navigasi).
-  // Data donasi dan pengeluaran bersifat publik untuk dashboard donatur, 
-  // sehingga fetch data dapat berjalan dengan aman meski tanpa session.
   const fundTracker = useFundTracker();
+  
+  const [alert, setAlert] = React.useState<AlertConfig>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
+
+  const showAlert = React.useCallback((title: string, message: string, type: AlertConfig['type'] = 'info', onConfirm?: () => void) => {
+    setAlert({ visible: true, title, message, type, onConfirm });
+  }, []);
+
+  const hideAlert = React.useCallback(() => {
+    setAlert(prev => ({ ...prev, visible: false }));
+  }, []);
+
+  const combinedFundContext = React.useMemo(() => ({
+    ...fundTracker,
+    alert,
+    showAlert,
+    hideAlert
+  }), [fundTracker, alert, showAlert, hideAlert]);
 
   return (
-    <AuthContext.Provider value={auth}>
-      <FundTrackerContext.Provider value={fundTracker}>
+    <AuthContext.Provider value={{ ...auth, showAlert, hideAlert }}>
+      <FundTrackerContext.Provider value={combinedFundContext}>
         {children}
       </FundTrackerContext.Provider>
     </AuthContext.Provider>

@@ -32,17 +32,23 @@ export function useAuth(): AuthState & AuthActions {
   });
 
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    console.log(`[useAuth] Fetching profile for: ${userId}...`);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('[useAuth] Profile fetch error:', error.message);
+      if (error) {
+        console.error('[useAuth] Supabase Error fetching profile:', error.message, error.details);
+        return null;
+      }
+      return data as Profile;
+    } catch (err) {
+      console.error('[useAuth] Network/Unknown Error fetching profile:', err);
       return null;
     }
-    return data as Profile;
   }, []);
 
   const updateFromSession = useCallback(

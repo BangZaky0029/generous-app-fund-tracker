@@ -9,10 +9,28 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { AppProvider } from '@/context/FundTrackerContext';
+import { AppProvider, useFundTrackerContext } from '@/context/FundTrackerContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import { AppColors } from '@/constants/theme';
+import { AlertModal } from '@/components/ui/AlertModal';
+
+function GlobalAlert() {
+  const { alert, hideAlert } = useFundTrackerContext();
+  return (
+    <AlertModal
+      visible={alert.visible}
+      title={alert.title}
+      message={alert.message}
+      type={alert.type}
+      onClose={hideAlert}
+      onConfirm={alert.onConfirm ? () => {
+        alert.onConfirm?.();
+        hideAlert();
+      } : undefined}
+    />
+  );
+}
 
 export default function RootLayout() {
   return (
@@ -26,15 +44,9 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen name="index" options={{ headerShown: false }} />
-
-          {/* Role-based screens */}
           <Stack.Screen name="(admin)" options={{ headerShown: false }} />
           <Stack.Screen name="(donatur)" options={{ headerShown: false }} />
-
-          {/* Auth screens */}
           <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'none' }} />
-
-          {/* Modal — form tambah expense */}
           <Stack.Screen
             name="modal/add-expense"
             options={{
@@ -44,6 +56,7 @@ export default function RootLayout() {
             }}
           />
         </Stack>
+        <GlobalAlert />
         <StatusBar style="light" backgroundColor={AppColors.bg.primary} />
       </AppProvider>
     </GestureHandlerRootView>

@@ -8,7 +8,11 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { scanReceipt } from '@/services/ocrService';
 
+import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows } from '@/constants/theme';
+import { useAuthContext } from '@/context/FundTrackerContext';
+
 export default function ValidasiKamera() {
+  const { showAlert } = useAuthContext();
   const [permission, requestPermission] = useCameraPermissions();
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isScanning, setIsScanning] = useState(false);
@@ -18,22 +22,22 @@ export default function ValidasiKamera() {
 
   if (!permission.granted) {
     return (
-      <View className="flex-1 bg-surface items-center justify-center p-8">
-        <View className="w-24 h-24 bg-primary/10 rounded-full items-center justify-center mb-8 border border-primary/20">
+      <View className="flex-1 bg-[#0f172a] items-center justify-center p-8">
+        <View className="w-24 h-24 bg-[#69f6b8]/10 rounded-full items-center justify-center mb-8 border border-[#69f6b8]/20">
           <MaterialIcons name="camera-alt" size={48} color="#69f6b8" />
         </View>
-        <Text className="font-headline text-2xl font-bold text-white text-center mb-4">Akses Kamera Dibutuhkan</Text>
-        <Text className="text-on-surface-variant text-center mb-10 leading-6 px-4">
+        <Text className="text-2xl font-bold text-white text-center mb-4">Akses Kamera Dibutuhkan</Text>
+        <Text className="text-[#94a3b8] text-center mb-10 leading-6 px-4">
           Untuk menjaga transparansi donasi, Admin diwajibkan mengunggah bukti struk asli melalui kamera. Kami menjamin privasi data Anda.
         </Text>
         <TouchableOpacity 
           onPress={requestPermission} 
-          className="bg-primary w-full py-5 rounded-2xl items-center shadow-lg shadow-primary/20"
+          className="bg-[#69f6b8] w-full py-5 rounded-2xl items-center shadow-lg"
         >
-          <Text className="font-bold text-on-primary-container text-lg">Izinkan Sekarang</Text>
+          <Text className="font-bold text-[#005a3c] text-lg">Izinkan Sekarang</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.back()} className="mt-6">
-          <Text className="text-on-surface-variant font-medium">Nanti Saja</Text>
+          <Text className="text-[#94a3b8] font-medium">Nanti Saja</Text>
         </TouchableOpacity>
       </View>
     );
@@ -54,31 +58,26 @@ export default function ValidasiKamera() {
       
       if (result.amount) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert(
+        showAlert(
           'Struk Terdeteksi',
           `Nominal: Rp ${result.amount.toLocaleString('id-ID')}\nTanggal: ${result.date || 'Tidak ditemukan'}\n\nLanjutkan simpan?`,
-          [
-            { text: 'Ulangi', style: 'cancel' },
-            { 
-              text: 'Simpan', 
-              onPress: () => router.push({
-                pathname: '/modal/add-expense',
-                params: { 
-                  amount: result.amount?.toString(),
-                  description: result.rawText.substring(0, 50),
-                  category: 'Lainnya'
-                }
-              }) 
+          'success',
+          () => router.push({
+            pathname: '/modal/add-expense',
+            params: { 
+              amount: result.amount?.toString(),
+              description: result.rawText.substring(0, 50),
+              category: 'Lainnya'
             }
-          ]
+          })
         );
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('Gagal Mendeteksi', 'Nominal struk tidak terbaca dengan jelas. Pastikan foto fokus dan pencahayaan cukup.');
+        showAlert('Gagal Mendeteksi', 'Nominal struk tidak terbaca dengan jelas. Pastikan foto fokus dan pencahayaan cukup.', 'warning');
       }
     } catch (error: any) {
       setIsScanning(false);
-      Alert.alert('System Error', error.message || 'Gagal memproses gambar.');
+      showAlert('System Error', error.message || 'Gagal memproses gambar.', 'error');
     }
   };
 
@@ -91,7 +90,7 @@ export default function ValidasiKamera() {
           handleOcrProcess(photo.base64);
         }
       } catch (e) {
-        Alert.alert('Error', 'Gagal mengambil gambar');
+        showAlert('Error', 'Gagal mengambil gambar', 'error');
       }
     }
   };

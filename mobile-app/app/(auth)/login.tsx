@@ -9,7 +9,7 @@ import { useAuthContext } from '@/context/FundTrackerContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
-  const { signIn, isLoading } = useAuthContext();
+  const { signIn, isLoading, showAlert } = useAuthContext();
   const [role, setRole] = useState<'donatur' | 'admin'>('donatur');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +18,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Email dan password harus diisi.');
+      showAlert('Input Tidak Valid', 'Email dan password harus diisi.', 'warning');
       return;
     }
     setIsSubmitting(true);
@@ -27,7 +27,7 @@ export default function LoginScreen() {
       router.replace('/');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login gagal';
-      Alert.alert('Login Gagal', message);
+      showAlert('Login Gagal', message, 'error');
     } finally {
       setIsSubmitting(false);
     }

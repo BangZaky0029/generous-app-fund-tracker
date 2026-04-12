@@ -9,7 +9,7 @@ import { useAuthContext } from '@/context/FundTrackerContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
-  const { signUp } = useAuthContext();
+  const { signUp, showAlert } = useAuthContext();
   const [role, setRole] = useState<'donatur' | 'admin'>('donatur');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,24 +19,25 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!fullName.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Semua kolom harus diisi.');
+      showAlert('Input Tidak Valid', 'Semua kolom harus diisi.', 'warning');
       return;
     }
     if (password.length < 6) {
-      Alert.alert('Error', 'Password minimal 6 karakter.');
+      showAlert('Password Terlalu Pendek', 'Password minimal 6 karakter.', 'warning');
       return;
     }
     setIsSubmitting(true);
     try {
       await signUp(email.trim().toLowerCase(), password, fullName.trim(), role);
-      Alert.alert(
-        'Pendaftaran Berhasil!',
-        'Silakan periksa email Anda untuk konfirmasi (jika diaktifkan), lalu login.',
-        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+      showAlert(
+        'Pendaftaran Berhasil!', 
+        'Akun Anda telah dibuat. Silakan login untuk melanjutkan.', 
+        'success',
+        () => router.replace('/(auth)/login')
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Pendaftaran gagal';
-      Alert.alert('Gagal Daftar', message);
+      showAlert('Gagal Daftar', message, 'error');
     } finally {
       setIsSubmitting(false);
     }

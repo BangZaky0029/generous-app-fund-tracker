@@ -6,27 +6,40 @@ import { supabase } from '@/lib/supabaseConfig';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { Expense, ExpenseCategory } from '@/constants/types';
 
-// --- Ambil semua expenses dengan profile admin ---
+// --- Ambil semua expenses ---
 export async function fetchAllExpenses(): Promise<Expense[]> {
+  console.log('[ExpenseService] Fetching all expenses...');
   const { data, error } = await supabase
     .from('expenses')
-    .select('*, profiles(full_name, role)')
+    .select('*') // Simplifikasi sementara untuk debug network
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error('[ExpenseService] Error:', error.message);
+    throw new Error(error.message);
+  }
   return (data as Expense[]) ?? [];
 }
 
 // --- Ambil N expenses terbaru ---
 export async function fetchRecentExpenses(limit = 10): Promise<Expense[]> {
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('*, profiles(full_name, role)')
-    .order('created_at', { ascending: false })
-    .limit(limit);
+  console.log(`[ExpenseService] Fetching recent ${limit} expenses...`);
+  try {
+    const { data, error } = await supabase
+      .from('expenses')
+      .select('*') // Simplifikasi sementara
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-  if (error) throw new Error(error.message);
-  return (data as Expense[]) ?? [];
+    if (error) {
+      console.error('[ExpenseService] Supabase Error:', error.message);
+      throw new Error(error.message);
+    }
+    return (data as Expense[]) ?? [];
+  } catch (err) {
+    console.error('[ExpenseService] Network/Unknown Error:', err);
+    throw err;
+  }
 }
 
 // --- Hitung total expenses per kategori ---
