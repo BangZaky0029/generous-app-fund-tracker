@@ -49,35 +49,21 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// ===== INNER FUND TRACKER PROVIDER =====
-// Hanya di-render kalau sudah ada user (tidak fetch data sebelum login)
-function FundTrackerProvider({ children }: { children: ReactNode }) {
-  const fundTracker = useFundTracker();
-  return (
-    <FundTrackerContext.Provider value={fundTracker}>
-      {children}
-    </FundTrackerContext.Provider>
-  );
-}
 
 // ===== COMBINED PROVIDER =====
 export function AppProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
+  
+  // NOTE: Selalu jalankan hook agar struktur pohon Context tidak pernah berganti tipe (mencegah crash navigasi).
+  // Data donasi dan pengeluaran bersifat publik untuk dashboard donatur, 
+  // sehingga fetch data dapat berjalan dengan aman meski tanpa session.
+  const fundTracker = useFundTracker();
 
   return (
     <AuthContext.Provider value={auth}>
-      {/* 
-        FundTracker hanya aktif kalau user sudah login.
-        Ini mencegah realtime subscription & fetch data saat belum ada session.
-        isLoading true = sedang cek session, tunggu dulu.
-      */}
-      {auth.user ? (
-        <FundTrackerProvider>{children}</FundTrackerProvider>
-      ) : (
-        <FundTrackerContext.Provider value={EMPTY_FUND_STATE}>
-          {children}
-        </FundTrackerContext.Provider>
-      )}
+      <FundTrackerContext.Provider value={fundTracker}>
+        {children}
+      </FundTrackerContext.Provider>
     </AuthContext.Provider>
   );
 }
