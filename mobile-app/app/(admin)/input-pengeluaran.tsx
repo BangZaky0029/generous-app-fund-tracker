@@ -1,107 +1,234 @@
-import { View, Text, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import React from 'react';
+import { 
+  View, Text, ScrollView, TouchableOpacity, 
+  StyleSheet, Image 
+} from 'react-native';
+import { 
+  PlusCircle, Scan, Keyboard, 
+  ArrowRight, ShieldCheck, Zap,
+  Info
+} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
 import { router } from 'expo-router';
+import { GlassCard } from '@/components/ui/GlassCard';
+import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows } from '@/constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
-export default function InputPengeluaran() {
-   const [amount, setAmount] = useState('');
-   const [category, setCategory] = useState<string | null>(null);
-   const [desc, setDesc] = useState('');
+export default function InputDashboard() {
+  
+  const handleOpenExpense = () => {
+    router.push('/modal/add-expense');
+  };
 
-   const Categories = [
-     { id: 'logistik', label: 'Logistik', icon: 'inventory-2' as any },
-     { id: 'medis', label: 'Medis', icon: 'medical-services' as any },
-     { id: 'operasional', label: 'Operasional', icon: 'bolt' as any },
-     { id: 'lainnya', label: 'Lainnya', icon: 'more-horiz' as any }
-   ];
+  const handleOpenDonation = () => {
+    router.push('/modal/add-donation');
+  };
 
-   return (
-    <SafeAreaView className="flex-1 bg-surface" edges={['top', 'left', 'right']}>
-      {/* TopAppBar */}
-      <View className="flex-row justify-between items-center px-6 py-4 bg-[#192540]/90 border-b border-outline-variant/15 z-50">
-        <View className="flex-row items-center gap-3">
-          <View className="w-8 h-8 rounded-full border border-primary/30 items-center justify-center bg-surface-variant overflow-hidden">
-             <MaterialIcons name="person" size={16} color="#69f6b8" />
-          </View>
-          <Text className="font-headline font-bold text-sm text-primary tracking-widest uppercase">Input Pengeluaran</Text>
-        </View>
-        <MaterialIcons name="notifications" size={24} color="#69f6b8" />
+  return (
+    <SafeAreaView style={styles.root} edges={['top']}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Action Center</Text>
+        <Text style={styles.headerSubtitle}>Kelola Arus Dana Generous</Text>
       </View>
 
-      <ScrollView className="flex-1 px-6 pt-6 mb-24">
-         <View className="mb-10 items-center">
-            <Text className="text-on-surface-variant font-label text-xs tracking-widest uppercase mb-2">Input Transaksi Baru</Text>
-            <Text className="font-headline text-2xl font-extrabold text-on-surface">Digital Command Center</Text>
-         </View>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        
+        {/* Main Header Card */}
+        <GlassCard variant="elevated" style={styles.heroCard}>
+          <View style={styles.heroInfo}>
+            <ShieldCheck size={32} color={AppColors.accent.emerald} />
+            <Text style={styles.heroTitle}>Input Terverifikasi</Text>
+            <Text style={styles.heroDesc}>
+              Setiap transaksi yang Anda masukkan akan tercatat secara permanen di blockchain database Supabase.
+            </Text>
+          </View>
+        </GlassCard>
 
-         <View className="bg-surface-container rounded-xl p-8 border border-outline-variant/15 shadow-2xl relative overflow-hidden">
-            <View className="absolute -top-12 -right-12 w-32 h-32 bg-primary/20 rounded-full" />
-            
-            {/* Amount */}
-            <View className="mb-6">
-               <Text className="font-headline text-sm font-bold text-primary tracking-wide uppercase mb-3">Nominal Transaksi</Text>
-               <View className="relative justify-center">
-                  <Text className="absolute left-6 text-on-surface-variant font-headline font-bold text-xl z-10">Rp</Text>
-                  <TextInput 
-                     className="bg-[#000000] border border-outline-variant/15 rounded-lg py-5 pl-16 pr-6 text-2xl font-headline font-extrabold text-on-surface"
-                     placeholder="0"
-                     placeholderTextColor="#4d556b"
-                     keyboardType="numeric"
-                     value={amount}
-                     onChangeText={setAmount}
-                  />
-               </View>
+        <Text style={styles.sectionLabel}>Pilih Jenis Input</Text>
+
+        {/* Action Buttons */}
+        <TouchableOpacity 
+          style={styles.actionCard} 
+          activeOpacity={0.9}
+          onPress={handleOpenExpense}
+        >
+          <GlassCard variant="elevated" style={styles.cardInner}>
+            <LinearGradient
+              colors={['rgba(105, 246, 184, 0.1)', 'rgba(6, 14, 32, 0)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={[styles.iconBox, { backgroundColor: 'rgba(105, 246, 184, 0.1)' }]}>
+              <Scan size={32} color={AppColors.accent.emerald} />
             </View>
-
-            {/* Kategori */}
-            <View className="mb-6">
-               <Text className="font-headline text-sm font-bold text-primary tracking-wide uppercase mb-3">Kategori</Text>
-               <View className="flex-row flex-wrap justify-between">
-                 {Categories.map((cat) => {
-                    const isSelected = category === cat.id;
-                    return (
-                      <TouchableOpacity 
-                         key={cat.id} 
-                         onPress={() => setCategory(cat.id)}
-                         className={`w-[48%] py-4 rounded-lg flex-row items-center justify-center gap-2 mb-3 border ${isSelected ? 'bg-primary-container border-primary' : 'bg-surface-container-high border-outline-variant/10'}`}
-                      >
-                         <MaterialIcons name={cat.icon} size={18} color={isSelected ? '#002919' : '#a3aac4'} />
-                         <Text className={`font-bold text-sm ${isSelected ? 'text-on-primary-container' : 'text-on-surface-variant'}`}>{cat.label}</Text>
-                      </TouchableOpacity>
-                    )
-                 })}
-               </View>
+            <View style={styles.cardContent}>
+              <Text style={styles.cardTitle}>Input Pengeluaran</Text>
+              <Text style={styles.cardDesc}>Scan struk belanja dengan AI OCR atau masukkan data pengeluaran secara manual.</Text>
             </View>
-
-            {/* Deskripsi */}
-            <View className="mb-6">
-               <Text className="font-headline text-sm font-bold text-primary tracking-wide uppercase mb-3">Deskripsi</Text>
-               <TextInput 
-                  className="bg-[#000000] border border-outline-variant/15 rounded-lg p-5 text-on-surface font-body"
-                  placeholder="Keterangan pengeluaran..."
-                  placeholderTextColor="#4d556b"
-                  multiline
-                  numberOfLines={3}
-                  value={desc}
-                  onChangeText={setDesc}
-                  style={{ textAlignVertical: 'top' }}
-               />
+            <View style={styles.arrowBox}>
+               <ArrowRight size={20} color={AppColors.accent.emerald} />
             </View>
+          </GlassCard>
+        </TouchableOpacity>
 
-            <View className="pt-4 mt-2 border-t border-outline-variant/10">
-               <TouchableOpacity 
-                  onPress={() => router.push('/(admin)/validasi-kamera')}
-                  className="bg-primary py-4 rounded-lg flex-row items-center justify-center gap-3 active:scale-95 transition-transform"
-               >
-                  <Text className="font-headline font-bold text-lg text-on-primary-container">Lanjutkan ke Kamera</Text>
-                  <MaterialIcons name="photo-camera" size={24} color="#002919" />
-               </TouchableOpacity>
-               <Text className="text-center text-on-surface-variant/60 text-xs mt-4 font-label">Verifikasi struk akan dilakukan di langkah berikutnya.</Text>
+        <TouchableOpacity 
+          style={styles.actionCard} 
+          activeOpacity={0.9}
+          onPress={handleOpenDonation}
+        >
+          <GlassCard variant="elevated" style={styles.cardInner}>
+            <LinearGradient
+              colors={['rgba(99, 102, 241, 0.1)', 'rgba(6, 14, 32, 0)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <View style={[styles.iconBox, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
+              <PlusCircle size={32} color={AppColors.accent.blue} />
             </View>
-         </View>
+            <View style={styles.cardContent}>
+              <Text style={styles.cardTitle}>Donasi / Kas Masuk</Text>
+              <Text style={styles.cardDesc}>Catat dana yang masuk dari donatur atau uang kas jamaah untuk menambah saldo.</Text>
+            </View>
+            <View style={styles.arrowBox}>
+               <ArrowRight size={20} color={AppColors.accent.blue} />
+            </View>
+          </GlassCard>
+        </TouchableOpacity>
 
+        {/* Tips Section */}
+        <GlassCard style={styles.tipsCard}>
+           <View style={styles.tipsHeader}>
+              <Zap size={16} color={AppColors.accent.electric} />
+              <Text style={styles.tipsTitle}>Tips Admin</Text>
+           </View>
+           <Text style={styles.tipsText}>
+             Gunakan fitur **Scan Struk** untuk efisiensi. AI akan mendeteksi nominal secara otomatis dan mengisi form untuk Anda.
+           </Text>
+        </GlassCard>
+
+        <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>
-   )
+  );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: AppColors.bg.primary,
+  },
+  header: {
+    paddingHorizontal: AppSpacing.base,
+    paddingVertical: AppSpacing.xl,
+  },
+  headerTitle: {
+    color: AppColors.text.primary,
+    fontSize: 32,
+    fontWeight: AppFonts.weights.bold,
+    letterSpacing: -1,
+  },
+  headerSubtitle: {
+    color: AppColors.accent.emerald,
+    fontSize: 14,
+    fontWeight: AppFonts.weights.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginTop: 4,
+  },
+  scroll: {
+    padding: AppSpacing.base,
+  },
+  heroCard: {
+    marginBottom: AppSpacing.xl,
+    padding: AppSpacing.xl,
+    backgroundColor: 'rgba(25, 37, 64, 0.4)',
+  },
+  heroInfo: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  heroTitle: {
+    color: AppColors.text.primary,
+    fontSize: 20,
+    fontWeight: AppFonts.weights.bold,
+  },
+  heroDesc: {
+    color: AppColors.text.tertiary,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  sectionLabel: {
+    color: AppColors.text.tertiary,
+    fontSize: 12,
+    fontWeight: AppFonts.weights.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: AppSpacing.lg,
+    marginLeft: 4,
+  },
+  actionCard: {
+    marginBottom: AppSpacing.md,
+  },
+  cardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: AppSpacing.lg,
+    gap: AppSpacing.lg,
+    overflow: 'hidden',
+  },
+  iconBox: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  cardContent: {
+    flex: 1,
+    gap: 4,
+  },
+  cardTitle: {
+    color: AppColors.text.primary,
+    fontSize: 18,
+    fontWeight: AppFonts.weights.bold,
+  },
+  cardDesc: {
+    color: AppColors.text.tertiary,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  arrowBox: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tipsCard: {
+    marginTop: AppSpacing.lg,
+    padding: AppSpacing.lg,
+    borderColor: 'rgba(105, 246, 184, 0.1)',
+    backgroundColor: 'rgba(105, 246, 184, 0.05)',
+  },
+  tipsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  tipsTitle: {
+    color: AppColors.accent.electric,
+    fontSize: 14,
+    fontWeight: AppFonts.weights.bold,
+    textTransform: 'uppercase',
+  },
+  tipsText: {
+    color: AppColors.text.secondary,
+    fontSize: 13,
+    lineHeight: 20,
+  }
+});

@@ -1,66 +1,61 @@
 /**
  * OCR Service
- * Menggunakan Google Cloud Vision API untuk ekstrak teks dari foto struk (Gold Standard OCR)
- * Docs: https://cloud.google.com/vision/docs/ocr
+ * Menggunakan OCR.space Free API untuk ekstrak teks dari foto struk
+ * Docs: https://ocr.space/OCRAPI
  */
 import type { OcrResult, ParsedReceiptData } from '@/constants/types';
 
-const OCR_API_URL = 'https://vision.googleapis.com/v1/images:annotate';
-const OCR_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_VISION_API_KEY ?? '';
+const OCR_API_URL = 'https://api.ocr.space/parse/image';
+const OCR_API_KEY = process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY ?? '';
 
 /**
- * Kirim gambar base64 ke Google Vision API dan dapatkan anotasi teks lengkap
+ * Kirim gambar base64 ke OCR.space API dan dapatkan teks terurai
  */
 export async function extractTextFromImage(base64Image: string): Promise<OcrResult> {
   if (!OCR_API_KEY) {
-    throw new Error('API Key Google Vision API belum di-set di file .env');
+    throw new Error('API Key OCR.space belum di-set di file .env');
   }
 
-  const payload = {
-    requests: [
-      {
-        image: {
-          content: base64Image,
-        },
-        features: [
-          {
-            type: 'TEXT_DETECTION',
-          },
-        ],
-      },
-    ],
-  };
+  // Pastikan base64 memiliki prefix data URI agar OCR.space mengenalinya dengan benar
+  const base64Data = base64Image.startsWith('data:') 
+    ? base64Image 
+    : `data:image/jpeg;base64,${base64Image}`;
 
-  const response = await fetch(`${OCR_API_URL}?key=${OCR_API_KEY}`, {
+  const formData = new FormData();
+  formData.append('apikey', OCR_API_KEY);
+  formData.append('base64Image', base64Data);
+  formData.append('language', 'ind'); // Set bahasa ke Indonesia
+  formData.append('isOverlayRequired', 'false');
+  formData.append('detectOrientation', 'true');
+  formData.append('scale', 'true'); // Membantu akurasi struk kecil/buram
+
+  const response = await fetch(OCR_API_URL, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
+    body: formData,
   });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Google Vision API error: ${response.status} - ${errorBody}`);
+    throw new Error(`OCR.space API error: ${response.status} - ${errorBody}`);
   }
 
   const result: OcrResult = await response.json();
 
-  // Handle Google Vision specific API layer errors
-  if (result.responses && result.responses[0]?.error) {
-    throw new Error(`Vision API Error: ${result.responses[0].error.message}`);
+  // Handle OCR.space specific processing errors
+  if (result.IsErroredOnProcessing) {
+    throw new Error(`OCR.space Error: ${result.ErrorMessage || 'Gagal memproses gambar'}`);
   }
 
   return result;
 }
 
 /**
- * Parse teks OCR Google Vision untuk ekstrak nominal dan tanggal dari struk
+ * Parse teks hasil OCR untuk ekstrak nominal dan tanggal dari struk
  * Mensupport struk Indonesia
  */
 export function parseReceiptText(ocrResult: OcrResult): ParsedReceiptData {
-  // Ambil raw string text lengkap hasil scan Google Vision
-  const rawText = ocrResult.responses?.[0]?.fullTextAnnotation?.text ?? '';
+  // Ambil teks dari ParsedResults pertama (OCR.space schema)
+  const rawText = ocrResult.ParsedResults?.[0]?.ParsedText ?? '';
 
   if (!rawText) {
     return { amount: null, date: null, rawText: 'Tidak ada teks terdeteksi.' };
@@ -73,30 +68,32 @@ export function parseReceiptText(ocrResult: OcrResult): ParsedReceiptData {
     /(?:total|jumlah|rp\.?|idr)\s*[:.]?\s*([\d.,]+)/gi,
     /(?:grand\s*total|subtotal|total\s*harga)\s*[:.]?\s*([\d.,]+)/gi,
     /([\d]{1,3}(?:[.,]\d{3})+)/gi, // Angka ribuan seperti 50.000 atau 50,000
+    /TOTAL\s+([\d.,]+)/i,
   ];
 
   for (const pattern of amountPatterns) {
-    const match = rawText.match(pattern);
-    if (match) {
-      // Ambil angka terakhir yang match (karena biasanya "total" ada di porsi paling bawah struk)
-      const lastMatch = match[match.length - 1];
-      const cleaned = lastMatch.replace(/[^\d]/g, '');
-      const parsed = parseInt(cleaned, 10);
-      if (!isNaN(parsed) && parsed > 100) {
-        amount = parsed;
-        break;
+    const matches = rawText.matchAll(pattern);
+    for (const match of matches) {
+      if (match[1]) {
+        const cleaned = match[1].replace(/[^\d]/g, '');
+        const parsed = parseInt(cleaned, 10);
+        // Validasi: Biasanya total struk > 1000 perak (mencegah salah ambil angka kecil)
+        if (!isNaN(parsed) && parsed > 500) {
+          // Selalu ambil angka yang paling besar di bagian bawah jika memungkinkan
+          if (amount === null || parsed > amount) {
+            amount = parsed;
+          }
+        }
       }
     }
   }
 
   // --- Parse Tanggal ---
-  // Pattern Indonesia: "11/04/2026", "11-04-2026", "11 April 2026", "2026-04-11"
   let date: string | null = null;
   const datePatterns = [
-    /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/,     // DD/MM/YYYY atau MM/DD/YYYY
+    /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/,     // DD/MM/YYYY
     /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/,     // YYYY-MM-DD
-    /(\d{1,2})\s+(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\s+(\d{4})/i,
-    /(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d{4})/i,
+    /(\d{1,2})\s+(jan|feb|mar|apr|mei|jun|jul|agu|sep|okt|nov|des)[a-z]*\s+(\d{4})/i,
   ];
 
   for (const pattern of datePatterns) {
@@ -118,7 +115,7 @@ export async function scanReceipt(base64Image: string): Promise<ParsedReceiptDat
     const ocrResult = await extractTextFromImage(base64Image);
     return parseReceiptText(ocrResult);
   } catch (error) {
-    console.error('[OCR Service Google Vision] Error:', error);
+    console.error('[OCR Service OCR.space] Error:', error);
     throw error;
   }
 }

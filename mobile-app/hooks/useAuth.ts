@@ -16,11 +16,14 @@ type AuthState = {
 
 type AuthActions = {
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, role?: 'donatur' | 'admin') => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updateProfile: (fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
 export function useAuth(): AuthState & AuthActions {
+  // ... (existing state and fetchProfile)
   const [state, setState] = useState<AuthState>({
     user: null,
     session: null,
@@ -28,7 +31,6 @@ export function useAuth(): AuthState & AuthActions {
     isAdmin: false,
   });
 
-  // Ambil profile dari tabel profiles
   const fetchProfile = useCallback(async (userId: string): Promise<Profile | null> => {
     const { data, error } = await supabase
       .from('profiles')
@@ -43,7 +45,6 @@ export function useAuth(): AuthState & AuthActions {
     return data as Profile;
   }, []);
 
-  // Update state dari session
   const updateFromSession = useCallback(
     async (session: Session | null) => {
       if (!session?.user) {
@@ -69,12 +70,10 @@ export function useAuth(): AuthState & AuthActions {
   );
 
   useEffect(() => {
-    // Cek session yang sudah ada
     supabase.auth.getSession().then(({ data }) => {
       updateFromSession(data.session);
     });
 
-    // Subscribe ke perubahan auth state
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         updateFromSession(session);
@@ -86,29 +85,50 @@ export function useAuth(): AuthState & AuthActions {
     };
   }, [updateFromSession]);
 
-  // --- Sign In ---
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
   }, []);
 
-  // --- Sign Up (register + buat profile) ---
-  const signUp = useCallback(async (email: string, password: string, fullName: string) => {
+  const signUp = useCallback(async (email: string, password: string, fullName: string, role: 'donatur' | 'admin' = 'donatur') => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
 
     if (data.user) {
-      // Buat profile dengan role donatur (default)
       const { error: profileError } = await supabase.from('profiles').upsert({
         id: data.user.id,
         full_name: fullName.trim(),
-        role: 'donatur',
+        role: role,
       });
       if (profileError) console.error('[SignUp] Profile create error:', profileError.message);
     }
   }, []);
 
-  // --- Sign Out ---
+  const resetPassword = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'generous-app://reset-password',
+    });
+    if (error) throw new Error(error.message);
+  }, []);
+
+  const updateProfile = useCallback(async (fullName: string) => {
+    if (!state.user?.id) return;
+    
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: fullName.trim() })
+      .eq('id', state.user.id);
+
+    if (error) throw new Error(error.message);
+    
+    // Refresh local state
+    const newProfile = await fetchProfile(state.user.id);
+    setState(prev => ({
+      ...prev,
+      user: prev.user ? { ...prev.user, profile: newProfile } : null
+    }));
+  }, [state.user, fetchProfile]);
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error(error.message);
@@ -118,6 +138,8 @@ export function useAuth(): AuthState & AuthActions {
     ...state,
     signIn,
     signUp,
+    resetPassword,
+    updateProfile,
     signOut,
   };
 }

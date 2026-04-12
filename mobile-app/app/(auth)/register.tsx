@@ -1,21 +1,16 @@
-/**
- * Register Screen
- * Pendaftaran akun baru (default role: donatur)
- */
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ScrollView, ActivityIndicator, Alert,
-  KeyboardAvoidingView, Platform,
+  View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform, StyleSheet
 } from 'react-native';
 import { router } from 'expo-router';
 import { Eye, EyeOff, Lock, Mail, User, ArrowLeft } from 'lucide-react-native';
 import { useAuthContext } from '@/context/FundTrackerContext';
-import { GlassCard } from '@/components/ui/GlassCard';
-import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows } from '@/constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
   const { signUp } = useAuthContext();
+  const [role, setRole] = useState<'donatur' | 'admin'>('donatur');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,10 +28,10 @@ export default function RegisterScreen() {
     }
     setIsSubmitting(true);
     try {
-      await signUp(email.trim().toLowerCase(), password, fullName.trim());
+      await signUp(email.trim().toLowerCase(), password, fullName.trim(), role);
       Alert.alert(
         'Pendaftaran Berhasil!',
-        'Silakan periksa email Anda untuk konfirmasi, lalu login.',
+        'Silakan periksa email Anda untuk konfirmasi (jika diaktifkan), lalu login.',
         [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
       );
     } catch (err) {
@@ -48,162 +43,248 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
+    <View style={styles.root}>
+      {/* Background blobs */}
+      <View style={styles.blob1} />
+      <View style={styles.blob2} />
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        {/* Back Button */}
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft size={20} color={AppColors.text.secondary} />
-          <Text style={styles.backText}>Kembali</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.title}>Buat Akun Baru</Text>
-        <Text style={styles.subtitle}>Bergabung sebagai donatur Generous</Text>
-
-        <GlassCard variant="elevated" style={styles.formCard}>
-          {/* Full Name */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Nama Lengkap</Text>
-            <View style={styles.inputWrap}>
-              <User size={16} color={AppColors.text.tertiary} style={styles.inputIcon} />
-              <TextInput
-                value={fullName}
-                onChangeText={setFullName}
-                placeholder="Nama Lengkap"
-                placeholderTextColor={AppColors.text.tertiary}
-                style={styles.input}
-              />
-            </View>
-          </View>
-
-          {/* Email */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email</Text>
-            <View style={styles.inputWrap}>
-              <Mail size={16} color={AppColors.text.tertiary} style={styles.inputIcon} />
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="email@example.com"
-                placeholderTextColor={AppColors.text.tertiary}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                style={styles.input}
-              />
-            </View>
-          </View>
-
-          {/* Password */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.inputWrap}>
-              <Lock size={16} color={AppColors.text.tertiary} style={styles.inputIcon} />
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Minimal 6 karakter"
-                placeholderTextColor={AppColors.text.tertiary}
-                secureTextEntry={!showPassword}
-                style={[styles.input, { flex: 1 }]}
-              />
-              <TouchableOpacity onPress={() => setShowPassword((v) => !v)} style={styles.eyeBtn}>
-                {showPassword
-                  ? <EyeOff size={16} color={AppColors.text.tertiary} />
-                  : <Eye size={16} color={AppColors.text.tertiary} />}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <TouchableOpacity
-            onPress={handleRegister}
-            disabled={isSubmitting}
-            style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
-            activeOpacity={0.85}
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps="handled"
           >
-            {isSubmitting
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={styles.submitText}>Daftar Sekarang</Text>}
-          </TouchableOpacity>
-
-          <View style={styles.loginRow}>
-            <Text style={styles.loginHint}>Sudah punya akun? </Text>
-            <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
-              <Text style={styles.loginLink}>Masuk</Text>
+            {/* Back Button */}
+            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+              <ArrowLeft size={20} color="#94a3b8" />
+              <Text style={styles.backText}>Kembali</Text>
             </TouchableOpacity>
-          </View>
-        </GlassCard>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+            <Text style={styles.title}>Buat Akun Baru</Text>
+            <Text style={styles.subtitle}>Bergabung sebagai {role === 'admin' ? 'Pengelola' : 'Donatur'} Generous</Text>
+
+            {/* Form Card */}
+            <View style={styles.card}>
+              <Text style={styles.label}>DAFTAR SEBAGAI</Text>
+              <View style={styles.roleSelector}>
+                <TouchableOpacity
+                  onPress={() => setRole('donatur')}
+                  style={[styles.roleBtn, role === 'donatur' && styles.roleBtnActive]}
+                >
+                  <Text style={[styles.roleBtnText, role === 'donatur' && styles.roleBtnTextActive]}>Donatur</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setRole('admin')}
+                  style={[styles.roleBtn, role === 'admin' && styles.roleBtnActive]}
+                >
+                  <Text style={[styles.roleBtnText, role === 'admin' && styles.roleBtnTextActive]}>Admin</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.label}>NAMA LENGKAP</Text>
+              <View style={styles.inputWrap}>
+                <User size={20} color="#6d758c" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Nama Lengkap"
+                  placeholderTextColor="#6d758c"
+                  value={fullName}
+                  onChangeText={setFullName}
+                />
+              </View>
+
+              <Text style={styles.label}>EMAIL</Text>
+              <View style={styles.inputWrap}>
+                <Mail size={20} color="#6d758c" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="email@example.com"
+                  placeholderTextColor="#6d758c"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <Text style={styles.label}>KATA SANDI</Text>
+              <View style={styles.inputWrap}>
+                <Lock size={20} color="#6d758c" />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Minimal 6 karakter"
+                  placeholderTextColor="#6d758c"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={setPassword}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff size={20} color="#6d758c" /> : <Eye size={20} color="#6d758c" />}
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.submitBtn, isSubmitting && styles.submitBtnDisabled]}
+                onPress={handleRegister}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#005a3c" />
+                ) : (
+                  <Text style={styles.submitText}>Daftar Sekarang</Text>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.loginRow}>
+                <Text style={styles.loginHint}>Sudah punya akun? </Text>
+                <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                  <Text style={styles.loginLink}>Masuk</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: AppColors.bg.primary },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: AppSpacing.base,
-    paddingTop: 60,
-    paddingBottom: AppSpacing['3xl'],
+  root: { flex: 1, backgroundColor: '#0f172a' },
+  scroll: { flexGrow: 1, padding: 24, paddingTop: 20, paddingBottom: 40 },
+  blob1: {
+    position: 'absolute',
+    top: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+    borderRadius: 150,
+  },
+  blob2: {
+    position: 'absolute',
+    bottom: -100,
+    left: -100,
+    width: 300,
+    height: 300,
+    backgroundColor: 'rgba(105, 246, 184, 0.05)',
+    borderRadius: 150,
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: AppSpacing.sm,
-    marginBottom: AppSpacing.xl,
+    gap: 8,
+    marginBottom: 32,
+    marginTop: 10,
   },
   backText: {
-    color: AppColors.text.secondary,
-    fontSize: AppFonts.sizes.base,
+    color: '#94a3b8',
+    fontSize: 14,
+    fontWeight: '500',
   },
   title: {
-    color: AppColors.text.primary,
-    fontSize: AppFonts.sizes['2xl'],
-    fontWeight: AppFonts.weights.extrabold,
-    marginBottom: 4,
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 8,
   },
   subtitle: {
-    color: AppColors.text.secondary,
-    fontSize: AppFonts.sizes.sm,
-    marginBottom: AppSpacing.xl,
+    fontSize: 14,
+    color: '#94a3b8',
+    marginBottom: 32,
   },
-  formCard: { marginBottom: AppSpacing.xl },
-  inputGroup: { marginBottom: AppSpacing.base },
-  inputLabel: {
-    color: AppColors.text.secondary,
-    fontSize: AppFonts.sizes.sm,
-    fontWeight: AppFonts.weights.medium,
-    marginBottom: 6,
+  card: {
+    backgroundColor: 'rgba(25, 37, 64, 0.6)',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(64, 72, 93, 0.2)',
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#6d758c',
+    marginBottom: 8,
+    letterSpacing: 1.5,
+  },
+  roleSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#0f172a',
+    borderRadius: 14,
+    padding: 4,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(64, 72, 93, 0.15)',
+  },
+  roleBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  roleBtnActive: {
+    backgroundColor: '#1e293b',
+    borderWidth: 1,
+    borderColor: 'rgba(105, 246, 184, 0.2)',
+  },
+  roleBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6d758c',
+  },
+  roleBtnTextActive: {
+    color: '#69f6b8',
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.bg.primary,
+    backgroundColor: '#0f172a',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    height: 56,
+    marginBottom: 20,
     borderWidth: 1,
-    borderColor: AppColors.glass.border,
-    borderRadius: AppRadius.lg,
-    paddingHorizontal: AppSpacing.md,
-    height: 48,
+    borderColor: 'rgba(64, 72, 93, 0.15)',
   },
-  inputIcon: { marginRight: AppSpacing.sm },
-  input: { flex: 1, color: AppColors.text.primary, fontSize: AppFonts.sizes.base },
-  eyeBtn: { paddingLeft: AppSpacing.sm },
+  input: {
+    flex: 1,
+    marginLeft: 12,
+    color: '#fff',
+    fontSize: 15,
+  },
   submitBtn: {
-    backgroundColor: AppColors.accent.electric,
-    borderRadius: AppRadius.lg,
-    height: 52,
+    backgroundColor: '#69f6b8',
+    height: 56,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: AppSpacing.base,
-    ...AppShadows.md,
+    marginTop: 12,
+    shadowColor: '#69f6b8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
-  submitBtnDisabled: { opacity: 0.6 },
-  submitText: { color: '#fff', fontSize: AppFonts.sizes.md, fontWeight: AppFonts.weights.bold },
-  loginRow: { flexDirection: 'row', justifyContent: 'center', marginTop: AppSpacing.base },
-  loginHint: { color: AppColors.text.secondary, fontSize: AppFonts.sizes.sm },
-  loginLink: { color: AppColors.accent.electric, fontSize: AppFonts.sizes.sm, fontWeight: AppFonts.weights.semibold },
+  submitBtnDisabled: { opacity: 0.7 },
+  submitText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#005a3c',
+  },
+  loginRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 24,
+  },
+  loginHint: {
+    fontSize: 13,
+    color: '#94a3b8',
+  },
+  loginLink: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#69f6b8',
+  },
 });

@@ -43,7 +43,9 @@ type AuthContextType = {
   isLoading: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName: string, role?: 'donatur' | 'admin') => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updateProfile: (fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
