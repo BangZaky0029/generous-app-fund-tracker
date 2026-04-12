@@ -2,12 +2,12 @@
  * Add Donation Screen (Internal to Tabs)
  * Form tambah dana masuk (Donasi)
  */
-import React, { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Image,
+  ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
-import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { X, ArrowDownCircle, ArrowLeft, Camera, Image as ImageIcon, Trash2 } from 'lucide-react-native';
@@ -21,24 +21,41 @@ import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows } from '@/consta
 export default function AddDonationScreen() {
   const { user, isAdmin } = useAuthContext();
   const { refetch, showAlert } = useFundTrackerContext();
-  const insets = useSafeAreaInsets();
-
+  const params = useLocalSearchParams();
   const [donatorName, setDonatorName] = useState('');
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const processedUriRef = useRef<string | null>(null);
+
+  // Tangkap foto dari Kamera Kustom
+  useEffect(() => {
+    const newUri = params.capturedUri as string | undefined;
+    if (newUri && newUri !== processedUriRef.current) {
+      setCapturedUri(newUri);
+      processedUriRef.current = newUri;
+    }
+  }, [params.capturedUri]);
 
   const handlePickImage = async (useCamera: boolean) => {
-    const options: ImagePicker.ImagePickerOptions = {
+    if (useCamera) {
+      // Navigasi ke Kamera Kustom kita
+      router.push({
+        pathname: '/(admin)/validasi-kamera',
+        params: { 
+          mode: 'photo', 
+          returnTo: '/(admin)/add-donation' 
+        }
+      });
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
       quality: 0.7,
-    };
-
-    const result = useCamera 
-      ? await ImagePicker.launchCameraAsync(options)
-      : await ImagePicker.launchImageLibraryAsync(options);
+    });
 
     if (!result.canceled) {
       setCapturedUri(result.assets[0].uri);

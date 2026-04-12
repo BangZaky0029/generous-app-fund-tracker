@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { LayoutDashboard, ReceiptText, UploadCloud, Camera, User } from 'lucide-react-native';
 import { TouchableOpacity, View } from 'react-native';
 
@@ -50,7 +50,12 @@ export default function AdminLayout() {
           tabBarStyle: { display: 'none' },
           tabBarButton: (props) => (
             <TouchableOpacity
-              onPress={props.onPress ?? undefined}
+              onPress={() => {
+                router.push({
+                  pathname: '/(admin)/validasi-kamera',
+                  params: { mode: 'scan' }
+                });
+              }}
               onLongPress={props.onLongPress ?? undefined}
               activeOpacity={0.8}
               style={{

@@ -1,7 +1,6 @@
 /**
- * OCR Service
- * Menggunakan OCR.space Free API untuk ekstrak teks dari foto struk
- * Docs: https://ocr.space/OCRAPI
+ * OCR Service - Optimized for Indonesian Receipts
+ * Using OCR.space API to extract amount and dates
  */
 import type { OcrResult, ParsedReceiptData } from '@/constants/types';
 
@@ -9,14 +8,14 @@ const OCR_API_URL = 'https://api.ocr.space/parse/image';
 const OCR_API_KEY = process.env.EXPO_PUBLIC_OCR_SPACE_API_KEY ?? '';
 
 /**
- * Kirim gambar base64 ke OCR.space API dan dapatkan teks terurai
+ * Sends base64 image to OCR.space
  */
 export async function extractTextFromImage(base64Image: string): Promise<OcrResult> {
   if (!OCR_API_KEY) {
-    throw new Error('API Key OCR.space belum di-set di file .env');
+    throw new Error('API Key OCR.space not found in .env');
   }
 
-  // Pastikan base64 memiliki prefix data URI agar OCR.space mengenalinya dengan benar
+  // Ensure Base64 has correct prefix
   const base64Data = base64Image.startsWith('data:') 
     ? base64Image 
     : `data:image/jpeg;base64,${base64Image}`;
@@ -24,11 +23,11 @@ export async function extractTextFromImage(base64Image: string): Promise<OcrResu
   const formData = new FormData();
   formData.append('apikey', OCR_API_KEY);
   formData.append('base64Image', base64Data);
-  formData.append('language', 'eng'); // Gunakan 'eng' (latin based) untuk kestabilan di Free Tier
+  formData.append('language', 'eng'); // 'eng' is stable, receipts use latin chars
   formData.append('isOverlayRequired', 'false');
   formData.append('detectOrientation', 'true');
   formData.append('scale', 'true');
-  formData.append('OCREngine', '2'); // Engine 2 lebih akurat untuk struk belanja/layout kompleks
+  formData.append('OCREngine', '2'); // Engine 2 is better for receipts
 
   const response = await fetch(OCR_API_URL, {
     method: 'POST',
@@ -37,86 +36,105 @@ export async function extractTextFromImage(base64Image: string): Promise<OcrResu
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`OCR.space API error: ${response.status} - ${errorBody}`);
+    throw new Error(`OCR API Error: ${response.status} - ${errorBody}`);
   }
 
   const result: OcrResult = await response.json();
-
-  // Handle OCR.space specific processing errors
   if (result.IsErroredOnProcessing) {
-    throw new Error(`OCR.space Error: ${result.ErrorMessage || 'Gagal memproses gambar'}`);
+    throw new Error(`OCR Processing Error: ${result.ErrorMessage || 'Unknown Error'}`);
   }
 
   return result;
 }
 
 /**
- * Parse teks hasil OCR untuk ekstrak nominal dan tanggal dari struk
- * Mensupport struk Indonesia
+ * Robust parsing for Indonesian receipts
  */
 export function parseReceiptText(ocrResult: OcrResult): ParsedReceiptData {
-  // Ambil teks dari ParsedResults pertama (OCR.space schema)
-  const rawText = ocrResult.ParsedResults?.[0]?.ParsedText ?? '';
+  try {
+    const rawText = ocrResult.ParsedResults?.[0]?.ParsedText ?? '';
+    if (!rawText) {
+      return { amount: null, date: null, rawText: 'No text detected.' };
+    }
 
-  if (!rawText) {
-    return { amount: null, date: null, rawText: 'Tidak ada teks terdeteksi.' };
-  }
+    // --- 1. AMOUNT EXTRACTION ---
+    let amount: number | null = null;
+    
+    // Clean text: remove Rp, IDR, and unify separators for parsing
+    // But keep dots/commas for now to identify thousand/decimal
+    const sanitizedText = rawText.replace(/Rp\.?|IDR/gi, ' ');
 
-  // --- Parse Nominal ---
-  // Pattern: "Rp 50.000", "Rp50000", "Total: 50.000", "TOTAL 50000"
-  let amount: number | null = null;
-  const amountPatterns = [
-    /(?:total|jumlah|rp\.?|idr|netto|bayar|tunai)\s*[:.]?\s*([\d.,]+)/gi,
-    /(?:grand\s*total|subtotal|total\s*harga|amount\s*total)\s*[:.]?\s*([\d.,]+)/gi,
-    /([\d]{1,3}(?:[.,]\d{3})+)/gi, 
-    /TOTAL\s+([\d.,]+)/i,
-  ];
+    // Patterns with /g flag to avoid matchAll TypeError
+    const amountPatterns = [
+      /(?:total|jumlah|bayar|netto|tunai|tagihan|amount)\s*[:.]?\s*([\d.,]{3,15})/gi,
+      /(?:grand\s*total|subtotal|total\s*harga)\s*[:.]?\s*([\d.,]{3,15})/gi,
+      /([\d]{1,3}(?:[.,]\d{3})+)/g, // Standard thousand separators
+    ];
 
-  for (const pattern of amountPatterns) {
-    const matches = rawText.matchAll(pattern);
-    for (const match of matches) {
-      if (match[1]) {
-        const cleaned = match[1].replace(/[^\d]/g, '');
-        const parsed = parseInt(cleaned, 10);
-        // Validasi: Biasanya total struk > 1000 perak (mencegah salah ambil angka kecil)
-        if (!isNaN(parsed) && parsed > 500) {
-          // Selalu ambil angka yang paling besar di bagian bawah jika memungkinkan
-          if (amount === null || parsed > amount) {
-            amount = parsed;
+    const foundAmounts: number[] = [];
+
+    for (const pattern of amountPatterns) {
+      const matches = sanitizedText.matchAll(pattern);
+      for (const match of matches) {
+        if (match[1] || match[0]) {
+          const valStr = match[1] || match[0];
+          
+          // Indonesian format: 50.000,00 -> 50000.00
+          // Strategy: remove all dots, treat last comma as decimal
+          let cleaned = valStr.replace(/\./g, ''); // Remove thousand dots
+          cleaned = cleaned.replace(/,/g, '.');    // Internal decimal
+          
+          const parsed = parseFloat(cleaned);
+          
+          // Basic validation: mostly receipts are > 1000 and total is usually the largest
+          if (!isNaN(parsed) && parsed >= 100) {
+            foundAmounts.push(Math.floor(parsed));
           }
         }
       }
     }
-  }
 
-  // --- Parse Tanggal ---
-  let date: string | null = null;
-  const datePatterns = [
-    /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/,     // DD/MM/YYYY
-    /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/,     // YYYY-MM-DD
-    /(\d{1,2})\s+(jan|feb|mar|apr|mei|jun|jul|agu|sep|okt|nov|des)[a-z]*\s+(\d{4})/i,
-  ];
-
-  for (const pattern of datePatterns) {
-    const match = rawText.match(pattern);
-    if (match) {
-      date = match[0];
-      break;
+    if (foundAmounts.length > 0) {
+      // Pick the largest value found as it is usually the "Grand Total"
+      amount = Math.max(...foundAmounts);
     }
-  }
 
-  return { amount, date, rawText };
+    // --- 2. DATE EXTRACTION ---
+    let date: string | null = null;
+    const datePatterns = [
+      /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/g,     // DD/MM/YYYY
+      /(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/g,     // YYYY-MM-DD
+      /(\d{1,2})\s+(jan|feb|mar|apr|mei|jun|jul|agu|sep|okt|nov|des)[a-z]*\s+(\d{4})/gi,
+    ];
+
+    for (const pattern of datePatterns) {
+      const match = rawText.match(pattern);
+      if (match) {
+        date = match[0];
+        break;
+      }
+    }
+
+    return { amount, date, rawText };
+  } catch (error) {
+    console.error('[OCR Parser Error]:', error);
+    return { 
+      amount: null, 
+      date: null, 
+      rawText: ocrResult.ParsedResults?.[0]?.ParsedText || 'Parsing failed.' 
+    };
+  }
 }
 
 /**
- * Main function: foto base64 → data struk terparse
+ * High-level scanner function
  */
 export async function scanReceipt(base64Image: string): Promise<ParsedReceiptData> {
   try {
     const ocrResult = await extractTextFromImage(base64Image);
     return parseReceiptText(ocrResult);
   } catch (error) {
-    console.error('[OCR Service OCR.space] Error:', error);
+    console.error('[OCR Service] Fatal Error:', error);
     throw error;
   }
 }

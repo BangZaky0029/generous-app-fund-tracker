@@ -2,7 +2,7 @@
  * Add Expense Screen (Internal to Tabs)
  * Form tambah pengeluaran - Data diterima dari Scanner Utama atau Input Manual
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Image, KeyboardAvoidingView, Platform,
@@ -29,14 +29,23 @@ export default function AddExpenseScreen() {
   const [description, setDescription] = useState('');
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const processedUriRef = useRef<string | null>(null);
 
-  // Auto-fill data jika datang dari Kamera Scanner
+  // Auto-fill data jika datang dari Kamera Scanner (Hanya jika ada data BARU)
   useEffect(() => {
-    if (params.amount) setAmount(params.amount as string);
-    if (params.description) setDescription(params.description as string);
-    if (params.category) setCategory(params.category as ExpenseCategory);
-    if (params.capturedUri) setCapturedUri(params.capturedUri as string);
-  }, [params]);
+    const newUri = params.capturedUri as string | undefined;
+    
+    // Jika ada capturedUri di params dan belum pernah kita proses sebelumnya
+    if (newUri && newUri !== processedUriRef.current) {
+      if (params.amount) setAmount(params.amount as string);
+      if (params.description) setDescription(params.description as string);
+      if (params.category) setCategory(params.category as ExpenseCategory);
+      setCapturedUri(newUri);
+      
+      // Tandai URI ini sudah diproses agar tidak menimpa editan manual nanti
+      processedUriRef.current = newUri;
+    }
+  }, [params.capturedUri, params.amount, params.description, params.category]);
 
   const handleSubmit = async () => {
     if (!isAdmin || !user?.id) {
@@ -95,7 +104,10 @@ export default function AddExpenseScreen() {
           </View>
           <TouchableOpacity 
             style={styles.scanToggleBtn} 
-            onPress={() => router.push('/(admin)/validasi-kamera')}
+            onPress={() => router.push({
+              pathname: '/(admin)/validasi-kamera',
+              params: { mode: 'scan', returnTo: '/(admin)/add-expense' }
+            })}
           >
             <ScanLine size={20} color="#69f6b8" />
             <Text style={styles.scanToggleText}>Auto Scan</Text>
@@ -145,11 +157,13 @@ export default function AddExpenseScreen() {
                     <TouchableOpacity
                       key={cat.name}
                       onPress={() => setCategory(cat.name)}
+                      activeOpacity={0.7}
                       style={[
                         styles.categoryChip,
                         isActive && {
-                          backgroundColor: `${cat.color}20`,
-                          borderColor: `${cat.color}60`,
+                          backgroundColor: `${cat.color}30`,
+                          borderColor: cat.color,
+                          borderWidth: 2,
                         },
                       ]}
                     >

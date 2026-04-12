@@ -2,22 +2,30 @@ import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'rea
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, FlashMode } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { scanReceipt } from '@/services/ocrService';
-
-import { AppColors } from '@/constants/theme';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
 
 export default function ValidasiKamera() {
   const { showAlert } = useFundTrackerContext();
   const [permission, requestPermission] = useCameraPermissions();
+  const params = useLocalSearchParams();
+  const mode = (params.mode as 'scan' | 'photo') || 'scan';
+  const returnTo = (params.returnTo as string) || '/(admin)/add-expense';
+
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isScanning, setIsScanning] = useState(false);
   const [lastCapturedUri, setLastCapturedUri] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
+
+  // Reset state saat mode berubah (misal dari foto donasi balik ke scanner utama)
+  useEffect(() => {
+    setIsScanning(false);
+    setLastCapturedUri(null);
+  }, [mode]);
 
   if (!permission) return <View style={{ flex: 1, backgroundColor: '#000' }} />;
 
@@ -31,8 +39,8 @@ export default function ValidasiKamera() {
         <Text style={styles.permissionDesc}>
           Untuk menjaga transparansi donasi, Admin diwajibkan mengunggah bukti struk asli melalui kamera.
         </Text>
-        <TouchableOpacity 
-          onPress={requestPermission} 
+        <TouchableOpacity
+          onPress={requestPermission}
           style={styles.permissionBtn}
         >
           <Text style={styles.permissionBtnText}>Izinkan Sekarang</Text>
@@ -49,12 +57,28 @@ export default function ValidasiKamera() {
   const handleOcrProcess = async (base64: string, uri: string) => {
     setIsScanning(true);
     setLastCapturedUri(uri);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+    // MODE PHOTO: Lewati OCR, langsung konfirmasi
+    if (mode === 'photo') {
+      setIsScanning(false);
+      showAlert(
+        'Foto Diambil',
+        'Gunakan foto ini sebagai bukti?',
+        'success',
+        () => router.push({
+          pathname: returnTo as any,
+          params: { capturedUri: uri }
+        })
+      );
+      return;
+    }
+
+    // MODE SCAN: Jalankan AI/OCR
     try {
       const result = await scanReceipt(base64);
       setIsScanning(false);
-      
+
       if (result.amount) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showAlert(
@@ -63,7 +87,7 @@ export default function ValidasiKamera() {
           'success',
           () => router.push({
             pathname: '/(admin)/add-expense',
-            params: { 
+            params: {
               amount: result.amount?.toString(),
               description: result.rawText.substring(0, 50),
               category: 'Lainnya',
@@ -119,49 +143,60 @@ export default function ValidasiKamera() {
         </View>
       </SafeAreaView>
 
-      <CameraView 
+      <CameraView
         ref={cameraRef}
-        style={{ flex: 1 }} 
+        style={{ flex: 1 }}
         facing="back"
         flash={flash}
       >
-         <View style={styles.overlay}>
-           <View style={styles.viewfinder}>
+        <View style={styles.overlay}>
+          {mode === 'scan' ? (
+            <View style={styles.viewfinder}>
               <View style={[styles.corner, styles.topLeft]} />
               <View style={[styles.corner, styles.topRight]} />
               <View style={[styles.corner, styles.bottomLeft]} />
               <View style={[styles.corner, styles.bottomRight]} />
 
               <View style={styles.metaBadge}>
-                 <View style={[styles.statusDot, { backgroundColor: isScanning ? '#fbbf24' : '#69f6b8' }]} />
-                 <Text style={styles.metaText}>{isScanning ? 'MEMPROSES...' : 'SIAP PINDAI'}</Text>
+                <View style={[styles.statusDot, { backgroundColor: isScanning ? '#fbbf24' : '#69f6b8' }]} />
+                <Text style={styles.metaText}>
+                  {isScanning ? 'MEMPROSES...' : 'SIAP PINDAI'}
+                </Text>
               </View>
-           </View>
+            </View>
+          ) : (
+            <View style={styles.photoModeBadge}>
+               <View style={styles.statusDot} />
+               <Text style={styles.metaText}>MODE FOTO BUKTI</Text>
+            </View>
+          )}
 
-           <View style={styles.hintBox}>
-              <Text style={styles.hintText}>Posisikan struk belanja di dalam kotak</Text>
-           </View>
-         </View>
+          <View style={styles.hintBox}>
+            <Text style={styles.hintText}>
+              {mode === 'scan' ? 'Posisikan struk belanja di dalam kotak' : 'Ambil foto bukti transaksi dengan jelas'}
+            </Text>
+          </View>
+        </View>
 
-         <View style={styles.controls}>
-            <TouchableOpacity onPress={pickImage} style={styles.sideBtn}>
-               <MaterialIcons name="photo-library" size={24} color="#dee5ff" />
-            </TouchableOpacity>
+        <View style={styles.controls}>
+          <TouchableOpacity onPress={pickImage} style={styles.sideBtn}>
+            <MaterialIcons name="photo-library" size={24} color="#dee5ff" />
+          </TouchableOpacity>
 
-            <TouchableOpacity onPress={takePicture} disabled={isScanning} style={styles.shutterBtn}>
-               <View style={styles.shutterInner}>
-                  {isScanning ? <ActivityIndicator color="#000" /> : <View style={styles.shutterPoint} />}
-               </View>
-            </TouchableOpacity>
+          <TouchableOpacity onPress={takePicture} disabled={isScanning} style={styles.shutterBtn}>
+            <View style={styles.shutterInner}>
+              {isScanning ? <ActivityIndicator color="#000" /> : <View style={styles.shutterPoint} />}
+            </View>
+          </TouchableOpacity>
 
-            <TouchableOpacity onPress={toggleFlash} style={styles.sideBtn}>
-               <MaterialIcons 
-                  name={flash === 'off' ? 'flash-off' : flash === 'on' ? 'flash-on' : 'flash-auto'} 
-                  size={24} 
-                  color={flash === 'off' ? '#dee5ff' : '#69f6b8'} 
-               />
-            </TouchableOpacity>
-         </View>
+          <TouchableOpacity onPress={toggleFlash} style={styles.sideBtn}>
+            <MaterialIcons
+              name={flash === 'off' ? 'flash-off' : flash === 'on' ? 'flash-on' : 'flash-auto'}
+              size={24}
+              color={flash === 'off' ? '#dee5ff' : '#69f6b8'}
+            />
+          </TouchableOpacity>
+        </View>
       </CameraView>
     </View>
   );
@@ -180,14 +215,15 @@ const styles = StyleSheet.create({
   backBtn: { padding: 4 },
   headerTitle: { color: '#69f6b8', fontWeight: 'bold', letterSpacing: 1 },
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
-  viewfinder: { width: '80%', aspectRatio: 3/4, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 20, position: 'relative' },
+  viewfinder: { width: '80%', aspectRatio: 3 / 4, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 20, position: 'relative' },
   corner: { position: 'absolute', width: 24, height: 24, borderColor: '#69f6b8', borderWidth: 4 },
   topLeft: { top: -2, left: -2, borderBottomWidth: 0, borderRightWidth: 0, borderTopLeftRadius: 20 },
   topRight: { top: -2, right: -2, borderBottomWidth: 0, borderLeftWidth: 0, borderTopRightRadius: 20 },
   bottomLeft: { bottom: -2, left: -2, borderTopWidth: 0, borderRightWidth: 0, borderBottomLeftRadius: 20 },
   bottomRight: { bottom: -2, right: -2, borderTopWidth: 0, borderLeftWidth: 0, borderBottomRightRadius: 20 },
   metaBadge: { position: 'absolute', top: 16, left: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  photoModeBadge: { position: 'absolute', top: 120, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(105, 246, 184, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)' },
+  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#69f6b8' },
   metaText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
   hintBox: { position: 'absolute', bottom: 180, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 24 },
   hintText: { color: '#fff', fontSize: 12 },
