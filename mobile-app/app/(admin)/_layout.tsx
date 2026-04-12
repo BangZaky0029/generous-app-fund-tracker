@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { LayoutDashboard, ReceiptText, UploadCloud, Camera, User } from 'lucide-react-native';
+import { TouchableOpacity, View } from 'react-native';
 
 export default function AdminLayout() {
   return (
@@ -12,8 +13,8 @@ export default function AdminLayout() {
           left: 20,
           right: 20,
           elevation: 0,
-          backgroundColor: 'rgba(25, 37, 64, 0.9)',
-          borderRadius: 9999,
+          backgroundColor: 'rgba(25, 37, 64, 0.95)',
+          borderRadius: 32,
           height: 64,
           borderTopWidth: 0,
           borderWidth: 1,
@@ -21,7 +22,7 @@ export default function AdminLayout() {
           paddingBottom: 8,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#06b77f',
+        tabBarActiveTintColor: '#69f6b8',
         tabBarInactiveTintColor: '#6d758c',
         tabBarShowLabel: true,
         tabBarLabelStyle: { fontSize: 10, fontFamily: 'Inter', fontWeight: '500' },
@@ -30,7 +31,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Dashboard',
+          title: 'Home',
           tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
         }}
       />
@@ -41,18 +42,50 @@ export default function AdminLayout() {
           tabBarIcon: ({ color, size }) => <UploadCloud size={size} color={color} />,
         }}
       />
+      
+      <Tabs.Screen
+        name="validasi-kamera"
+        options={{
+          title: 'Kamera',
+          tabBarStyle: { display: 'none' },
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              onPress={props.onPress ?? undefined}
+              onLongPress={props.onLongPress ?? undefined}
+              activeOpacity={0.8}
+              style={{
+                top: -30,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  backgroundColor: '#69f6b8',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: '#69f6b8',
+                  shadowOffset: { width: 0, height: 10 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 15,
+                  elevation: 5,
+                }}
+              >
+                <Camera size={32} color="#060e20" />
+              </View>
+            </TouchableOpacity>
+          ),
+        }}
+      />
+
       <Tabs.Screen
         name="manajemen-bukti"
         options={{
           title: 'Gallery',
           tabBarIcon: ({ color, size }) => <ReceiptText size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="validasi-kamera"
-        options={{
-          title: 'Kamera',
-          tabBarIcon: ({ color, size }) => <Camera size={size} color={color} />,
         }}
       />
       <Tabs.Screen
