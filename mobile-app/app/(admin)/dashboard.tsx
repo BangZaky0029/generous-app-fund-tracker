@@ -30,7 +30,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-surface font-body mb-20" contentContainerStyle={{ padding: 24, paddingTop: 60 }}>
+    <ScrollView 
+      className="flex-1 bg-surface font-body" 
+      contentContainerStyle={{ padding: 24, paddingTop: 60, paddingBottom: 140 }}
+    >
       {/* Header */}
       <View className="flex-row justify-between items-center mb-8">
         <View className="flex-row items-center gap-3">

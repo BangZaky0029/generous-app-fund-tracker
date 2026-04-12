@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 export default function ValidasiKamera() {
   const [permission, requestPermission] = useCameraPermissions();
@@ -22,13 +23,17 @@ export default function ValidasiKamera() {
   return (
     <SafeAreaView edges={['top']} className="flex-1 bg-black">
       {/* TopAppBar */}
-      <View className="flex-row justify-between items-center px-6 py-4 bg-[#192540]/60 border-b border-[#40485d]/15 z-50 absolute top-0 w-full mt-10 rounded-b-3xl">
+      {/* TopAppBar Navigation */}
+      <View className="flex-row justify-between items-center px-6 py-4 bg-[#192540]/80 border-b border-[#40485d]/15 z-50 absolute top-12 left-4 right-4 rounded-2xl backdrop-blur-md">
         <View className="flex-row items-center gap-3">
-          <View className="w-8 h-8 rounded-full border border-primary/30 items-center justify-center bg-surface-variant overflow-hidden">
-             <MaterialIcons name="person" size={16} color="#69f6b8" />
-          </View>
+          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+            <MaterialIcons name="arrow-back" size={24} color="#69f6b8" />
+          </TouchableOpacity>
           <Text className="font-headline text-sm text-[#69f6b8] font-bold uppercase tracking-widest">Pindai Bukti</Text>
         </View>
+        <TouchableOpacity className="w-8 h-8 rounded-full border border-primary/30 items-center justify-center bg-surface-variant overflow-hidden">
+           <MaterialIcons name="person" size={16} color="#69f6b8" />
+        </TouchableOpacity>
       </View>
 
       <CameraView style={{ flex: 1 }} facing="back">

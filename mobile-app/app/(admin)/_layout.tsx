@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { LayoutDashboard, ReceiptText, UploadCloud, Camera } from 'lucide-react-native';
+import { LayoutDashboard, ReceiptText, UploadCloud, Camera, User } from 'lucide-react-native';
 
 export default function AdminLayout() {
   return (
@@ -53,6 +53,13 @@ export default function AdminLayout() {
         options={{
           title: 'Kamera',
           tabBarIcon: ({ color, size }) => <Camera size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profil"
+        options={{
+          title: 'Admin',
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
     </Tabs>
