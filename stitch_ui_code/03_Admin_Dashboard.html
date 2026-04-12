@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina Finansial - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#006544",
+                    "outline": "#6d758c",
+                    "on-surface": "#dee5ff",
+                    "on-error": "#490006",
+                    "on-tertiary-container": "#004955",
+                    "primary-dim": "#58e7ab",
+                    "inverse-surface": "#faf8ff",
+                    "tertiary-fixed-dim": "#00cdeb",
+                    "outline-variant": "#40485d",
+                    "surface-container-high": "#141f38",
+                    "on-secondary-container": "#c3d1ea",
+                    "surface-container-lowest": "#000000",
+                    "surface-tint": "#69f6b8",
+                    "on-tertiary": "#005360",
+                    "inverse-on-surface": "#4d556b",
+                    "error-container": "#9f0519",
+                    "tertiary-container": "#00dcfd",
+                    "secondary": "#d5e3fd",
+                    "surface-variant": "#192540",
+                    "surface-bright": "#1f2b49",
+                    "on-secondary-fixed-variant": "#4e5c71",
+                    "tertiary": "#77e6ff",
+                    "secondary-container": "#3a485c",
+                    "on-secondary-fixed": "#324054",
+                    "surface-dim": "#060e20",
+                    "surface": "#060e20",
+                    "tertiary-dim": "#00cdeb",
+                    "primary-fixed-dim": "#58e7ab",
+                    "error": "#ff716c",
+                    "surface-container": "#0f1930",
+                    "inverse-primary": "#006d4a",
+                    "error-dim": "#d7383b",
+                    "primary": "#69f6b8",
+                    "on-secondary": "#455367",
+                    "surface-container-low": "#091328",
+                    "secondary-dim": "#c7d5ee",
+                    "on-error-container": "#ffa8a3",
+                    "on-tertiary-fixed": "#00343c",
+                    "on-surface-variant": "#a3aac4",
+                    "background": "#060e20",
+                    "on-tertiary-fixed-variant": "#005360",
+                    "on-background": "#dee5ff",
+                    "primary-container": "#06b77f",
+                    "primary-fixed": "#69f6b8",
+                    "secondary-fixed-dim": "#c7d5ee",
+                    "on-primary-container": "#002919",
+                    "surface-container-highest": "#192540",
+                    "on-primary-fixed": "#00452d",
+                    "tertiary-fixed": "#00dcfd",
+                    "secondary-fixed": "#d5e3fd",
+                    "on-primary": "#005a3c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(25, 37, 64, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #060e20;
+            color: #dee5ff;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#192540]/60 backdrop-blur-3xl border-b border-[#40485d]/15 shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-outline-variant/30">
+<img alt="Admin Profile" class="w-full h-full object-cover" data-alt="professional portrait of a high-tech financial administrator in a dark studio with subtle emerald rim lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9YiMWYqDWq75EopNuHwotbwPaVkNCi3g0Lw6pCImS73aIpPH2OnsdvxLP4YJDG9eel9jQjJqN62OACThSQXdg0uIifYDbCwdlVhlusj7ujZywT9azTTN2ukoOECNFpTAfbFNezREg7rLjMsxJyVcoLUr2XarLZBN0GgdYo53SWyC9ZdQjLtT4U8FdoCbBR9PYN7Gw286tUehwiSlPD1JbReJxFd6mMiQX88zUDTPh98R0xJGjcJXlqO5aBoG3CyjyOuYeXaGNWIQ"/>
+</div>
+<span class="text-xl font-bold text-[#69f6b8] font-['Manrope'] uppercase tracking-widest text-sm">Ethereal Vault</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-[#ffffff]/10 transition-colors active:scale-95 duration-200 text-[#69f6b8]">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-7xl mx-auto space-y-8">
+<!-- Hero Bento Section: Total Saldo -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="md:col-span-2 bg-gradient-to-br from-surface-container to-surface-container-high rounded-xl p-8 relative overflow-hidden flex flex-col justify-between min-h-[320px] shadow-2xl">
+<!-- Decorative Glow -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 blur-[100px] rounded-full"></div>
+<div class="relative z-10">
+<p class="text-on-surface-variant font-medium tracking-wide mb-2 font-headline">Total Saldo Terkelola</p>
+<h1 class="text-5xl md:text-7xl font-extrabold text-primary font-headline tracking-tighter">
+                        Rp2.840.500.000
+                    </h1>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-8">
+<div class="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="trending_up">trending_up</span>
+<span class="text-primary font-bold text-sm">+12.4% Bulan Ini</span>
+</div>
+<div class="h-1 w-24 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-3/4"></div>
+</div>
+</div>
+<!-- Abstract Visual -->
+<div class="absolute bottom-0 right-0 opacity-20 pointer-events-none">
+<img alt="Financial Projection" class="w-64 h-auto" data-alt="abstract 3D fluid crystal waves in emerald and midnight blue flowing diagonally with soft highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAwkALELCjcVLTorC4WiP5PgPwEbYdN9j0YLl-LlbMahwwe2u8Q0m_ZiI5_iMf4DFrYoWJZo1xPHC7I3rwNnFTrDXOX9rmbwxLBq5RcKD15E3LVEMeN-weqvxkPhHSL77Zke1fe-tMzPLGV_-JM1uU8kLqMlgjuYE08JtMTNcZt9eXLUi17xsUisaiTbN52S7Kfl3JdOMqMiqptvZTQuYE5vbCnzLd--yEKhT45F5R2aYIp9rDSY5I1Z4iohUhH_epKb7CIfVmJ62A"/>
+</div>
+</div>
+<!-- Quick Actions Bento Cell -->
+<div class="bg-surface-container-high rounded-xl p-6 flex flex-col gap-4 border border-outline-variant/10">
+<h3 class="text-on-surface font-headline font-bold text-lg mb-2">Aksi Cepat</h3>
+<button class="flex items-center justify-between w-full p-4 bg-gradient-to-br from-primary-container to-primary text-on-primary-container rounded-lg font-bold transition-transform active:scale-95 group">
+<span class="flex items-center gap-3">
+<span class="material-symbols-outlined" data-icon="add_box">add_box</span>
+                        Tambah Data
+                    </span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="flex items-center justify-between w-full p-4 bg-surface-variant hover:bg-surface-bright text-primary rounded-lg font-bold border border-primary/20 transition-all active:scale-95 group">
+<span class="flex items-center gap-3">
+<span class="material-symbols-outlined" data-icon="qr_code_scanner">qr_code_scanner</span>
+                        Pindai Dokumen
+                    </span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="chevron_right">chevron_right</span>
+</button>
+<div class="mt-auto pt-4 border-t border-outline-variant/10">
+<p class="text-xs text-on-surface-variant mb-2">Sistem Terakhir Diperbarui</p>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="text-sm font-medium">Sistem Aktif (V2.4)</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Secondary Grid: Agent Logs & Market Snapshot -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Log Aktivitas Agen -->
+<div class="md:col-span-2 glass-panel rounded-xl p-6 border border-outline-variant/15 flex flex-col min-h-[400px]">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="smart_toy">smart_toy</span>
+<h2 class="text-xl font-bold font-headline">Log Aktivitas Agen</h2>
+</div>
+<span class="text-xs font-label bg-surface-container px-3 py-1 rounded-full text-on-surface-variant border border-outline-variant/20">Real-time Stream</span>
+</div>
+<div class="space-y-4 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+<!-- Log Item 1 -->
+<div class="flex gap-4 p-4 rounded-lg bg-surface-container/50 border-l-4 border-primary">
+<div class="flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="sync">sync</span>
+</div>
+<div class="flex flex-col">
+<p class="text-sm text-on-surface font-medium">Agen sedang menghitung ulang persentase portofolio...</p>
+<span class="text-[10px] text-on-surface-variant font-label mt-1">Baru saja</span>
+</div>
+</div>
+<!-- Log Item 2 -->
+<div class="flex gap-4 p-4 rounded-lg bg-surface-container/30">
+<div class="flex-shrink-0">
+<span class="material-symbols-outlined text-emerald-400 text-sm" data-icon="check_circle">check_circle</span>
+</div>
+<div class="flex flex-col">
+<p class="text-sm text-on-surface font-medium">Sinkronisasi data berhasil: 1,420 entries diproses.</p>
+<span class="text-[10px] text-on-surface-variant font-label mt-1">2 menit yang lalu</span>
+</div>
+</div>
+<!-- Log Item 3 -->
+<div class="flex gap-4 p-4 rounded-lg bg-surface-container/30">
+<div class="flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="psychology">psychology</span>
+</div>
+<div class="flex flex-col">
+<p class="text-sm text-on-surface font-medium">AI mendeteksi anomali pada pengeluaran departemen IT.</p>
+<span class="text-[10px] text-on-surface-variant font-label mt-1">5 menit yang lalu</span>
+</div>
+</div>
+<!-- Log Item 4 -->
+<div class="flex gap-4 p-4 rounded-lg bg-surface-container/30">
+<div class="flex-shrink-0">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="schedule">schedule</span>
+</div>
+<div class="flex flex-col">
+<p class="text-sm text-on-surface font-medium">Pembuatan laporan mingguan otomatis dimulai...</p>
+<span class="text-[10px] text-on-surface-variant font-label mt-1">12 menit yang lalu</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Allocation Tile -->
+<div class="bg-surface-container rounded-xl p-6 border border-outline-variant/10 flex flex-col gap-6">
+<h3 class="text-lg font-bold font-headline">Alokasi Dana</h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant">Operasional</span>
+<span class="text-primary font-bold">45%</span>
+</div>
+<div class="h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[45%] rounded-full shadow-[0_0_10px_rgba(105,246,184,0.4)]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant">Investasi</span>
+<span class="text-tertiary font-bold">30%</span>
+</div>
+<div class="h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-tertiary w-[30%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs mb-2">
+<span class="text-on-surface-variant">Dana Darurat</span>
+<span class="text-secondary font-bold">25%</span>
+</div>
+<div class="h-2 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[25%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="mt-auto p-4 rounded-xl bg-surface-container-high/50 border border-outline-variant/10">
+<p class="text-xs text-on-surface-variant leading-relaxed italic">
+                        "Optimasi agen otomatis telah meningkatkan efisiensi alokasi sebesar 4.2% pada kuartal ini."
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] md:w-[400px] rounded-full bg-[#192540]/60 backdrop-blur-3xl border border-[#40485d]/15 shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-around items-center px-4 py-2 z-50 h-16">
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#06b77f] to-[#69f6b8] text-[#060e20] rounded-full w-12 h-12 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+<span class="font-['Inter'] text-[10px] font-medium">Input</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="photo_library">photo_library</span>
+<span class="font-['Inter'] text-[10px] font-medium">Gallery</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Inter'] text-[10px] font-medium">Settings</span>
+</a>
+</nav>
+</body></html>

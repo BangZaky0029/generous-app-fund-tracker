@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profil Donatur - Transparansi Publik</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-dim": "#d7383b",
+                    "on-secondary": "#455367",
+                    "on-surface": "#dee5ff",
+                    "on-tertiary": "#005360",
+                    "on-secondary-fixed": "#324054",
+                    "surface-container-lowest": "#000000",
+                    "outline-variant": "#40485d",
+                    "on-error-container": "#ffa8a3",
+                    "primary-dim": "#58e7ab",
+                    "primary": "#69f6b8",
+                    "secondary-fixed-dim": "#c7d5ee",
+                    "background": "#060e20",
+                    "tertiary-dim": "#00cdeb",
+                    "tertiary-fixed-dim": "#00cdeb",
+                    "secondary": "#d5e3fd",
+                    "secondary-container": "#3a485c",
+                    "primary-container": "#06b77f",
+                    "inverse-surface": "#faf8ff",
+                    "primary-fixed": "#69f6b8",
+                    "surface-variant": "#192540",
+                    "on-primary-container": "#002919",
+                    "secondary-fixed": "#d5e3fd",
+                    "surface-dim": "#060e20",
+                    "inverse-primary": "#006d4a",
+                    "surface": "#060e20",
+                    "error": "#ff716c",
+                    "surface-tint": "#69f6b8",
+                    "inverse-on-surface": "#4d556b",
+                    "surface-container": "#0f1930",
+                    "tertiary": "#77e6ff",
+                    "primary-fixed-dim": "#58e7ab",
+                    "on-surface-variant": "#a3aac4",
+                    "on-tertiary-container": "#004955",
+                    "surface-container-high": "#141f38",
+                    "on-tertiary-fixed": "#00343c",
+                    "on-secondary-container": "#c3d1ea",
+                    "tertiary-container": "#00dcfd",
+                    "error-container": "#9f0519",
+                    "on-primary-fixed": "#00452d",
+                    "surface-container-highest": "#192540",
+                    "secondary-dim": "#c7d5ee",
+                    "tertiary-fixed": "#00dcfd",
+                    "on-secondary-fixed-variant": "#4e5c71",
+                    "outline": "#6d758c",
+                    "on-tertiary-fixed-variant": "#005360",
+                    "surface-container-low": "#091328",
+                    "surface-bright": "#1f2b49",
+                    "on-primary": "#005a3c",
+                    "on-primary-fixed-variant": "#006544",
+                    "on-error": "#490006",
+                    "on-background": "#dee5ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(15, 25, 48, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        body {
+            background-color: #060e20;
+            color: #dee5ff;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body selection:bg-primary selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#0f1930]/60 backdrop-blur-2xl shadow-[0px_20px_40px_rgba(0,0,0,0.4)]">
+<div class="flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-4">
+<button class="hover:bg-[#192540] transition-colors p-2 rounded-full active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined text-[#69f6b8]" data-icon="grid_view">grid_view</span>
+</button>
+<h1 class="font-['Manrope'] font-bold text-lg tracking-tight text-[#69f6b8]">Profil Donatur</h1>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-primary/20 p-0.5 overflow-hidden">
+<img alt="Profile Avatar" class="w-full h-full object-cover rounded-full" data-alt="professional minimalist avatar of a person with a friendly expression on a soft slate background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuApSdKnV5b15GcezltL0BWMlbj0IV3AZWOo6J6WbuxKFotaBagnniyvkJfKbTnVthOgjZxgBavPRN9aq19x0yMrwS0GyXSbXjBGwBhv-lCsMImYWi1MPTwaOrh6xic2aghPutLyrXIWKk4sCyomQOKSl28EIebLtBAh3FoqGZYl51zHxtJGYwTvTQUk2O0oFeIZTkkANIWqY9_G9ItJW5Y86d-Rq7GNWnpwz0tZmoAw5E1DJXWvhLMU_6CYK0ckcXM3a7yLPI9xP8g"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-2xl mx-auto space-y-8">
+<!-- User Info Bento Card -->
+<section class="grid grid-cols-1 md:grid-cols-1 gap-6">
+<div class="glass-card rounded-xl p-8 flex flex-col items-center text-center relative overflow-hidden group">
+<!-- Abstract Glow Background -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 blur-[80px] rounded-full group-hover:bg-primary/20 transition-all duration-700"></div>
+<div class="relative mb-6">
+<div class="w-24 h-24 rounded-full bg-gradient-to-tr from-[#06b77f] to-[#69f6b8] p-1 shadow-[0_0_30px_rgba(105,246,184,0.3)]">
+<div class="w-full h-full rounded-full bg-surface-container overflow-hidden">
+<img alt="User Avatar Large" class="w-full h-full object-cover" data-alt="stylized illustration of a philanthropist donor character in a clean digital vector style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPLgTd5zMUEUDwEqmB9PKhaeNEvcajsMdNzYxHGA9d_d6QxGM2g3VqzSVJVIk_ff6EeUe0OhkfLN755klL7Rl3E8zUYaAlZ7_IMPWq2tUOTHmN5YGOFxNDVJaewZyKPHTI0OjYSfFEsxbJLdQW3ffPcWjCZnA9Xhwn1SrstpKWxXxQr0-mqk-B4hO7LoyyPSP_pTPPnmUqUjt0kI6GLQNYIO3pf3oQ_l3119fLynSngxih-v2uqHaTnM32UGwC8aoV-_kL49O3QZg"/>
+</div>
+</div>
+<div class="absolute -bottom-1 -right-1 bg-surface-container-highest p-1.5 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<h2 class="font-headline font-bold text-2xl mb-1 tracking-tight">Donatur Anonim</h2>
+<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-high border border-outline-variant/15">
+<span class="material-symbols-outlined text-[#69f6b8] text-lg" data-icon="military_tech">military_tech</span>
+<span class="text-sm font-semibold tracking-wide text-slate-300">Silver Contributor</span>
+</div>
+</div>
+</section>
+<!-- Contribution Summary Bento Card -->
+<section class="glass-card rounded-xl p-8 border border-outline-variant/10 relative overflow-hidden">
+<div class="flex flex-col gap-2 relative z-10">
+<span class="text-on-surface-variant font-medium text-xs uppercase tracking-widest">Total Kontribusi</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-4xl md:text-5xl font-extrabold text-[#69f6b8] drop-shadow-[0_0_15px_rgba(105,246,184,0.4)]">Rp12.500.000</span>
+</div>
+<div class="mt-6 flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase tracking-tighter">Peringkat Publik</span>
+<span class="text-sm font-bold text-on-surface">#124 Teratas</span>
+</div>
+<div class="h-8 w-px bg-outline-variant/20"></div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase tracking-tighter">Program Dibantu</span>
+<span class="text-sm font-bold text-on-surface">12 Kampanye</span>
+</div>
+<div class="h-8 w-px bg-outline-variant/20"></div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase tracking-tighter">Bergabung</span>
+<span class="text-sm font-bold text-on-surface">Jan 2024</span>
+</div>
+</div>
+</div>
+<!-- Decorative pulse element -->
+<div class="absolute bottom-0 right-0 w-32 h-32 bg-primary/5 blur-3xl animate-pulse"></div>
+</section>
+<!-- Activity Section -->
+<section class="space-y-4">
+<div class="flex items-center justify-between px-2">
+<h3 class="font-headline font-bold text-xl">Riwayat Transaksi</h3>
+<button class="text-primary text-sm font-semibold hover:underline">Lihat Semua</button>
+</div>
+<div class="space-y-3">
+<!-- Transaction Item 1 -->
+<div class="glass-card p-4 rounded-lg flex items-center justify-between border border-outline-variant/5 hover:border-primary/20 transition-all cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="volunteer_activism">volunteer_activism</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Bantuan Medis Gaza</p>
+<p class="text-xs text-on-surface-variant">12 Okt 2024 • 14:20 WIB</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-primary">Rp2.500.000</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">Berhasil</p>
+</div>
+</div>
+<!-- Transaction Item 2 -->
+<div class="glass-card p-4 rounded-lg flex items-center justify-between border border-outline-variant/5 hover:border-primary/20 transition-all cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="school">school</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Beasiswa Anak Pesisir</p>
+<p class="text-xs text-on-surface-variant">05 Okt 2024 • 09:15 WIB</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-primary">Rp5.000.000</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">Berhasil</p>
+</div>
+</div>
+<!-- Transaction Item 3 -->
+<div class="glass-card p-4 rounded-lg flex items-center justify-between border border-outline-variant/5 hover:border-primary/20 transition-all cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="forest">forest</span>
+</div>
+<div>
+<p class="font-bold text-on-surface">Reboisasi Hutan Kalimantan</p>
+<p class="text-xs text-on-surface-variant">28 Sep 2024 • 18:45 WIB</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-bold text-primary">Rp1.000.000</p>
+<p class="text-[10px] text-slate-500 uppercase font-medium">Berhasil</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Settings Section -->
+<section class="glass-card rounded-xl overflow-hidden border border-outline-variant/5">
+<button class="w-full flex items-center justify-between p-5 hover:bg-surface-variant/40 transition-colors border-b border-outline-variant/10 group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary" data-icon="security">security</span>
+<span class="font-medium text-on-surface">Keamanan</span>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-5 hover:bg-surface-variant/40 transition-colors border-b border-outline-variant/10 group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary" data-icon="help">help</span>
+<span class="font-medium text-on-surface">Pusat Bantuan</span>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-sm" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-5 hover:bg-error-container/10 transition-colors group">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-error-dim" data-icon="logout">logout</span>
+<span class="font-medium text-error">Keluar</span>
+</div>
+</button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-center pb-8 pointer-events-none">
+<div class="bg-[#192540]/60 backdrop-blur-2xl shadow-[0px_20px_40px_rgba(0,0,0,0.4)] w-[90%] max-w-md rounded-full px-4 py-2 flex justify-between items-center pointer-events-auto">
+<!-- Beranda -->
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-98" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-wide uppercase mt-1">Beranda</span>
+</a>
+<!-- Laporan -->
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-98" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-wide uppercase mt-1">Laporan</span>
+</a>
+<!-- Profil (Active) -->
+<a class="flex flex-col items-center justify-center bg-gradient-to-tr from-[#06b77f] to-[#69f6b8] text-[#060e20] rounded-full px-5 py-2 active:scale-98 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-['Inter'] text-[10px] font-medium tracking-wide uppercase mt-1">Profil</span>
+</a>
+</div>
+</nav>
+</body></html>

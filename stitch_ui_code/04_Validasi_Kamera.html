@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina Finansial - Pindai Bukti</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#006544",
+                        "outline": "#6d758c",
+                        "on-surface": "#dee5ff",
+                        "on-error": "#490006",
+                        "on-tertiary-container": "#004955",
+                        "primary-dim": "#58e7ab",
+                        "inverse-surface": "#faf8ff",
+                        "tertiary-fixed-dim": "#00cdeb",
+                        "outline-variant": "#40485d",
+                        "surface-container-high": "#141f38",
+                        "on-secondary-container": "#c3d1ea",
+                        "surface-container-lowest": "#000000",
+                        "surface-tint": "#69f6b8",
+                        "on-tertiary": "#005360",
+                        "inverse-on-surface": "#4d556b",
+                        "error-container": "#9f0519",
+                        "tertiary-container": "#00dcfd",
+                        "secondary": "#d5e3fd",
+                        "surface-variant": "#192540",
+                        "surface-bright": "#1f2b49",
+                        "on-secondary-fixed-variant": "#4e5c71",
+                        "tertiary": "#77e6ff",
+                        "secondary-container": "#3a485c",
+                        "on-secondary-fixed": "#324054",
+                        "surface-dim": "#060e20",
+                        "surface": "#060e20",
+                        "tertiary-dim": "#00cdeb",
+                        "primary-fixed-dim": "#58e7ab",
+                        "error": "#ff716c",
+                        "surface-container": "#0f1930",
+                        "inverse-primary": "#006d4a",
+                        "error-dim": "#d7383b",
+                        "primary": "#69f6b8",
+                        "on-secondary": "#455367",
+                        "surface-container-low": "#091328",
+                        "secondary-dim": "#c7d5ee",
+                        "on-error-container": "#ffa8a3",
+                        "on-tertiary-fixed": "#00343c",
+                        "on-surface-variant": "#a3aac4",
+                        "background": "#060e20",
+                        "on-tertiary-fixed-variant": "#005360",
+                        "on-background": "#dee5ff",
+                        "primary-container": "#06b77f",
+                        "primary-fixed": "#69f6b8",
+                        "secondary-fixed-dim": "#c7d5ee",
+                        "on-primary-container": "#002919",
+                        "surface-container-highest": "#192540",
+                        "on-primary-fixed": "#00452d",
+                        "tertiary-fixed": "#00dcfd",
+                        "secondary-fixed": "#d5e3fd",
+                        "on-primary": "#005a3c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .scanner-line {
+            background: linear-gradient(to bottom, transparent, #69f6b8, transparent);
+            height: 100px;
+            width: 100%;
+            position: absolute;
+            top: -100px;
+            animation: scan 3s ease-in-out infinite;
+            opacity: 0.4;
+        }
+        @keyframes scan {
+            0% { top: 0%; }
+            50% { top: 80%; }
+            100% { top: 0%; }
+        }
+        .viewfinder-corner {
+            width: 40px;
+            height: 40px;
+            border-color: #69f6b8;
+            position: absolute;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#192540]/60 backdrop-blur-3xl border-b border-[#40485d]/15 shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary/20">
+<img alt="Admin Profile" class="w-full h-full object-cover" data-alt="Close-up portrait of a professional male administrator in a clean modern setting with soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxlt9mrEJCGjHXXF3PMiNFtS_o8i9XREgu76GwXF9U5MmZyX5KHWQz__aI3R4-o6ZDS4JHVTjgty7rj4_F1lgMGQIWtZhvyMslhbRge0GDRAiopIk1Q6AK0LPFRf4QP4NUw4qckvnA-lspfOfXbm2vdOAXrKdqjA5cAVvvECTNp0k_vWzP00ujWsX7svV082QI4X7pJGdtcJHG8o3hZjFo5XJRwc9gRrpYL4obJv4JUd1O9VWmRd-F-FnLZzqUknuk0_KDvYifsMg"/>
+</div>
+<h1 class="font-headline uppercase tracking-widest text-sm text-[#69f6b8] font-bold">Pindai Bukti</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-slate-400 hover:bg-[#ffffff]/10 transition-colors p-2 rounded-full active:scale-95 duration-200" data-icon="notifications">notifications</button>
+</div>
+</header>
+<!-- Main Canvas: Camera Interface -->
+<main class="relative h-screen w-full overflow-hidden bg-black flex flex-col pt-16">
+<!-- Camera Viewfinder Overlay -->
+<div class="flex-grow relative flex items-center justify-center p-8">
+<!-- Simulated Camera Feed -->
+<div class="absolute inset-0 z-0">
+<img alt="Receipt Preview" class="w-full h-full object-cover opacity-60" data-alt="Perspective view of a crumpled white paper receipt on a dark slate background with dramatic contrast lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpr_lxdFZXzi98i0gMSyDcKpmWU2nw2mFjIxgpL0ErtUIAd3J7R6Qb608wZAj1dJrSjiKCuopgw3UHq0c_HMOQBHgdWugxSTNyI0r9Klm5gtQDs5MCuBt2OaKZTEI2FC1zFDSZF12Yj1YAXtfswUKxpWBZ3rH_s76GjNo-V_VxW2k3ug8iYHQuvKGILDheCthYZ_fd4BBYKj1GwiQ1UAN9D42P-W-YraRZMsgWX3XnsYGetZPD0hVOXNCnDb3xMEz3yixUoaII4bA"/>
+</div>
+<!-- OCR Scanning Area -->
+<div class="relative w-full aspect-[3/4] max-w-md z-10 overflow-hidden border border-white/10 rounded-xl">
+<!-- Corners -->
+<div class="viewfinder-corner top-0 left-0 border-t-4 border-l-4 rounded-tl-xl"></div>
+<div class="viewfinder-corner top-0 right-0 border-t-4 border-r-4 rounded-tr-xl"></div>
+<div class="viewfinder-corner bottom-0 left-0 border-b-4 border-l-4 rounded-bl-xl"></div>
+<div class="viewfinder-corner bottom-0 right-0 border-b-4 border-r-4 rounded-br-xl"></div>
+<!-- Shimmering Scan Line -->
+<div class="scanner-line"></div>
+<!-- Detection Metadata Chips -->
+<div class="absolute top-4 left-4 flex flex-col gap-2">
+<div class="bg-primary/20 backdrop-blur-md px-3 py-1 rounded-full border border-primary/30 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-[10px] font-bold text-primary tracking-widest uppercase">Mendeteksi...</span>
+</div>
+</div>
+<!-- Detected Text Cues (Ghosting) -->
+<div class="absolute inset-0 pointer-events-none p-12 flex flex-col justify-center">
+<div class="h-4 w-1/2 bg-primary/10 rounded mb-4 blur-[1px]"></div>
+<div class="h-4 w-2/3 bg-primary/5 rounded mb-4 blur-[2px]"></div>
+<div class="h-8 w-1/3 bg-primary/20 rounded mb-8 blur-[1px]"></div>
+</div>
+</div>
+</div>
+<!-- Camera Controls & Preview Bar -->
+<div class="absolute bottom-32 left-0 right-0 px-6 flex justify-between items-center z-20">
+<!-- Last Upload Preview -->
+<div class="group relative">
+<div class="w-16 h-20 rounded-lg overflow-hidden border-2 border-outline-variant/30 rotate-[-4deg] shadow-xl group-active:scale-95 transition-all">
+<img alt="Recent Receipt" class="w-full h-full object-cover" data-alt="Micro photo of a printed receipt with black text on white paper, slightly blurred aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLw2jCBrN1sWA0fJBirchvZRk2tp0eUzcGxAieU6LRPoiiQfdPINbaaoVFlaXd0xipuHfhrwjJRSfQDnbIL8j7cudG1VBsjfvn8sBC6NQotpe4Zl1nKZB4YS8kwelDT7Cjwwo2_3jEIbWsfSXDunVMf9uASYxX_pXeoVeZT_2j3OQ9g0Zu3lrPX31bOf4OBvNKF8z1555u2rq3Jvrs6PGNsDf7j-4azZzvG9ObQnSjKpqkdD_2pGaEZWb4evSvPmXZH4HEBR_vAQU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+</div>
+<span class="absolute -bottom-6 left-0 text-[10px] font-medium text-on-surface-variant uppercase tracking-tighter">Terakhir</span>
+</div>
+<!-- Floating Capture Button -->
+<button class="w-20 h-20 rounded-full bg-gradient-to-br from-[#06b77f] to-[#69f6b8] p-1 shadow-[0_0_40px_rgba(105,246,184,0.3)] active:scale-90 transition-transform duration-200">
+<div class="w-full h-full rounded-full border-4 border-on-primary-container/20 flex items-center justify-center">
+<div class="w-16 h-16 rounded-full bg-on-primary-container/10 border border-white/20"></div>
+</div>
+</button>
+<!-- Gallery / Flash Controls -->
+<div class="flex flex-col gap-4">
+<button class="w-12 h-12 rounded-full bg-surface-variant/40 backdrop-blur-xl border border-outline-variant/20 flex items-center justify-center text-on-surface hover:bg-surface-variant/60 transition-all active:scale-95">
+<span class="material-symbols-outlined">flash_auto</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-surface-variant/40 backdrop-blur-xl border border-outline-variant/20 flex items-center justify-center text-on-surface hover:bg-surface-variant/60 transition-all active:scale-95">
+<span class="material-symbols-outlined">image</span>
+</button>
+</div>
+</div>
+<!-- Instructional Overlay -->
+<div class="absolute bottom-28 left-1/2 -translate-x-1/2 w-full text-center px-8 z-10">
+<p class="text-on-surface/80 text-sm font-medium tracking-wide bg-black/40 backdrop-blur-sm inline-block py-2 px-6 rounded-full border border-white/5">
+                Posisikan struk belanja di dalam kotak tengah
+            </p>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] bg-[#192540]/60 backdrop-blur-3xl rounded-full border border-[#40485d]/15 shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-around items-center px-4 py-2 z-50">
+<!-- Dashboard -->
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Inter'] text-[10px] font-medium">Dashboard</span>
+</a>
+<!-- Input (Active) -->
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#06b77f] to-[#69f6b8] text-[#060e20] rounded-full w-12 h-12 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span class="hidden">Input</span>
+</a>
+<!-- Gallery -->
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="photo_library">photo_library</span>
+<span class="font-['Inter'] text-[10px] font-medium">Gallery</span>
+</a>
+<!-- Settings -->
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-['Inter'] text-[10px] font-medium">Settings</span>
+</a>
+</nav>
+</body></html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ethereal Vault - Galeri Bukti</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed-variant": "#006544",
+                        "outline": "#6d758c",
+                        "on-surface": "#dee5ff",
+                        "on-error": "#490006",
+                        "on-tertiary-container": "#004955",
+                        "primary-dim": "#58e7ab",
+                        "inverse-surface": "#faf8ff",
+                        "tertiary-fixed-dim": "#00cdeb",
+                        "outline-variant": "#40485d",
+                        "surface-container-high": "#141f38",
+                        "on-secondary-container": "#c3d1ea",
+                        "surface-container-lowest": "#000000",
+                        "surface-tint": "#69f6b8",
+                        "on-tertiary": "#005360",
+                        "inverse-on-surface": "#4d556b",
+                        "error-container": "#9f0519",
+                        "tertiary-container": "#00dcfd",
+                        "secondary": "#d5e3fd",
+                        "surface-variant": "#192540",
+                        "surface-bright": "#1f2b49",
+                        "on-secondary-fixed-variant": "#4e5c71",
+                        "tertiary": "#77e6ff",
+                        "secondary-container": "#3a485c",
+                        "on-secondary-fixed": "#324054",
+                        "surface-dim": "#060e20",
+                        "surface": "#060e20",
+                        "tertiary-dim": "#00cdeb",
+                        "primary-fixed-dim": "#58e7ab",
+                        "error": "#ff716c",
+                        "surface-container": "#0f1930",
+                        "inverse-primary": "#006d4a",
+                        "error-dim": "#d7383b",
+                        "primary": "#69f6b8",
+                        "on-secondary": "#455367",
+                        "surface-container-low": "#091328",
+                        "secondary-dim": "#c7d5ee",
+                        "on-error-container": "#ffa8a3",
+                        "on-tertiary-fixed": "#00343c",
+                        "on-surface-variant": "#a3aac4",
+                        "background": "#060e20",
+                        "on-tertiary-fixed-variant": "#005360",
+                        "on-background": "#dee5ff",
+                        "primary-container": "#06b77f",
+                        "primary-fixed": "#69f6b8",
+                        "secondary-fixed-dim": "#c7d5ee",
+                        "on-primary-container": "#002919",
+                        "surface-container-highest": "#192540",
+                        "on-primary-fixed": "#00452d",
+                        "tertiary-fixed": "#00dcfd",
+                        "secondary-fixed": "#d5e3fd",
+                        "on-primary": "#005a3c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #060e20;
+            color: #dee5ff;
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(25, 37, 64, 0.6);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen pb-32">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#192540]/60 backdrop-blur-3xl border-b border-[#40485d]/15 shadow-[0_20px_40px_rgba(0,0,0,0.4)] flex justify-between items-center px-6 h-16">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full overflow-hidden border border-[#69f6b8]/30">
+<img alt="Admin Profile" class="w-full h-full object-cover" data-alt="professional headshot of a male administrator in a clean minimalist tech office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFtAIoQMowCbA0BhRdNjUSZvWJXKdKdQ-qQ8j4MalMfdYBcclkWpFqdWuXx3MZ2J76prlZq0ZXan8C1PpVO-Hy8vrGn3pclLsfr07Wa8gyHWDkbzzvv4CJF2pgL4FabkZ28PRy7rhocKKbPQ5cQcAmtm9XZgQd0u4jXrebVno6zhsi-bFHOUWNkkDKx9cX7uqLT-ByO3RbZpMA9eYqgc23zQUcTE1qxgc2yQTfwSQZ_pxPF0gRteE4HuO3zn_e5o4EjJy5YEsDP8g"/>
+</div>
+<span class="font-['Manrope'] uppercase tracking-widest text-sm text-[#69f6b8] font-bold">Ethereal Vault</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:bg-[#ffffff]/10 transition-colors rounded-full active:scale-95 duration-200">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-6 max-w-7xl mx-auto">
+<!-- Page Title & Bento Search Header -->
+<div class="mb-10">
+<h1 class="font-headline text-3xl font-extrabold text-on-surface mb-6 tracking-tight">Galeri Bukti</h1>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<!-- Search Input Bento Cell -->
+<div class="md:col-span-2 bg-surface-container rounded-lg p-1 border border-outline-variant/15 flex items-center gap-3 px-4">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-on-surface w-full font-body py-3" placeholder="Cari transaksi atau kategori..." type="text"/>
+</div>
+<!-- Date Filter Bento Cell -->
+<div class="bg-surface-container rounded-lg p-1 border border-outline-variant/15 flex items-center gap-3 px-4">
+<span class="material-symbols-outlined text-on-surface-variant">calendar_today</span>
+<select class="bg-transparent border-none focus:ring-0 text-on-surface w-full font-body py-3 appearance-none">
+<option>Semua Tanggal</option>
+<option>Hari Ini</option>
+<option>Minggu Ini</option>
+<option>Bulan Ini</option>
+</select>
+</div>
+<!-- Status Filter Bento Cell -->
+<div class="bg-surface-container rounded-lg p-1 border border-outline-variant/15 flex items-center gap-3 px-4">
+<span class="material-symbols-outlined text-on-surface-variant">filter_list</span>
+<select class="bg-transparent border-none focus:ring-0 text-on-surface w-full font-body py-3 appearance-none">
+<option>Semua Status</option>
+<option>Verifikasi Berhasil</option>
+<option>Pending</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Bento Grid Gallery -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+<!-- Gallery Item 1: Pending (Hero Cell) -->
+<div class="group relative bg-surface-container-high rounded-xl overflow-hidden border border-outline-variant/15 shadow-2xl transition-all duration-300 hover:scale-[1.02] sm:col-span-2 lg:col-span-2 xl:col-span-2">
+<div class="aspect-[16/9] w-full relative">
+<img alt="Receipt" class="w-full h-full object-cover" data-alt="close-up photo of a modern restaurant receipt on a dark marble surface with soft atmospheric blue lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhZ3-LsdZ6HxhUIeIbdhBMgR-lk4xsOKso-lRWIky92--WXLete0rlZy59Zw9-HPKATD71Py5RZqc99f4nsCtlfRWv17TI6zO9hLJy8O3ItX2Bag7FpwXngjjICr8-ryarB69C3_YUNdGhpyBWLmncTQXyqP0DjSPYBSY6xEaYq-Y0jG_OhDvNOqCRxSRk3kO6KdGM4aZcnKupRkuahc2Tu3JHoPVP3PlXUfUFNwod7vqozn3c_4TB7hmZ4Vxgf8nIoKvz1w5gZTU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim via-transparent to-transparent"></div>
+<div class="absolute top-4 left-4">
+<div class="px-3 py-1 bg-surface-variant/80 backdrop-blur-md rounded-full border border-outline-variant/30 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+<span class="text-[10px] font-bold text-on-surface tracking-wider uppercase">Pending</span>
+</div>
+</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline text-xl font-bold text-on-surface">Makan Malam Korporat</h3>
+<span class="font-headline text-lg font-bold text-primary">Rp1.450.000</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant text-sm font-body">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">category</span> Konsumsi</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-sm">schedule</span> 12 Okt 2023</span>
+</div>
+</div>
+</div>
+<!-- Gallery Item 2: Success -->
+<div class="group bg-surface-container-high rounded-xl overflow-hidden border border-outline-variant/15 shadow-xl transition-all duration-300 hover:scale-[1.02]">
+<div class="aspect-square w-full relative">
+<img alt="Receipt" class="w-full h-full object-cover" data-alt="clean digital capture of a supermarket invoice on a deep navy background with sharp emerald focus" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBy0UtirdY6BCKBXBmmbuZpD1te56W34LxqyTMArkWSNI_EwAb3lObvEfnSi7qUX3wdT2o8ZRcj1lQT6vJZguNKWuSu2FWgsZfvnzStE5Q-2Y4fXIvSNu9BKIsVpIbbhQsZfMHCesWntfR1givaMRvodxpotLdlG6ZVDcS-q4MogG9-V68q9oBr7A1FOyOUtSgR1Olm7q3IHNMM2S67VkT7KrhMwNtzvEvBb8-kjK-7qDTZoISJrojIPUmHH2wbyETcoFGdwIdxEGo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/80 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<div class="px-3 py-1 bg-primary/20 backdrop-blur-md rounded-full border border-primary/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[10px] font-bold text-primary tracking-wider uppercase">Verifikasi Berhasil</span>
+</div>
+</div>
+</div>
+<div class="p-5">
+<h3 class="font-headline font-bold text-on-surface mb-1">Logistik Kantor</h3>
+<p class="font-headline text-sm font-semibold text-primary mb-3">Rp245.000</p>
+<div class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">11 Okt 2023</div>
+</div>
+</div>
+<!-- Gallery Item 3: Success -->
+<div class="group bg-surface-container-high rounded-xl overflow-hidden border border-outline-variant/15 shadow-xl transition-all duration-300 hover:scale-[1.02]">
+<div class="aspect-square w-full relative">
+<img alt="Receipt" class="w-full h-full object-cover" data-alt="gasoline station receipt held by a person against a blurred urban night background with neon highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoG3eGXIIS_ghzPazPBznI61L4H4vPVWUBulATQlC-RtLW7tJdqBQZ0yOuuS5MdC7hQrwSCK_062-sIX3loD7SPa9kgvBL9n--ja_X_TdKpt27qNVZGCBUgtG2ZFdDq1ufvLuPEqQsiG5gZFZJV3WBj5iMifpbyjIXNxHZfnPKNKgnw3uHwRfcgufh6W_88LQJhkUy7wbdZUDxDB_e_ye3vV8z3IFrGobQaBxb1mQSTmauc50PBW_FVnK7HMrKvwGj4QFt-X953uc"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/80 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<div class="px-3 py-1 bg-primary/20 backdrop-blur-md rounded-full border border-primary/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[10px] font-bold text-primary tracking-wider uppercase">Verifikasi Berhasil</span>
+</div>
+</div>
+</div>
+<div class="p-5">
+<h3 class="font-headline font-bold text-on-surface mb-1">BBM Operasional</h3>
+<p class="font-headline text-sm font-semibold text-primary mb-3">Rp550.000</p>
+<div class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">10 Okt 2023</div>
+</div>
+</div>
+<!-- Gallery Item 4: Success -->
+<div class="group bg-surface-container-high rounded-xl overflow-hidden border border-outline-variant/15 shadow-xl transition-all duration-300 hover:scale-[1.02]">
+<div class="aspect-square w-full relative">
+<img alt="Receipt" class="w-full h-full object-cover" data-alt="macro photo of a crumpled business receipt on a dark gray wood surface with dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD7Igt6nSA28xMaLr0DYlrFZa84SaYcYCEd4XXTiGPMktHhADduD8rbM2NtSgDukhWweWnr2PLRHf9bpFcANsdVHwIXbHSANu7x8L6eeEuVHbF94Nf9k-3WidKPA0RaIYfls-wmvrhHxxRbjCw-IGYUGh2T-51-91pq_x2BWLiUkhGCHosKA-QLQy_u-nnr4vrLGNdAAaaqahwJ-LsmbeG8buJghw0jYui_DvthTKEDa26IKCEdm-2Vy5HVRUl0v8xGnnwykI-ifi4"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/80 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<div class="px-3 py-1 bg-primary/20 backdrop-blur-md rounded-full border border-primary/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[10px] font-bold text-primary tracking-wider uppercase">Verifikasi Berhasil</span>
+</div>
+</div>
+</div>
+<div class="p-5">
+<h3 class="font-headline font-bold text-on-surface mb-1">Parkir &amp; Tol</h3>
+<p class="font-headline text-sm font-semibold text-primary mb-3">Rp12.000</p>
+<div class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">09 Okt 2023</div>
+</div>
+</div>
+<!-- Gallery Item 5: Pending -->
+<div class="group bg-surface-container-high rounded-xl overflow-hidden border border-outline-variant/15 shadow-xl transition-all duration-300 hover:scale-[1.02]">
+<div class="aspect-square w-full relative">
+<img alt="Receipt" class="w-full h-full object-cover" data-alt="payment receipt coming out of a card terminal in a dark premium retail store setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzqzII21WGiCWn0dzLRVIKTjXIAd0Fy8HYoS2xK9DVkFwl9uhhueKrOyxUXLljzyrpFEr8Ulesmjp89tq8iBxTt2nUH86-_8rZMh7dZWoUMEqF0k0V0Vke8I9wWYJur9EHOdIKx2InpBzk2Mo1NN8Wev6eioakRDPU84CZrk4kEUwaRZRlQAaKgWtyKA6slQVzehMzpxtGQwju0KP_xqtnLP1bAsl3pZkYhicjvrT_4QjUFUZv2JjO00mw6IRWz8nRtLklZmna_3c"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/80 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<div class="px-3 py-1 bg-surface-variant/80 backdrop-blur-md rounded-full border border-outline-variant/30 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+<span class="text-[10px] font-bold text-on-surface tracking-wider uppercase">Pending</span>
+</div>
+</div>
+</div>
+<div class="p-5">
+<h3 class="font-headline font-bold text-on-surface mb-1">Perlengkapan IT</h3>
+<p class="font-headline text-sm font-semibold text-primary mb-3">Rp3.200.000</p>
+<div class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">08 Okt 2023</div>
+</div>
+</div>
+<!-- Gallery Item 6: Success -->
+<div class="group bg-surface-container-high rounded-xl overflow-hidden border border-outline-variant/15 shadow-xl transition-all duration-300 hover:scale-[1.02]">
+<div class="aspect-square w-full relative">
+<img alt="Receipt" class="w-full h-full object-cover" data-alt="digital bank statement on a sleek glass tablet screen with reflections of green ambient lights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1xhw9loGfijQqks4qZ1e7RV3d1ZoXM8cgwBO9XK5PcnK8fOBAGDg5nkH_wxuj4hun5d-WOqI5FpNbJ1cDR7HhHiWeMo_HqkB4zlM1wn3GwuiyrdB2dJAd2zv9edu1Pa_jyvuAnrlrjiRsCY1cwoPREiHpxZLEwuQs06La-_UZYzK2Iqp_tXJNTokoGwSD3u7t29UoJfOOxPLpe7WJVSN9ONDXq7o8ep3O_Eik76_qaLudj_m7bbg8CzWwCvgOusqGmfvYRWqwXck"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/80 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<div class="px-3 py-1 bg-primary/20 backdrop-blur-md rounded-full border border-primary/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[10px] font-bold text-primary tracking-wider uppercase">Verifikasi Berhasil</span>
+</div>
+</div>
+</div>
+<div class="p-5">
+<h3 class="font-headline font-bold text-on-surface mb-1">Langganan Software</h3>
+<p class="font-headline text-sm font-semibold text-primary mb-3">Rp890.000</p>
+<div class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">07 Okt 2023</div>
+</div>
+</div>
+<!-- Gallery Item 7: Success -->
+<div class="group bg-surface-container-high rounded-xl overflow-hidden border border-outline-variant/15 shadow-xl transition-all duration-300 hover:scale-[1.02]">
+<div class="aspect-square w-full relative">
+<img alt="Receipt" class="w-full h-full object-cover" data-alt="person paying with a card at a modern cafe, soft focus on the receipt being printed" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvTlQHuJqq1wAi-kHpAfjm5759-es7Q97teoMuzzExv-9Mvt5vmQWWGtuf5fPFbpi2o_O_EG-P8m0KGyxD0RWxwQ-zuaus21Z0fVtjUe-uAybcKxLpUV_hOQgDe_As0HPX4WLcnmQetmyuU0Wij6VX7n9aEaS_iugAx6A82CQmeQIf1nc5Nl27LhdOJX8oO3EY3itK68mpkPB1MAVIhoXgcJpEC0kWpYYsum08NtBTO_HgB2camCwdzh4P-C5ZD01_rgPCjBgf1TQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/80 to-transparent"></div>
+<div class="absolute top-4 left-4">
+<div class="px-3 py-1 bg-primary/20 backdrop-blur-md rounded-full border border-primary/30 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-[10px] font-bold text-primary tracking-wider uppercase">Verifikasi Berhasil</span>
+</div>
+</div>
+</div>
+<div class="p-5">
+<h3 class="font-headline font-bold text-on-surface mb-1">Coffee Meeting</h3>
+<p class="font-headline text-sm font-semibold text-primary mb-3">Rp120.000</p>
+<div class="text-[10px] text-on-surface-variant font-medium uppercase tracking-widest">06 Okt 2023</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-0 right-0 flex justify-around items-center px-4 py-2 z-50">
+<div class="bg-[#192540]/60 backdrop-blur-3xl border border-[#40485d]/15 shadow-[0_20px_40px_rgba(0,0,0,0.4)] rounded-full w-[90%] mx-auto flex justify-around items-center h-16">
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-['Inter'] text-[10px] font-medium mt-1">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-['Inter'] text-[10px] font-medium mt-1">Input</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-gradient-to-br from-[#06b77f] to-[#69f6b8] text-[#060e20] rounded-full w-12 h-12 shadow-lg shadow-primary/20 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">photo_library</span>
+<span class="sr-only">Gallery</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 p-2 hover:text-[#69f6b8] transition-all active:scale-90 duration-200" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-['Inter'] text-[10px] font-medium mt-1">Settings</span>
+</a>
+</div>
+</nav>
+</body></html>
