@@ -49,12 +49,14 @@ export type AuthContextType = {
   user: AuthUser | null;
   session: Session | null;
   isLoading: boolean;
+  isVerifying: boolean;
   isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, role?: 'donatur' | 'admin') => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  setIsVerifying: (val: boolean) => void;
   showAlert: (title: string, message: string, type: AlertConfig['type'], onConfirm?: () => void) => void;
   hideAlert: () => void;
 };

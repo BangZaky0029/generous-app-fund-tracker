@@ -95,6 +95,22 @@ export default function AdminLayout() {
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
+
+      {/* Internal Screens (Hidden from Tab Bar UI but within Tab System) */}
+      <Tabs.Screen
+        name="add-expense"
+        options={{
+          href: null,
+          title: 'Input Pengeluaran',
+        }}
+      />
+      <Tabs.Screen
+        name="add-donation"
+        options={{
+          href: null,
+          title: 'Catat Donasi',
+        }}
+      />
     </Tabs>
   );
 }

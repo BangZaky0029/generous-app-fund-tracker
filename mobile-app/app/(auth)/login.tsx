@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, Alert,
+  View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator,
   KeyboardAvoidingView, Platform, StyleSheet
 } from 'react-native';
 import { router } from 'expo-router';
-import { Eye, EyeOff, Lock, Mail, Wallet, ArrowRight, Fingerprint } from 'lucide-react-native';
+import { 
+  Eye, EyeOff, Lock, Mail, Wallet, 
+  ArrowRight, Fingerprint, Smartphone,
+  ShieldAlert
+} from 'lucide-react-native';
+import { AntDesign } from '@expo/vector-icons';
 import { useAuthContext } from '@/context/FundTrackerContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '@/lib/supabaseConfig';
 
 export default function LoginScreen() {
-  const { signIn, isLoading, showAlert } = useAuthContext();
+  const { signIn, signOut, isLoading, setIsVerifying, showAlert } = useAuthContext();
   const [role, setRole] = useState<'donatur' | 'admin'>('donatur');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,16 +27,57 @@ export default function LoginScreen() {
       showAlert('Input Tidak Valid', 'Email dan password harus diisi.', 'warning');
       return;
     }
+
     setIsSubmitting(true);
+    setIsVerifying(true); // LOCK NAVIGATION
     try {
+      // 1. Sign In ke Supabase
       await signIn(email.trim().toLowerCase(), password);
-      router.replace('/');
+      
+      // 2. Verifikasi Role secara manual untuk keamanan di pintu masuk
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+         const { data: p, error: pErr } = await supabase
+           .from('profiles')
+           .select('role')
+           .eq('id', user.id)
+           .single();
+
+         if (p && p.role !== role) {
+            // Mismatch Role!
+            await signOut();
+            showAlert(
+              'Akses Ditolak', 
+              `Maaf, akun ini terdaftar sebagai ${p.role.toUpperCase()}. Silakan pilih role yang sesuai pada menu di atas.`, 
+              'error'
+            );
+            setIsSubmitting(false);
+            setIsVerifying(false); // UNLOCK
+            return;
+         }
+      }
+
+      // Jika lolos, biarkan AuthGate yang menghandle redirect ke /
+      // router.replace('/') // AuthGate akan melakukan ini otomatis
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login gagal';
       showAlert('Login Gagal', message, 'error');
-    } finally {
       setIsSubmitting(false);
+      setIsVerifying(false); // UNLOCK
+    } finally {
+      // Kita buka lock hanya jika proses berhenti di sini (error/mismatch).
+      // Jika berhasil, AuthGate akan memindahkan layar saat isVerifying(false) dipanggil.
+      setIsVerifying(false);
     }
+  };
+
+  const showComingSoon = (name: string) => {
+    showAlert(
+      'Coming Soon',
+      `Fitur login via ${name} sedang dalam tahap kalibrasi agen AI. Tunggu update versi selanjutnya ya!`,
+      'info'
+    );
   };
 
   if (isLoading) {
@@ -55,6 +102,7 @@ export default function LoginScreen() {
           <ScrollView 
             contentContainerStyle={styles.scroll}
             keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
             {/* Header */}
             <View style={styles.header}>
@@ -97,11 +145,11 @@ export default function LoginScreen() {
 
               <Text style={styles.label}>EMAIL</Text>
               <View style={styles.inputWrap}>
-                <Mail size={20} color="#6d758c" />
+                <Mail size={18} color="#64748b" />
                 <TextInput
                   style={styles.input}
                   placeholder="nama@email.com"
-                  placeholderTextColor="#6d758c"
+                  placeholderTextColor="#475569"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -116,17 +164,17 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </View>
               <View style={styles.inputWrap}>
-                <Lock size={20} color="#6d758c" />
+                <Lock size={18} color="#64748b" />
                 <TextInput
                   style={styles.input}
                   placeholder="••••••••"
-                  placeholderTextColor="#6d758c"
+                  placeholderTextColor="#475569"
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <EyeOff size={20} color="#6d758c" /> : <Eye size={20} color="#6d758c" />}
+                  {showPassword ? <EyeOff size={18} color="#64748b" /> : <Eye size={18} color="#64748b" />}
                 </TouchableOpacity>
               </View>
 
@@ -136,11 +184,11 @@ export default function LoginScreen() {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#005a3c" />
+                  <ActivityIndicator color="#002919" />
                 ) : (
                   <>
                     <Text style={styles.submitText}>Masuk Sekarang</Text>
-                    <ArrowRight size={20} color="#005a3c" />
+                    <ArrowRight size={20} color="#002919" />
                   </>
                 )}
               </TouchableOpacity>
@@ -151,9 +199,19 @@ export default function LoginScreen() {
                 <View style={styles.divider} />
               </View>
 
-              <View style={styles.biometricWrap}>
-                <TouchableOpacity style={styles.biometricBtn}>
-                  <Fingerprint size={24} color="#dee5ff" />
+              <View style={styles.socialRow}>
+                <TouchableOpacity 
+                  style={styles.socialBtn}
+                  onPress={() => showComingSoon('Google')}
+                >
+                   <AntDesign name="google" size={22} color="#fff" />
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.socialBtn}
+                  onPress={() => showComingSoon('Biometric')}
+                >
+                  <Fingerprint size={22} color="#69f6b8" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -172,8 +230,8 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0f172a' },
-  loadingRoot: { flex: 1, backgroundColor: '#0f172a', alignItems: 'center', justifyContent: 'center' },
+  root: { flex: 1, backgroundColor: '#060e20' },
+  loadingRoot: { flex: 1, backgroundColor: '#060e20', alignItems: 'center', justifyContent: 'center' },
   scroll: { flexGrow: 1, padding: 24, justifyContent: 'center' },
   blob1: {
     position: 'absolute',
@@ -181,7 +239,7 @@ const styles = StyleSheet.create({
     left: -100,
     width: 300,
     height: 300,
-    backgroundColor: 'rgba(105, 246, 184, 0.05)',
+    backgroundColor: 'rgba(105, 246, 184, 0.03)',
     borderRadius: 150,
   },
   blob2: {
@@ -190,17 +248,17 @@ const styles = StyleSheet.create({
     right: -100,
     width: 300,
     height: 300,
-    backgroundColor: 'rgba(99, 102, 241, 0.05)',
+    backgroundColor: 'rgba(99, 102, 241, 0.03)',
     borderRadius: 150,
   },
   header: { alignItems: 'center', marginBottom: 40 },
   logoBox: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    backgroundColor: '#192540',
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: '#0f172a',
     borderWidth: 1,
-    borderColor: 'rgba(64, 72, 93, 0.15)',
+    borderColor: 'rgba(105, 246, 184, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -212,22 +270,23 @@ const styles = StyleSheet.create({
   },
   brandTitle: {
     fontSize: 32,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#fff',
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
   brandSubtitle: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: '#64748b',
     marginTop: 4,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: 'rgba(25, 37, 64, 0.6)',
-    borderRadius: 24,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    borderRadius: 32,
     padding: 24,
     borderWidth: 1,
-    borderColor: 'rgba(64, 72, 93, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 20 },
     shadowOpacity: 0.4,
@@ -238,19 +297,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: 32,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(64, 72, 93, 0.3)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.05)',
   },
   activeTab: {
     flex: 1,
     paddingBottom: 16,
-    borderBottomWidth: 2,
+    borderBottomWidth: 3,
     borderBottomColor: '#69f6b8',
   },
   activeTabText: {
     textAlign: 'center',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#69f6b8',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   inactiveTab: {
     flex: 1,
@@ -260,39 +321,43 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     fontWeight: '700',
-    color: '#6d758c',
+    color: '#475569',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   label: {
     fontSize: 10,
-    fontWeight: '800',
-    color: '#6d758c',
-    marginBottom: 8,
-    letterSpacing: 1.5,
+    fontWeight: '900',
+    color: '#475569',
+    marginBottom: 10,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   labelRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 8,
   },
   forgotText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     color: '#69f6b8',
   },
   roleSelector: {
     flexDirection: 'row',
-    backgroundColor: '#0f172a',
-    borderRadius: 14,
-    padding: 4,
-    marginBottom: 24,
+    backgroundColor: '#060e20',
+    borderRadius: 16,
+    padding: 6,
+    marginBottom: 32,
     borderWidth: 1,
-    borderColor: 'rgba(64, 72, 93, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   roleBtn: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
   },
   roleBtnActive: {
     backgroundColor: '#1e293b',
@@ -301,8 +366,8 @@ const styles = StyleSheet.create({
   },
   roleBtnText: {
     fontSize: 13,
-    fontWeight: '600',
-    color: '#6d758c',
+    fontWeight: '700',
+    color: '#475569',
   },
   roleBtnTextActive: {
     color: '#69f6b8',
@@ -310,81 +375,88 @@ const styles = StyleSheet.create({
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    borderRadius: 14,
+    backgroundColor: '#060e20',
+    borderRadius: 16,
     paddingHorizontal: 16,
-    height: 56,
+    height: 60,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: 'rgba(64, 72, 93, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
   },
   input: {
     flex: 1,
     marginLeft: 12,
     color: '#fff',
     fontSize: 15,
+    fontWeight: '600',
   },
   submitBtn: {
     backgroundColor: '#69f6b8',
-    height: 56,
-    borderRadius: 14,
+    height: 60,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 12,
-    gap: 8,
+    marginTop: 20,
+    gap: 12,
     shadowColor: '#69f6b8',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowRadius: 20,
+    elevation: 5,
   },
   submitBtnDisabled: { opacity: 0.7 },
   submitText: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#005a3c',
+    fontWeight: '900',
+    color: '#002919',
   },
   dividerWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 32,
     gap: 16,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: 'rgba(64, 72, 93, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   dividerText: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#475569',
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#334155',
+    letterSpacing: 2,
   },
-  biometricWrap: {
-    alignItems: 'center',
+  socialRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
   },
-  biometricBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 14,
-    backgroundColor: '#192540',
+  socialBtn: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: '#060e20',
     borderWidth: 1,
-    borderColor: 'rgba(64, 72, 93, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 32,
+    marginTop: 40,
+    marginBottom: 20,
   },
   footerText: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: '#64748b',
+    fontWeight: '500',
   },
   footerLink: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#69f6b8',
   },
 });

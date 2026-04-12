@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  View, Text, ScrollView, TouchableOpacity, 
+import {
+  View, Text, ScrollView, TouchableOpacity,
   ActivityIndicator, TextInput, Modal, StyleSheet
 } from 'react-native';
-import { 
-  User, Mail, Shield, LogOut, Settings, 
+import {
+  User, Mail, Shield, LogOut, Settings,
   ChevronRight, Edit2, Check, X, Award,
   Database, RefreshCw, BarChart3, Star
 } from 'lucide-react-native';
@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function AdminProfil() {
   const { user, signOut, updateProfile, showAlert } = useAuthContext();
   const { recentExpenses } = useFundTrackerContext();
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(user?.profile?.full_name || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,7 +31,7 @@ export default function AdminProfil() {
       showAlert('Error', 'Nama harus diisi lengkap, bro.', 'error');
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       await updateProfile(newName);
@@ -60,7 +60,7 @@ export default function AdminProfil() {
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        
+
         {/* Header Section */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Account Shield</Text>
@@ -83,7 +83,7 @@ export default function AdminProfil() {
               >
                 <Text style={styles.avatarText}>{initial}</Text>
               </LinearGradient>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.editAvatarBtn}
                 onPress={() => setIsEditing(true)}
               >
@@ -97,7 +97,7 @@ export default function AdminProfil() {
                 <Mail size={12} color="#64748b" />
                 <Text style={styles.profileEmail}>{email}</Text>
               </View>
-              
+
               <View style={styles.statusBadge}>
                 <Star size={10} color="#fbbf24" fill="#fbbf24" />
                 <Text style={styles.statusText}>PRO ACCESS</Text>
@@ -144,8 +144,8 @@ export default function AdminProfil() {
             <ChevronRight size={18} color="#334155" />
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.settingItem, { borderBottomWidth: 0 }]} 
+          <TouchableOpacity
+            style={[styles.settingItem, { borderBottomWidth: 0 }]}
             onPress={handleLogout}
             activeOpacity={0.7}
           >
@@ -153,7 +153,7 @@ export default function AdminProfil() {
               <View style={[styles.settingIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
                 <LogOut size={18} color={AppColors.accent.red} />
               </View>
-              <Text style={[styles.settingText, { color: AppColors.accent.red }]}>Disconnect Session</Text>
+              <Text style={[styles.settingText, { color: AppColors.accent.red }]}>Logout</Text>
             </View>
           </TouchableOpacity>
         </GlassCard>
@@ -178,7 +178,7 @@ export default function AdminProfil() {
           <GlassCard style={styles.editModal}>
             <Text style={styles.modalTitle}>Update Identity</Text>
             <Text style={styles.modalSubtitle}>Ubah nama profil lengkap Anda yang akan tercatat di sistem ledger.</Text>
-            
+
             <View style={styles.inputWrap}>
               <User size={18} color="#64748b" />
               <TextInput
@@ -193,16 +193,16 @@ export default function AdminProfil() {
             </View>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity 
-                style={styles.cancelBtn} 
+              <TouchableOpacity
+                style={styles.cancelBtn}
                 onPress={() => setIsEditing(false)}
                 disabled={isSubmitting}
               >
                 <Text style={styles.cancelBtnText}>Batal</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.saveBtn} 
+
+              <TouchableOpacity
+                style={styles.saveBtn}
                 onPress={handleUpdateName}
                 disabled={isSubmitting}
               >

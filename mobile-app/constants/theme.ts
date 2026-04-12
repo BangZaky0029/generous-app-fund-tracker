@@ -6,9 +6,9 @@
 export const AppColors = {
   // === BACKGROUNDS ===
   bg: {
-    primary: '#F8FAFC',      // Slate 50 — layar utama (off-white)
-    secondary: '#FFFFFF',    // Pure White — card base
-    tertiary: '#F1F5F9',     // Slate 100 — form input/navbar
+    primary: '#060e20',      // Deep Navy — layar utama
+    secondary: '#0f172a',    // Deep Slate — card base
+    tertiary: '#1e293b',     // Slate 800 — form input/navbar
   },
 
   // === ACCENT COLORS (Soft Pastel Vibrancy) ===
@@ -29,20 +29,20 @@ export const AppColors = {
 
   // === GLASSMORPHISM / NEUMORPHISM (Light Mode) ===
   glass: {
-    bg: '#FFFFFF',
-    bgHover: '#F8FAFC',
-    border: '#E2E8F0',       // Slate 200 — garis pinggir soft
-    borderStrong: '#CBD5E1', // Slate 300
-    shadow: 'rgba(15, 23, 42, 0.05)', // Bayangan hitam sangat samar
+    bg: '#0f172a',
+    bgHover: '#1e293b',
+    border: 'rgba(255,255,255,0.05)',
+    borderStrong: 'rgba(255,255,255,0.1)',
+    shadow: 'rgba(0, 0, 0, 0.4)',
   },
 
   // === TEXT ===
   text: {
-    primary: '#0F172A',      // Slate 900 — Judul & nominal
-    secondary: '#475569',    // Slate 600 — Deskripsi / Muted
-    tertiary: '#94A3B8',     // Slate 400 — Waktu / Hint
-    white: '#FFFFFF',        // Tetap putih untuk tombol berlatar warna
-    inverse: '#F8FAFC',
+    primary: '#FFFFFF',      // White — Judul & nominal
+    secondary: '#94A3B8',    // Slate 400 — Deskripsi / Muted
+    tertiary: '#64748B',     // Slate 500 — Waktu / Hint
+    white: '#FFFFFF',
+    inverse: '#0F172A',
   },
 
   // === STATUS ===

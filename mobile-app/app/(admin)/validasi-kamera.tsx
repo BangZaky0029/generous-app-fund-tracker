@@ -1,43 +1,41 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions, FlashMode } from 'expo-camera';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
 import { scanReceipt } from '@/services/ocrService';
 
-import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows } from '@/constants/theme';
-import { useAuthContext } from '@/context/FundTrackerContext';
+import { AppColors } from '@/constants/theme';
+import { useFundTrackerContext } from '@/context/FundTrackerContext';
 
 export default function ValidasiKamera() {
-  const { showAlert } = useAuthContext();
+  const { showAlert } = useFundTrackerContext();
   const [permission, requestPermission] = useCameraPermissions();
   const [flash, setFlash] = useState<FlashMode>('off');
   const [isScanning, setIsScanning] = useState(false);
+  const [lastCapturedUri, setLastCapturedUri] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
-  if (!permission) return <View className="flex-1 bg-black" />;
+  if (!permission) return <View style={{ flex: 1, backgroundColor: '#000' }} />;
 
   if (!permission.granted) {
     return (
-      <View className="flex-1 bg-[#0f172a] items-center justify-center p-8">
-        <View className="w-24 h-24 bg-[#69f6b8]/10 rounded-full items-center justify-center mb-8 border border-[#69f6b8]/20">
+      <View style={styles.permissionRoot}>
+        <View style={styles.permissionIconBox}>
           <MaterialIcons name="camera-alt" size={48} color="#69f6b8" />
         </View>
-        <Text className="text-2xl font-bold text-white text-center mb-4">Akses Kamera Dibutuhkan</Text>
-        <Text className="text-[#94a3b8] text-center mb-10 leading-6 px-4">
-          Untuk menjaga transparansi donasi, Admin diwajibkan mengunggah bukti struk asli melalui kamera. Kami menjamin privasi data Anda.
+        <Text style={styles.permissionTitle}>Akses Kamera Dibutuhkan</Text>
+        <Text style={styles.permissionDesc}>
+          Untuk menjaga transparansi donasi, Admin diwajibkan mengunggah bukti struk asli melalui kamera.
         </Text>
         <TouchableOpacity 
           onPress={requestPermission} 
-          className="bg-[#69f6b8] w-full py-5 rounded-2xl items-center shadow-lg"
+          style={styles.permissionBtn}
         >
-          <Text className="font-bold text-[#005a3c] text-lg">Izinkan Sekarang</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()} className="mt-6">
-          <Text className="text-[#94a3b8] font-medium">Nanti Saja</Text>
+          <Text style={styles.permissionBtnText}>Izinkan Sekarang</Text>
         </TouchableOpacity>
       </View>
     );
@@ -48,8 +46,9 @@ export default function ValidasiKamera() {
     setFlash(current => (current === 'off' ? 'on' : current === 'on' ? 'auto' : 'off'));
   };
 
-  const handleOcrProcess = async (base64: string) => {
+  const handleOcrProcess = async (base64: string, uri: string) => {
     setIsScanning(true);
+    setLastCapturedUri(uri);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     
     try {
@@ -60,20 +59,21 @@ export default function ValidasiKamera() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         showAlert(
           'Struk Terdeteksi',
-          `Nominal: Rp ${result.amount.toLocaleString('id-ID')}\nTanggal: ${result.date || 'Tidak ditemukan'}\n\nLanjutkan simpan?`,
+          `Nominal: Rp ${result.amount.toLocaleString('id-ID')}\n\nLanjutkan simpan?`,
           'success',
           () => router.push({
-            pathname: '/modal/add-expense',
+            pathname: '/(admin)/add-expense',
             params: { 
               amount: result.amount?.toString(),
               description: result.rawText.substring(0, 50),
-              category: 'Lainnya'
+              category: 'Lainnya',
+              capturedUri: uri,
             }
           })
         );
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        showAlert('Gagal Mendeteksi', 'Nominal struk tidak terbaca dengan jelas. Pastikan foto fokus dan pencahayaan cukup.', 'warning');
+        showAlert('Gagal Mendeteksi', 'Nominal struk tidak terbaca. Pastikan foto fokus.', 'warning');
       }
     } catch (error: any) {
       setIsScanning(false);
@@ -86,8 +86,8 @@ export default function ValidasiKamera() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       try {
         const photo = await cameraRef.current.takePictureAsync({ base64: true, quality: 0.5 });
-        if (photo?.base64) {
-          handleOcrProcess(photo.base64);
+        if (photo?.base64 && photo?.uri) {
+          handleOcrProcess(photo.base64, photo.uri);
         }
       } catch (e) {
         showAlert('Error', 'Gagal mengambil gambar', 'error');
@@ -104,20 +104,18 @@ export default function ValidasiKamera() {
     });
 
     if (!result.canceled && result.assets[0].base64) {
-      handleOcrProcess(result.assets[0].base64);
+      handleOcrProcess(result.assets[0].base64, result.assets[0].uri);
     }
   };
 
   return (
-    <View className="flex-1 bg-black">
-      <SafeAreaView edges={['top']} className="absolute top-0 left-0 right-0 z-50">
-        <View className="flex-row justify-between items-center px-6 py-4 bg-[#192540]/80 border-b border-[#40485d]/15 mx-4 mt-2 rounded-2xl backdrop-blur-md">
-          <View className="flex-row items-center gap-3">
-            <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-              <MaterialIcons name="arrow-back" size={24} color="#69f6b8" />
-            </TouchableOpacity>
-            <Text className="font-headline text-sm text-[#69f6b8] font-bold uppercase tracking-widest">Pindai Bukti</Text>
-          </View>
+    <View style={styles.root}>
+      <SafeAreaView edges={['top']} style={styles.headerArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <MaterialIcons name="arrow-back" size={24} color="#69f6b8" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>PINDAI BUKTI</Text>
         </View>
       </SafeAreaView>
 
@@ -127,78 +125,75 @@ export default function ValidasiKamera() {
         facing="back"
         flash={flash}
       >
-         <View className="flex-1 justify-center items-center bg-black/40">
-           {/* Viewfinder Target */}
-           <View className="w-[80%] aspect-[3/4] border-2 border-white/20 rounded-xl relative overflow-hidden">
-             {/* Corners */}
-             <View className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-primary rounded-tl-xl" />
-             <View className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-primary rounded-tr-xl" />
-             <View className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-primary rounded-bl-xl" />
-             <View className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-primary rounded-br-xl" />
+         <View style={styles.overlay}>
+           <View style={styles.viewfinder}>
+              <View style={[styles.corner, styles.topLeft]} />
+              <View style={[styles.corner, styles.topRight]} />
+              <View style={[styles.corner, styles.bottomLeft]} />
+              <View style={[styles.corner, styles.bottomRight]} />
 
-             {/* Detection Meta */}
-             <View className="absolute top-4 left-4 bg-primary/20 px-3 py-1 rounded-full border border-primary/30 flex-row items-center gap-2">
-                <View className={`w-2 h-2 rounded-full ${isScanning ? 'bg-amber-400' : 'bg-primary'}`} />
-                <Text className="text-[10px] font-bold text-primary tracking-widest uppercase">
-                  {isScanning ? 'Memproses...' : 'Siap Pindai'}
-                </Text>
-             </View>
-
-             {/* Animated Scanning Line (Simulated) */}
-             {isScanning && (
-               <View className="absolute top-0 w-full h-1 bg-primary/50 shadow-lg shadow-primary" />
-             )}
+              <View style={styles.metaBadge}>
+                 <View style={[styles.statusDot, { backgroundColor: isScanning ? '#fbbf24' : '#69f6b8' }]} />
+                 <Text style={styles.metaText}>{isScanning ? 'MEMPROSES...' : 'SIAP PINDAI'}</Text>
+              </View>
            </View>
 
-           {/* Instructional */}
-           <View className="absolute bottom-48 bg-black/40 px-6 py-2 rounded-full border border-white/10">
-              <Text className="text-white/80 text-sm font-medium tracking-wide">Posisikan struk belanja di dalam kotak</Text>
+           <View style={styles.hintBox}>
+              <Text style={styles.hintText}>Posisikan struk belanja di dalam kotak</Text>
            </View>
          </View>
 
-         {/* Shutter Controls */}
-         <View className="absolute bottom-12 w-full flex-row justify-between items-center px-10 pb-6">
-            {/* Gallery Button */}
-            <View className="items-center justify-center w-12">
-              <TouchableOpacity 
-                disabled={isScanning}
-                onPress={pickImage}
-                className="w-12 h-12 rounded-full bg-surface-variant/40 border border-outline-variant/20 items-center justify-center backdrop-blur-md"
-              >
-                 <MaterialIcons name="photo-library" size={24} color="#dee5ff" />
-              </TouchableOpacity>
-            </View>
+         <View style={styles.controls}>
+            <TouchableOpacity onPress={pickImage} style={styles.sideBtn}>
+               <MaterialIcons name="photo-library" size={24} color="#dee5ff" />
+            </TouchableOpacity>
 
-            {/* Main Shutter */}
-            <TouchableOpacity 
-              disabled={isScanning}
-              onPress={takePicture}
-              className={`w-20 h-20 rounded-full ${isScanning ? 'bg-surface-variant' : 'bg-primary'} p-1 shadow-lg active:scale-95`}
-            >
-               <View className="w-full h-full rounded-full border-4 border-black/20 items-center justify-center">
-                  {isScanning ? (
-                    <ActivityIndicator color="#000" />
-                  ) : (
-                    <View className="w-16 h-16 rounded-full bg-transparent border-2 border-white/30" />
-                  )}
+            <TouchableOpacity onPress={takePicture} disabled={isScanning} style={styles.shutterBtn}>
+               <View style={styles.shutterInner}>
+                  {isScanning ? <ActivityIndicator color="#000" /> : <View style={styles.shutterPoint} />}
                </View>
             </TouchableOpacity>
 
-            {/* Flash Toggle */}
-            <View className="items-center justify-center w-12">
-              <TouchableOpacity 
-                onPress={toggleFlash}
-                className="w-12 h-12 rounded-full bg-surface-variant/40 border border-outline-variant/20 items-center justify-center backdrop-blur-md"
-              >
-                 <MaterialIcons 
-                    name={flash === 'off' ? 'flash-off' : flash === 'on' ? 'flash-on' : 'flash-auto'} 
-                    size={24} 
-                    color={flash === 'off' ? '#dee5ff' : '#69f6b8'} 
-                 />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={toggleFlash} style={styles.sideBtn}>
+               <MaterialIcons 
+                  name={flash === 'off' ? 'flash-off' : flash === 'on' ? 'flash-on' : 'flash-auto'} 
+                  size={24} 
+                  color={flash === 'off' ? '#dee5ff' : '#69f6b8'} 
+               />
+            </TouchableOpacity>
          </View>
       </CameraView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#000' },
+  permissionRoot: { flex: 1, backgroundColor: '#060e20', alignItems: 'center', justifyContent: 'center', padding: 32 },
+  permissionIconBox: { width: 96, height: 96, borderRadius: 48, backgroundColor: 'rgba(105, 246, 184, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 32 },
+  permissionTitle: { fontSize: 24, fontWeight: 'bold', color: '#fff', textAlign: 'center', marginBottom: 16 },
+  permissionDesc: { color: '#94a3b8', textAlign: 'center', marginBottom: 40, lineHeight: 22 },
+  permissionBtn: { backgroundColor: '#69f6b8', width: '100%', paddingVertical: 20, borderRadius: 16, alignItems: 'center' },
+  permissionBtnText: { color: '#002919', fontWeight: 'bold', fontSize: 16 },
+  headerArea: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 },
+  header: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'rgba(25, 37, 64, 0.8)', margin: 16, borderRadius: 16, gap: 12 },
+  backBtn: { padding: 4 },
+  headerTitle: { color: '#69f6b8', fontWeight: 'bold', letterSpacing: 1 },
+  overlay: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
+  viewfinder: { width: '80%', aspectRatio: 3/4, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 20, position: 'relative' },
+  corner: { position: 'absolute', width: 24, height: 24, borderColor: '#69f6b8', borderWidth: 4 },
+  topLeft: { top: -2, left: -2, borderBottomWidth: 0, borderRightWidth: 0, borderTopLeftRadius: 20 },
+  topRight: { top: -2, right: -2, borderBottomWidth: 0, borderLeftWidth: 0, borderTopRightRadius: 20 },
+  bottomLeft: { bottom: -2, left: -2, borderTopWidth: 0, borderRightWidth: 0, borderBottomLeftRadius: 20 },
+  bottomRight: { bottom: -2, right: -2, borderTopWidth: 0, borderLeftWidth: 0, borderBottomRightRadius: 20 },
+  metaBadge: { position: 'absolute', top: 16, left: 16, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  metaText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  hintBox: { position: 'absolute', bottom: 180, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 24 },
+  hintText: { color: '#fff', fontSize: 12 },
+  controls: { position: 'absolute', bottom: 40, width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 40 },
+  sideBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' },
+  shutterBtn: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#69f6b8', padding: 4 },
+  shutterInner: { flex: 1, borderRadius: 40, borderWidth: 4, borderColor: 'rgba(0,0,0,0.1)', alignItems: 'center', justifyContent: 'center' },
+  shutterPoint: { width: 60, height: 60, borderRadius: 30, backgroundColor: 'transparent', borderWidth: 2, borderColor: '#fff' }
+});

@@ -38,12 +38,21 @@ export async function fetchRecentDonations(limit = 5): Promise<Donation[]> {
   return (data as Donation[]) ?? [];
 }
 
+import { uploadToStorage } from '@/lib/upload';
+
 // --- Tambah donasi baru ---
 export async function createDonation(form: AddDonationForm): Promise<Donation> {
+  let receiptUrl: string | null = null;
+  
+  if (form.receiptLocalUri) {
+    receiptUrl = await uploadToStorage(form.receiptLocalUri, 'receipts', 'donations');
+  }
+
   const payload = {
-    donator_name: form.donator_name.trim() || 'Anonymous',
+    donator_name: form.donator_name.trim() || 'Hamba Allah',
     amount: parseFloat(form.amount),
     message: form.message.trim() || null,
+    receipt_url: receiptUrl,
   };
 
   const { data, error } = await supabase

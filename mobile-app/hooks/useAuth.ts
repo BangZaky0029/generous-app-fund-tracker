@@ -11,6 +11,7 @@ type AuthState = {
   user: AuthUser | null;
   session: Session | null;
   isLoading: boolean;
+  isVerifying: boolean;
   isAdmin: boolean;
 };
 
@@ -20,6 +21,7 @@ type AuthActions = {
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  setIsVerifying: (val: boolean) => void;
 };
 
 export function useAuth(): AuthState & AuthActions {
@@ -28,6 +30,7 @@ export function useAuth(): AuthState & AuthActions {
     user: null,
     session: null,
     isLoading: true,
+    isVerifying: false,
     isAdmin: false,
   });
 
@@ -54,7 +57,7 @@ export function useAuth(): AuthState & AuthActions {
   const updateFromSession = useCallback(
     async (session: Session | null) => {
       if (!session?.user) {
-        setState({ user: null, session: null, isLoading: false, isAdmin: false });
+        setState({ user: null, session: null, isLoading: false, isVerifying: false, isAdmin: false });
         return;
       }
 
@@ -65,12 +68,13 @@ export function useAuth(): AuthState & AuthActions {
         profile,
       };
 
-      setState({
+      setState(prev => ({
+        ...prev,
         user: authUser,
         session,
         isLoading: false,
         isAdmin: profile?.role === 'admin',
-      });
+      }));
     },
     [fetchProfile]
   );
@@ -93,6 +97,7 @@ export function useAuth(): AuthState & AuthActions {
 
   const signIn = useCallback(async (email: string, password: string) => {
     console.log(`[useAuth] Attempting signIn for: ${email}...`);
+    setState(prev => ({ ...prev, isLoading: true }));
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
@@ -108,6 +113,7 @@ export function useAuth(): AuthState & AuthActions {
 
   const signUp = useCallback(async (email: string, password: string, fullName: string, role: 'donatur' | 'admin' = 'donatur') => {
     console.log(`[useAuth] Attempting signUp for: ${email}...`);
+    setState(prev => ({ ...prev, isLoading: true }));
     try {
       const { data, error } = await supabase.auth.signUp({ email, password });
       
@@ -167,8 +173,17 @@ export function useAuth(): AuthState & AuthActions {
   }, [state.user, fetchProfile]);
 
   const signOut = useCallback(async () => {
+    console.log('[useAuth] User initiated signOut');
+    setState(prev => ({ ...prev, isLoading: true }));
     const { error } = await supabase.auth.signOut();
-    if (error) throw new Error(error.message);
+    if (error) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      throw new Error(error.message);
+    }
+  }, []);
+
+  const setIsVerifying = useCallback((val: boolean) => {
+    setState(prev => ({ ...prev, isVerifying: val }));
   }, []);
 
   return {
@@ -178,5 +193,6 @@ export function useAuth(): AuthState & AuthActions {
     resetPassword,
     updateProfile,
     signOut,
+    setIsVerifying,
   };
 }

@@ -19,11 +19,11 @@ export default function InputDashboard() {
   const { showAlert } = useFundTrackerContext();
   
   const handleOpenExpense = () => {
-    router.push('/modal/add-expense');
+    router.push('/(admin)/add-expense');
   };
 
   const handleOpenDonation = () => {
-    router.push('/modal/add-donation');
+    router.push('/(admin)/add-donation');
   };
 
   const showUnderConstruction = () => {
@@ -69,7 +69,7 @@ export default function InputDashboard() {
         <TouchableOpacity 
           style={styles.actionCard} 
           activeOpacity={0.8}
-          onPress={handleOpenExpense}
+          onPress={() => router.push('/(admin)/add-expense')}
         >
           <GlassCard style={styles.cardInner}>
             <View style={[styles.iconBox, { backgroundColor: 'rgba(105, 246, 184, 0.1)' }]}>

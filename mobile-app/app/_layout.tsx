@@ -6,12 +6,13 @@
  * - Semua auth routing dihandle oleh app/index.tsx (gatekeeper)
  * - AppProvider di sini hanya provide Context, tidak trigger redirect
  */
-import { Stack } from 'expo-router';
+import { Stack, useSegments, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
-import { AppProvider, useFundTrackerContext } from '@/context/FundTrackerContext';
+import { AppProvider, useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { AppColors } from '@/constants/theme';
 import { AlertModal } from '@/components/ui/AlertModal';
 
@@ -32,10 +33,53 @@ function GlobalAlert() {
   );
 }
 
+/**
+ * AuthGate — Penjaga pintu otomatis
+ */
+function AuthGate() {
+  const { user, isAdmin, isLoading, isVerifying } = useAuthContext();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Kunci navigasi jika sedang loading atau sedang verifikasi role
+    if (isLoading || isVerifying) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+    const inAdminGroup = segments[0] === '(admin)';
+    const inDonaturGroup = segments[0] === '(donatur)';
+
+    console.log(`[AuthGate] Segments: ${segments.join('/')} | User: ${user ? 'YES' : 'NO'} | Admin: ${isAdmin}`);
+
+    if (!user) {
+      // Jika tidak ada user dan tidak sedang di folder (auth), lempar ke login
+      if (!inAuthGroup) {
+        router.replace('/(auth)/login');
+      }
+    } else {
+      // Jika ada user
+      if (isAdmin) {
+        // Admin tapi tidak di folder admin, lempar ke dashboard admin
+        if (!inAdminGroup) {
+          router.replace('/(admin)/dashboard');
+        }
+      } else {
+        // Donatur tapi tidak di folder donatur, lempar ke dashboard donatur
+        if (!inDonaturGroup) {
+          router.replace('/(donatur)/dashboard');
+        }
+      }
+    }
+  }, [user, isAdmin, isLoading, segments]);
+
+  return null;
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <AppProvider>
+        <AuthGate />
         <Stack
           screenOptions={{
             headerShown: false,

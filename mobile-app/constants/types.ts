@@ -19,6 +19,7 @@ export type Donation = {
   donator_name: string;
   amount: number;
   message: string | null;
+  receipt_url: string | null;
   created_at: string;
 };
 
@@ -86,6 +87,7 @@ export type AddDonationForm = {
   donator_name: string;
   amount: string;
   message: string;
+  receiptLocalUri?: string | null;
 };
 
 // ========== OCR TYPES ==========
