@@ -11,7 +11,7 @@ export async function fetchAllExpenses(): Promise<Expense[]> {
   console.log('[ExpenseService] Fetching all expenses...');
   const { data, error } = await supabase
     .from('expenses')
-    .select('*') // Simplifikasi sementara untuk debug network
+    .select('*, profiles(full_name, role)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -27,7 +27,7 @@ export async function fetchRecentExpenses(limit = 10): Promise<Expense[]> {
   try {
     const { data, error } = await supabase
       .from('expenses')
-      .select('*') // Simplifikasi sementara
+      .select('*, profiles(full_name, role)')
       .order('created_at', { ascending: false })
       .limit(limit);
 

@@ -24,10 +24,11 @@ export async function extractTextFromImage(base64Image: string): Promise<OcrResu
   const formData = new FormData();
   formData.append('apikey', OCR_API_KEY);
   formData.append('base64Image', base64Data);
-  formData.append('language', 'ind'); // Set bahasa ke Indonesia
+  formData.append('language', 'eng'); // Gunakan 'eng' (latin based) untuk kestabilan di Free Tier
   formData.append('isOverlayRequired', 'false');
   formData.append('detectOrientation', 'true');
-  formData.append('scale', 'true'); // Membantu akurasi struk kecil/buram
+  formData.append('scale', 'true');
+  formData.append('OCREngine', '2'); // Engine 2 lebih akurat untuk struk belanja/layout kompleks
 
   const response = await fetch(OCR_API_URL, {
     method: 'POST',
@@ -65,9 +66,9 @@ export function parseReceiptText(ocrResult: OcrResult): ParsedReceiptData {
   // Pattern: "Rp 50.000", "Rp50000", "Total: 50.000", "TOTAL 50000"
   let amount: number | null = null;
   const amountPatterns = [
-    /(?:total|jumlah|rp\.?|idr)\s*[:.]?\s*([\d.,]+)/gi,
-    /(?:grand\s*total|subtotal|total\s*harga)\s*[:.]?\s*([\d.,]+)/gi,
-    /([\d]{1,3}(?:[.,]\d{3})+)/gi, // Angka ribuan seperti 50.000 atau 50,000
+    /(?:total|jumlah|rp\.?|idr|netto|bayar|tunai)\s*[:.]?\s*([\d.,]+)/gi,
+    /(?:grand\s*total|subtotal|total\s*harga|amount\s*total)\s*[:.]?\s*([\d.,]+)/gi,
+    /([\d]{1,3}(?:[.,]\d{3})+)/gi, 
     /TOTAL\s+([\d.,]+)/i,
   ];
 

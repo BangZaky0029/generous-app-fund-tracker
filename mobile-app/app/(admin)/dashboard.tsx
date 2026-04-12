@@ -1,6 +1,8 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Bell, TrendingUp, PlusSquare, QrCode, Bot, Receipt } from 'lucide-react-native';
+import { Bell, TrendingUp, PlusSquare, QrCode, Bot, Receipt, ChevronRight } from 'lucide-react-native';
 import { useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
+import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // Helper Formatter
 const formatRp = (amount: number) => {
@@ -17,125 +19,135 @@ export default function AdminDashboard() {
   const fundData = useFundTrackerContext();
   
   // Ambil inisial 
-  const fullName = ((user as any)?.user_metadata?.full_name as string) || 'Administrator';
+  const fullName = user?.profile?.full_name || 'Administrator';
   const initals = fullName.substring(0, 2).toUpperCase();
 
   if (fundData.isLoading) {
      return (
-       <View className="flex-1 bg-surface items-center justify-center">
+       <View className="flex-1 bg-[#060e20] items-center justify-center">
          <ActivityIndicator size="large" color="#69f6b8" />
-         <Text className="text-on-surface-variant mt-2 text-sm">Menyinkronkan agen pelacakan...</Text>
+         <Text className="text-slate-400 mt-2 text-sm font-medium">Sinkronisasi Agen Digital...</Text>
        </View>
      );
   }
 
   return (
     <ScrollView 
-      className="flex-1 bg-surface font-body" 
+      className="flex-1 bg-[#060e20]" 
       contentContainerStyle={{ padding: 24, paddingTop: 60, paddingBottom: 140 }}
+      showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View className="flex-row justify-between items-center mb-8">
-        <View className="flex-row items-center gap-3">
-          <View className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/30 overflow-hidden items-center justify-center">
-             <Text className="text-primary font-bold">{initals}</Text>
+      <View className="flex-row justify-between items-center mb-10">
+        <View className="flex-row items-center gap-4">
+          <LinearGradient
+            colors={['#69f6b8', '#00c37b']}
+            className="w-12 h-12 rounded-2xl items-center justify-center shadow-lg shadow-emerald-500/40"
+          >
+             <Text className="text-[#002919] font-bold text-lg">{initals}</Text>
+          </LinearGradient>
+          <View>
+            <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-[2px]">Admin Ledger</Text>
+            <Text className="text-white font-bold text-lg leading-tight">{fullName}</Text>
           </View>
-          <Text className="font-bold text-primary tracking-widest text-[12px] uppercase">{fullName}</Text>
         </View>
-        <TouchableOpacity className="p-2 rounded-full bg-white/10">
+        <TouchableOpacity className="p-3 rounded-2xl bg-slate-800/50 border border-slate-700/50">
           <Bell size={20} color="#69f6b8" />
         </TouchableOpacity>
       </View>
 
-      {/* Hero Section */}
-      <View className="bg-surface-container-high rounded-xl p-8 mb-6 border border-outline-variant/10 shadow-2xl relative overflow-hidden">
-         <View className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-50" />
-         <Text className="text-on-surface-variant font-medium tracking-wide mb-2">Total Saldo Terkelola</Text>
-         <Text className="text-3xl font-extrabold text-primary tracking-tighter">
+      {/* Hero Balanced Section */}
+      <View className="bg-slate-900 rounded-[32px] p-8 mb-8 border border-white/5 shadow-2xl relative overflow-hidden">
+         <LinearGradient
+           colors={['rgba(105, 246, 184, 0.15)', 'transparent']}
+           start={{ x: 0, y: 0 }}
+           end={{ x: 1, y: 1 }}
+           className="absolute inset-0"
+         />
+         <View className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px]" />
+         
+         <Text className="text-slate-400 font-bold text-xs uppercase tracking-[2px] mb-3">Total Saldo Terkelola</Text>
+         <Text className="text-4xl font-extrabold text-white tracking-tighter mb-8">
             {formatRp(fundData.remainingFunds)}
          </Text>
          
-         <View className="flex-row items-center gap-4 mt-8">
-           <View className="flex-row items-center gap-2 bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
-             <TrendingUp size={16} color="#69f6b8" />
-             <Text className="text-primary font-bold text-xs">Aset Total: {formatRp(fundData.totalDonations)}</Text>
-           </View>
+         <View className="flex-row items-center justify-between pt-6 border-t border-white/5">
+            <View>
+              <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">Aset Total</Text>
+              <Text className="text-emerald-400 font-bold">{formatRp(fundData.totalDonations)}</Text>
+            </View>
+            <View className="items-end">
+              <Text className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">Pengeluaran</Text>
+              <Text className="text-white font-bold">{formatRp(fundData.totalExpenses)}</Text>
+            </View>
          </View>
       </View>
 
       {/* Quick Actions */}
-      <View className="bg-surface-container-high rounded-xl p-6 mb-6 border border-outline-variant/10">
-        <Text className="text-on-surface font-bold text-lg mb-4">Aksi Cepat</Text>
-        <TouchableOpacity className="flex-row items-center justify-between p-4 bg-primary rounded-lg mb-3">
-          <View className="flex-row items-center gap-3">
-             <PlusSquare size={20} color="#005a3c" />
-             <Text className="text-[#005a3c] font-bold">Tambah Pengeluaran</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity className="flex-row items-center justify-between p-4 bg-surface-variant border border-primary/20 rounded-lg">
-          <View className="flex-row items-center gap-3">
-             <QrCode size={20} color="#69f6b8" />
-             <Text className="text-primary font-bold">Pindai Struk OCR</Text>
-          </View>
-        </TouchableOpacity>
-        <View className="mt-4 pt-4 border-t border-outline-variant/10">
-           <Text className="text-xs text-on-surface-variant mb-2">Sistem Agen Realtime</Text>
-           <View className="flex-row items-center gap-2">
-             <View className="w-2 h-2 rounded-full bg-primary" />
-             <Text className="text-sm font-medium text-on-surface">Supabase Channel Tersambung</Text>
-           </View>
+      <View className="mb-10">
+        <Text className="text-white font-bold text-lg mb-5 px-1">Aksi Cepat</Text>
+        <View className="flex-row gap-4">
+          <TouchableOpacity 
+            onPress={() => router.push('/modal/add-expense')}
+            className="flex-1 bg-emerald-400 rounded-3xl p-5 items-center justify-center shadow-lg shadow-emerald-500/20"
+          >
+            <PlusSquare size={24} color="#002919" />
+            <Text className="text-[#002919] font-bold mt-3 text-xs">Tambah Data</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            onPress={() => router.push('/modal/add-expense')}
+            className="flex-1 bg-slate-800 rounded-3xl p-5 items-center justify-center border border-white/5"
+          >
+            <QrCode size={24} color="#69f6b8" />
+            <Text className="text-white font-bold mt-3 text-xs">Pindai Struk</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* Log Aktivitas Agen */}
-      <View className="bg-[rgba(25,37,64,0.6)] rounded-xl p-6 border border-outline-variant/15 mb-6">
+      <View className="bg-slate-900/40 rounded-3xl p-6 border border-white/5 mb-8">
          <View className="flex-row items-center justify-between mb-6">
             <View className="flex-row items-center gap-3">
-              <Bot size={24} color="#69f6b8" />
-              <Text className="text-lg font-bold text-on-surface">Log Aktivitas Pengeluaran</Text>
+              <Bot size={22} color="#69f6b8" />
+              <Text className="text-lg font-bold text-white">Log Aktivitas</Text>
             </View>
+            <TouchableOpacity onPress={() => router.push('/(admin)/manajemen-bukti')}>
+              <Text className="text-emerald-400 font-bold text-xs">Lihat Semua</Text>
+            </TouchableOpacity>
          </View>
          
-         <View className="space-y-4">
+         <View className="space-y-3">
              {fundData.recentExpenses.length === 0 ? (
-                <Text className="text-on-surface-variant text-sm italic">Belum ada pengeluaran hari ini.</Text>
-             ) : fundData.recentExpenses.slice(0,3).map((exp, idx) => (
-                <View key={exp.id || idx} className="flex-row gap-4 p-4 rounded-lg bg-surface-container/50 border-l-4 border-primary">
-                    <Receipt size={16} color="#69f6b8" />
-                    <View className="flex-1">
-                        <Text className="text-sm text-on-surface font-medium">{exp.description || exp.category}</Text>
-                        <Text className="text-primary font-bold text-xs mt-1">{formatRp(exp.amount)} dicatat</Text>
-                    </View>
+                <View className="py-8 items-center">
+                  <Text className="text-slate-500 text-sm italic text-center">Belum ada pengeluaran digital tercatat hari ini.</Text>
                 </View>
+             ) : fundData.recentExpenses.slice(0,3).map((exp, idx) => (
+                <TouchableOpacity 
+                  key={exp.id || idx} 
+                  className="flex-row items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5"
+                  onPress={() => exp.receipt_url && router.push({ pathname: '/(admin)/manajemen-bukti', params: { search: exp.description } })}
+                >
+                    <View className="w-10 h-10 rounded-xl bg-emerald-500/10 items-center justify-center">
+                      <Receipt size={18} color="#69f6b8" />
+                    </View>
+                    <View className="flex-1">
+                        <Text className="text-sm text-white font-bold" numberOfLines={1}>{exp.description || exp.category}</Text>
+                        <Text className="text-emerald-400 font-bold text-[10px] mt-0.5">{formatRp(exp.amount)}</Text>
+                    </View>
+                    <ChevronRight size={16} color="#475569" />
+                </TouchableOpacity>
              ))}
          </View>
       </View>
 
-      {/* Allocation Tile */}
-      <View className="bg-surface-container rounded-xl p-6 border border-outline-variant/10 mb-10">
-        <Text className="text-lg font-bold text-on-surface mb-6">Alokasi Dana Keluar</Text>
-        <View className="space-y-6">
-          {fundData.categories.map((cat, idx) => (
-             <View key={idx}>
-               <View className="flex-row justify-between mb-2">
-                 <Text className="text-xs text-on-surface-variant">{cat.name}</Text>
-                 <Text className="text-xs text-primary font-bold">{cat.percentage}%</Text>
-               </View>
-               <View className="h-2 bg-surface-variant rounded-full overflow-hidden">
-                  <View 
-                    style={{ width: `${cat.percentage}%`, backgroundColor: cat.color }} 
-                    className="h-full rounded-full shadow-[0_0_10px_rgba(105,246,184,0.4)]" 
-                  />
-               </View>
-             </View>
-          ))}
-        </View>
-        
-        <View className="mt-6 p-4 rounded-xl bg-surface-container-high/50 border border-outline-variant/10">
-           <Text className="text-xs text-on-surface-variant leading-relaxed italic">
-             "Optimasi alokasi dihitung otomatis dari total biaya sebesar {formatRp(fundData.totalExpenses)}."
-           </Text>
-        </View>
+      {/* Monitoring System Status */}
+      <View className="px-5 py-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 flex-row items-center justify-between mb-10">
+         <View className="flex-row items-center gap-3">
+            <View className="w-2 h-2 rounded-full bg-emerald-400" />
+            <Text className="text-emerald-400/80 text-[11px] font-bold uppercase tracking-wider">Sistem Agen Realtime Aktif</Text>
+         </View>
+         <Text className="text-slate-500 text-[10px]">Supabase TLS 1.3</Text>
       </View>
     </ScrollView>
   );

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { 
   View, Text, ScrollView, TouchableOpacity, 
-  ActivityIndicator, Alert, TextInput, Modal, StyleSheet
+  ActivityIndicator, TextInput, Modal, StyleSheet
 } from 'react-native';
 import { 
   User, Mail, Shield, LogOut, Settings, 
   ChevronRight, Edit2, Check, X, Award,
-  Database, RefreshCw, BarChart3
+  Database, RefreshCw, BarChart3, Star
 } from 'lucide-react-native';
 import { useAuthContext, useFundTrackerContext } from '@/context/FundTrackerContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,8 +15,8 @@ import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows } from '@/consta
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function AdminProfil() {
-  const { user, signOut, updateProfile } = useAuthContext();
-  const { totalExpenses, totalDonations, recentExpenses } = useFundTrackerContext();
+  const { user, signOut, updateProfile, showAlert } = useAuthContext();
+  const { recentExpenses } = useFundTrackerContext();
   
   const [isEditing, setIsEditing] = useState(false);
   const [newName, setNewName] = useState(user?.profile?.full_name || '');
@@ -28,7 +28,7 @@ export default function AdminProfil() {
 
   const handleUpdateName = async () => {
     if (!newName.trim()) {
-      Alert.alert('Error', 'Nama tidak boleh kosong');
+      showAlert('Error', 'Nama harus diisi lengkap, bro.', 'error');
       return;
     }
     
@@ -36,23 +36,25 @@ export default function AdminProfil() {
     try {
       await updateProfile(newName);
       setIsEditing(false);
-      Alert.alert('Sukses', 'Profil berhasil diperbarui');
+      showAlert('Sukses', 'Profil digital Anda telah diperbarui.', 'success');
     } catch (err) {
-      Alert.alert('Error', 'Gagal memperbarui profil');
+      showAlert('Error', 'Gagal memperbarui profil di server.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Keluar Aplikasi',
-      'Apakah Anda yakin ingin keluar dari sistem?',
-      [
-        { text: 'Batal', style: 'cancel' },
-        { text: 'Keluar', style: 'destructive', onPress: signOut }
-      ]
+    showAlert(
+      'Keluar Sistem',
+      'Apakah Anda yakin ingin memutus sesi agen digital Anda?',
+      'warning',
+      signOut
     );
+  };
+
+  const showUnderConstruction = () => {
+    showAlert('Coming Soon', 'Modul pengaturan lanjutan sedang dikalibrasi oleh agen AI.', 'info');
   };
 
   return (
@@ -61,87 +63,85 @@ export default function AdminProfil() {
         
         {/* Header Section */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Manajemen Profil</Text>
-          <Text style={styles.headerSubtitle}>Role: Admin Utama</Text>
+          <Text style={styles.headerTitle}>Account Shield</Text>
+          <View style={styles.roleBadge}>
+            <Shield size={10} color={AppColors.accent.emerald} />
+            <Text style={styles.roleText}>Verified Administrator</Text>
+          </View>
         </View>
 
         {/* Hero Card */}
-        <GlassCard variant="elevated" style={styles.heroCard}>
+        <View style={styles.heroWrapper}>
           <LinearGradient
-            colors={['rgba(105, 246, 184, 0.1)', 'rgba(99, 102, 241, 0.05)']}
-            style={StyleSheet.absoluteFill}
-          />
-          
-          <View style={styles.avatarContainer}>
-            <LinearGradient
-              colors={[AppColors.accent.emerald, '#00c37b']}
-              style={styles.avatarGradient}
-            >
-              <Text style={styles.avatarText}>{initial}</Text>
-            </LinearGradient>
-            <TouchableOpacity 
-              style={styles.editAvatarBtn}
-              onPress={() => setIsEditing(true)}
-            >
-              <Edit2 size={12} color="#fff" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.profileInfo}>
-            <View style={styles.nameRow}>
-              <Text style={styles.profileName}>{fullName}</Text>
-              <TouchableOpacity onPress={() => setIsEditing(true)}>
-                <Edit2 size={16} color={AppColors.accent.electric} style={{ marginLeft: 8 }} />
+            colors={['#1e293b', '#0f172a']}
+            style={styles.heroCard}
+          >
+            <View style={styles.avatarContainer}>
+              <LinearGradient
+                colors={['#69f6b8', '#00c37b']}
+                style={styles.avatarGradient}
+              >
+                <Text style={styles.avatarText}>{initial}</Text>
+              </LinearGradient>
+              <TouchableOpacity 
+                style={styles.editAvatarBtn}
+                onPress={() => setIsEditing(true)}
+              >
+                <Edit2 size={12} color="#002919" />
               </TouchableOpacity>
             </View>
-            <View style={styles.emailRow}>
-              <Mail size={14} color={AppColors.text.tertiary} />
-              <Text style={styles.profileEmail}>{email}</Text>
+
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{fullName}</Text>
+              <View style={styles.emailRow}>
+                <Mail size={12} color="#64748b" />
+                <Text style={styles.profileEmail}>{email}</Text>
+              </View>
+              
+              <View style={styles.statusBadge}>
+                <Star size={10} color="#fbbf24" fill="#fbbf24" />
+                <Text style={styles.statusText}>PRO ACCESS</Text>
+              </View>
             </View>
-            
-            <View style={styles.badge}>
-              <Award size={12} color={AppColors.accent.emerald} />
-              <Text style={styles.badgeText}>Verified Admin</Text>
-            </View>
-          </View>
-        </GlassCard>
+          </LinearGradient>
+        </View>
 
         {/* Admin Stats Dashboard */}
-        <Text style={styles.sectionLabel}>Ringkasan Aktivitas</Text>
+        <Text style={styles.sectionLabel}>System Insights</Text>
         <View style={styles.statsRow}>
           <GlassCard style={styles.statItem}>
             <BarChart3 size={20} color={AppColors.accent.electric} />
             <Text style={styles.statValue}>{recentExpenses.length}</Text>
-            <Text style={styles.statLabel}>Bukti Discan</Text>
+            <Text style={styles.statLabel}>Total Assets</Text>
           </GlassCard>
           <GlassCard style={styles.statItem}>
             <Database size={20} color={AppColors.accent.blue} />
-            <Text style={styles.statValue}>v2.4</Text>
-            <Text style={styles.statLabel}>Versi Sistem</Text>
+            <Text style={styles.statValue}>v3.0</Text>
+            <Text style={styles.statLabel}>Agent Core</Text>
           </GlassCard>
         </View>
 
         {/* Settings List */}
-        <Text style={styles.sectionLabel}>Pengaturan & Keamanan</Text>
-        <GlassCard variant="elevated" style={styles.settingsGroup}>
-          <TouchableOpacity style={styles.settingItem} activeOpacity={0.7}>
+        <Text style={styles.sectionLabel}>Preferences</Text>
+        <GlassCard style={styles.settingsGroup}>
+          <TouchableOpacity style={styles.settingItem} activeOpacity={0.7} onPress={showUnderConstruction}>
             <View style={styles.settingLeft}>
               <View style={[styles.settingIcon, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
-                <Shield size={20} color={AppColors.accent.blue} />
+                <Shield size={18} color={AppColors.accent.blue} />
               </View>
-              <Text style={styles.settingText}>Keamanan Akun</Text>
+              <Text style={styles.settingText}>Security Protocol</Text>
             </View>
-            <ChevronRight size={18} color={AppColors.text.tertiary} />
+            <ChevronRight size={18} color="#334155" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingItem} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.settingItem} activeOpacity={0.7} onPress={showUnderConstruction}>
             <View style={styles.settingLeft}>
               <View style={[styles.settingIcon, { backgroundColor: 'rgba(105, 246, 184, 0.1)' }]}>
-                <Settings size={20} color={AppColors.accent.emerald} />
+                <Settings size={18} color={AppColors.accent.emerald} />
               </View>
-              <Text style={styles.settingText}>Pengaturan Aplikasi</Text>
+              <Text style={styles.settingText}>System Configuration</Text>
             </View>
-            <ChevronRight size={18} color={AppColors.text.tertiary} />
+            <ChevronRight size={18} color="#334155" />
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -151,17 +151,17 @@ export default function AdminProfil() {
           >
             <View style={styles.settingLeft}>
               <View style={[styles.settingIcon, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-                <LogOut size={20} color={AppColors.accent.red} />
+                <LogOut size={18} color={AppColors.accent.red} />
               </View>
-              <Text style={[styles.settingText, { color: AppColors.accent.red }]}>Keluar Aplikasi</Text>
+              <Text style={[styles.settingText, { color: AppColors.accent.red }]}>Disconnect Session</Text>
             </View>
           </TouchableOpacity>
         </GlassCard>
 
         {/* Footer Info */}
         <View style={styles.footer}>
-          <RefreshCw size={12} color={AppColors.text.tertiary} />
-          <Text style={styles.footerText}>Terhubung ke Supabase Realtime Engine</Text>
+          <RefreshCw size={12} color="#475569" />
+          <Text style={styles.footerText}>Node-Edge Realtime Active</Text>
         </View>
 
         <View style={{ height: 100 }} />
@@ -175,19 +175,20 @@ export default function AdminProfil() {
         onRequestClose={() => setIsEditing(false)}
       >
         <View style={styles.modalOverlay}>
-          <GlassCard variant="elevated" style={styles.editModal}>
-            <Text style={styles.modalTitle}>Ubah Nama Profil</Text>
-            <Text style={styles.modalSubtitle}>Nama ini akan terlihat pada setiap riwayat transaksi yang Anda tangani.</Text>
+          <GlassCard style={styles.editModal}>
+            <Text style={styles.modalTitle}>Update Identity</Text>
+            <Text style={styles.modalSubtitle}>Ubah nama profil lengkap Anda yang akan tercatat di sistem ledger.</Text>
             
             <View style={styles.inputWrap}>
-              <User size={18} color={AppColors.text.tertiary} />
+              <User size={18} color="#64748b" />
               <TextInput
                 style={styles.modalInput}
                 value={newName}
                 onChangeText={setNewName}
-                placeholder="Masukkan Nama Lengkap"
-                placeholderTextColor={AppColors.text.tertiary}
+                placeholder="Nama Lengkap"
+                placeholderTextColor="#475569"
                 autoFocus
+                selectionColor={AppColors.accent.emerald}
               />
             </View>
 
@@ -197,7 +198,6 @@ export default function AdminProfil() {
                 onPress={() => setIsEditing(false)}
                 disabled={isSubmitting}
               >
-                <X size={18} color={AppColors.text.secondary} />
                 <Text style={styles.cancelBtnText}>Batal</Text>
               </TouchableOpacity>
               
@@ -207,12 +207,9 @@ export default function AdminProfil() {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color="#002919" size="small" />
                 ) : (
-                  <>
-                    <Check size={18} color="#fff" />
-                    <Text style={styles.saveBtnText}>Simpan</Text>
-                  </>
+                  <Text style={styles.saveBtnText}>Update</Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -226,147 +223,159 @@ export default function AdminProfil() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: AppColors.bg.primary,
+    backgroundColor: '#060e20',
   },
   scroll: {
     padding: AppSpacing.base,
   },
   header: {
-    marginBottom: AppSpacing.xl,
-    marginTop: AppSpacing.md,
+    marginBottom: 32,
+    marginTop: 20,
+    paddingHorizontal: 4,
   },
   headerTitle: {
-    color: AppColors.text.primary,
+    color: '#fff',
     fontSize: 28,
-    fontWeight: AppFonts.weights.bold,
+    fontWeight: '900',
     letterSpacing: -0.5,
   },
-  headerSubtitle: {
+  roleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+  },
+  roleText: {
     color: AppColors.accent.emerald,
-    fontSize: 14,
-    fontWeight: AppFonts.weights.medium,
-    marginTop: 4,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  heroWrapper: {
+    borderRadius: 32,
+    overflow: 'hidden',
+    marginBottom: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   heroCard: {
-    padding: AppSpacing.xl,
+    padding: 32,
     alignItems: 'center',
-    marginBottom: AppSpacing.xl,
-    overflow: 'hidden',
   },
   avatarContainer: {
     position: 'relative',
-    marginBottom: AppSpacing.md,
+    marginBottom: 20,
   },
   avatarGradient: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 100,
+    height: 100,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    borderColor: 'rgba(25, 37, 64, 0.8)',
-    ...AppShadows.emerald,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   avatarText: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: AppFonts.weights.bold,
+    color: '#002919',
+    fontSize: 40,
+    fontWeight: '900',
   },
   editAvatarBtn: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: AppColors.accent.electric,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    bottom: -8,
+    right: -8,
+    backgroundColor: '#fff',
+    width: 32,
+    height: 32,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: AppColors.bg.secondary,
+    borderWidth: 3,
+    borderColor: '#0f172a',
   },
   profileInfo: {
     alignItems: 'center',
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
   profileName: {
-    color: AppColors.text.primary,
-    fontSize: 22,
-    fontWeight: AppFonts.weights.bold,
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: 6,
   },
   emailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 20,
   },
   profileEmail: {
-    color: AppColors.text.tertiary,
+    color: '#64748b',
     fontSize: 14,
+    fontWeight: '500',
   },
-  badge: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(105, 246, 184, 0.1)',
+    backgroundColor: 'rgba(251, 191, 36, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: AppRadius.full,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(105, 246, 184, 0.2)',
+    borderColor: 'rgba(251, 191, 36, 0.2)',
   },
-  badgeText: {
-    color: AppColors.accent.emerald,
-    fontSize: 12,
-    fontWeight: AppFonts.weights.bold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  statusText: {
+    color: '#fbbf24',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
   },
   sectionLabel: {
-    color: AppColors.text.tertiary,
-    fontSize: 12,
-    fontWeight: AppFonts.weights.bold,
+    color: '#334155',
+    fontSize: 11,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
-    marginBottom: AppSpacing.md,
-    marginLeft: 4,
+    letterSpacing: 2,
+    marginBottom: 16,
+    marginLeft: 8,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: AppSpacing.md,
-    marginBottom: AppSpacing.xl,
+    gap: 16,
+    marginBottom: 32,
   },
   statItem: {
     flex: 1,
-    padding: AppSpacing.md,
+    padding: 24,
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+    borderRadius: 24,
   },
   statValue: {
-    color: AppColors.text.primary,
-    fontSize: 20,
-    fontWeight: AppFonts.weights.bold,
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '900',
   },
   statLabel: {
-    color: AppColors.text.tertiary,
-    fontSize: 11,
-    fontWeight: AppFonts.weights.medium,
+    color: '#64748b',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   settingsGroup: {
     padding: 0,
-    marginBottom: AppSpacing.xl,
+    marginBottom: 32,
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: AppSpacing.lg,
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: AppColors.glass.border,
+    borderBottomColor: 'rgba(255,255,255,0.03)',
   },
   settingLeft: {
     flexDirection: 'row',
@@ -374,67 +383,69 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   settingText: {
-    color: AppColors.text.primary,
+    color: '#fff',
     fontSize: 15,
-    fontWeight: AppFonts.weights.medium,
+    fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: AppSpacing.md,
     opacity: 0.5,
   },
   footerText: {
-    color: AppColors.text.tertiary,
+    color: '#475569',
     fontSize: 10,
-    fontWeight: AppFonts.weights.medium,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(6, 14, 32, 0.85)',
+    backgroundColor: 'rgba(6, 14, 32, 0.8)',
     justifyContent: 'center',
-    padding: AppSpacing.xl,
+    padding: 24,
   },
   editModal: {
-    padding: AppSpacing.xl,
+    padding: 24,
+    borderRadius: 32,
   },
   modalTitle: {
-    color: AppColors.text.primary,
+    color: '#fff',
     fontSize: 20,
-    fontWeight: AppFonts.weights.bold,
+    fontWeight: '900',
     marginBottom: 8,
   },
   modalSubtitle: {
-    color: AppColors.text.secondary,
+    color: '#94a3b8',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: 24,
   },
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: AppColors.bg.primary,
-    borderRadius: AppRadius.lg,
+    backgroundColor: '#0f172a',
+    borderRadius: 16,
     paddingHorizontal: 16,
-    height: 56,
+    height: 60,
     borderWidth: 1,
-    borderColor: AppColors.glass.border,
+    borderColor: 'rgba(255,255,255,0.05)',
     marginBottom: 24,
   },
   modalInput: {
     flex: 1,
     marginLeft: 12,
-    color: AppColors.text.primary,
+    color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
   },
   modalActions: {
     flexDirection: 'row',
@@ -442,34 +453,30 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    flexDirection: 'row',
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    height: 50,
-    borderRadius: AppRadius.lg,
+    backgroundColor: 'rgba(255,255,255,0.02)',
     borderWidth: 1,
-    borderColor: AppColors.glass.border,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   cancelBtnText: {
-    color: AppColors.text.secondary,
-    fontSize: 15,
-    fontWeight: AppFonts.weights.bold,
+    color: '#94a3b8',
+    fontSize: 14,
+    fontWeight: '800',
   },
   saveBtn: {
-    flex: 1,
-    flexDirection: 'row',
+    flex: 2,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: AppColors.accent.emerald,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    height: 50,
-    borderRadius: AppRadius.lg,
-    backgroundColor: AppColors.accent.emerald,
-    ...AppShadows.emerald,
   },
   saveBtnText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: AppFonts.weights.bold,
+    color: '#002919',
+    fontSize: 14,
+    fontWeight: '900',
   },
 });

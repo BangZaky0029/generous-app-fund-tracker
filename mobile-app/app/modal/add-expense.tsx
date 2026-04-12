@@ -27,7 +27,7 @@ import type { ExpenseCategory } from '@/constants/types';
 
 export default function AddExpenseModal() {
   const { user, isAdmin } = useAuthContext();
-  const { refetch } = useFundTrackerContext();
+  const { refetch, showAlert } = useFundTrackerContext();
   const insets = useSafeAreaInsets();
 
   const {
@@ -69,10 +69,10 @@ export default function AddExpenseModal() {
   useEffect(() => {
     if (parsedData?.amount && parsedData.amount > 0) {
       setAmount(parsedData.amount.toString());
-      Alert.alert(
+      showAlert(
         '🤖 Agent Auto-Fill',
-        `Nominal terdeteksi: Rp ${parsedData.amount.toLocaleString('id-ID')}. Form telah diisi otomatis!`,
-        [{ text: 'Oke!' }]
+        `Nominal terdeteksi: Rp ${parsedData.amount.toLocaleString('id-ID')}. Data telah diisi otomatis.`,
+        'success'
       );
     }
   }, [parsedData]);
@@ -81,7 +81,7 @@ export default function AddExpenseModal() {
     if (!permission?.granted) {
       const { granted } = await requestPermission();
       if (!granted) {
-        Alert.alert('Izin Ditolak', 'Aplikasi butuh izin kamera untuk memindai struk.');
+        showAlert('Izin Ditolak', 'Aplikasi butuh izin kamera untuk memindai struk belanja.', 'error');
         return;
       }
     }
@@ -97,7 +97,7 @@ export default function AddExpenseModal() {
         await processImage(photo.uri);
       }
     } catch (e) {
-      Alert.alert('Error', 'Gagal mengambil gambar');
+      showAlert('Error', 'Gagal membidik gambar dari sensor kamera.', 'error');
       console.error(e);
       setShowCustomCamera(false);
     }
@@ -105,15 +105,15 @@ export default function AddExpenseModal() {
 
   const handleSubmit = async () => {
     if (!user?.id) {
-      Alert.alert('Error', 'Anda harus login sebagai admin.');
+      showAlert('Akses Ditolak', 'Anda harus memiliki otoritas admin untuk mencatat transaksi.', 'error');
       return;
     }
     if (!amount || parseFloat(amount) <= 0) {
-      Alert.alert('Error', 'Nominal harus diisi dan lebih dari 0.');
+      showAlert('Data Tidak Valid', 'Nominal pengeluaran harus diisi dengan angka positif.', 'warning');
       return;
     }
     if (!description.trim()) {
-      Alert.alert('Error', 'Keterangan harus diisi.');
+      showAlert('Data Kurang', 'Keterangan transaksi wajib diisi untuk audit.', 'warning');
       return;
     }
 
@@ -129,14 +129,15 @@ export default function AddExpenseModal() {
 
       refetch();
 
-      Alert.alert(
+      showAlert(
         '✅ Berhasil!',
-        'Pengeluaran berhasil dicatat. Agentic Core sedang memperbarui dashboard...',
-        [{ text: 'Oke', onPress: () => router.back() }]
+        'Aset transaksi telah dicatat dan diverifikasi. Agen sedang menyinkronkan ledger...',
+        'success',
+        () => router.back()
       );
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Gagal menyimpan';
-      Alert.alert('❌ Error', message);
+      const message = err instanceof Error ? err.message : 'Gagal sinkronisasi data';
+      showAlert('❌ Sinkronisasi Gagal', message, 'error');
     } finally {
       setIsSubmitting(false);
     }
