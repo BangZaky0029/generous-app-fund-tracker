@@ -50,34 +50,31 @@ function AuthGate() {
     const inAdminGroup = rootSegment === '(admin)';
     const inDonaturGroup = rootSegment === '(donatur)';
 
-    console.log(`[AuthGate] Segments: [${segments.join(', ')}] | User: ${user ? 'YES' : 'NO'} | Admin: ${isAdmin}`);
+    console.log(`[AuthGate] Segments: [${segments.join(', ')}] | User: ${user ? 'YES' : 'NO'} | Profile: ${user?.profile ? 'YES' : 'NO'} | Admin: ${isAdmin}`);
 
     if (!user) {
-      // Jika tidak ada user dan tidak sedang di folder (auth), lempar ke login
       if (!inAuthGroup) {
         router.replace('/(auth)/login');
       }
     } else {
-      // Jika ada user dan sedang di root "/" atau di folder yang salah
+      // Tunggu sampai profil ada di dalam user object sebelum melakukan pengalihan
+      if (!user.profile) return;
+
       if (isAdmin) {
-        // Admin tapi tidak di folder admin
         if (!inAdminGroup) {
-          // Hanya redirect ke dashboard jika sedang di "/" (segments empty) atau di folder donatur
-          // Ini mencegah interupsi saat transisi antar layar admin
           if (!rootSegment || inDonaturGroup || inAuthGroup) {
-            router.replace('/(admin)/dashboard');
+            router.replace('/(admin)/(tabs)/dashboard');
           }
         }
       } else {
-        // Donatur tapi tidak di folder donatur
         if (!inDonaturGroup) {
           if (!rootSegment || inAdminGroup || inAuthGroup) {
-            router.replace('/(donatur)/dashboard');
+            router.replace('/(donatur)/(tabs)/dashboard');
           }
         }
       }
     }
-  }, [user, isAdmin, isLoading, segments]);
+  }, [user, isAdmin, isLoading, isVerifying, segments]);
 
   return null;
 }

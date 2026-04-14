@@ -193,7 +193,7 @@ export default function AdminDashboard() {
             <Bot size={20} color="#69f6b8" />
             <Text style={styles.sectionTitle}>Log Aktivitas</Text>
           </View>
-          <TouchableOpacity onPress={() => router.push('/(admin)/manajemen-bukti')}>
+          <TouchableOpacity onPress={() => router.push('/(admin)/(tabs)/manajemen-bukti')}>
             <Text style={styles.viewAllText}>Lihat Semua</Text>
           </TouchableOpacity>
         </View>
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
                     <TouchableOpacity
                       key={item.id || idx}
                       style={styles.activityCard}
-                      onPress={() => item.receipt_url && router.push({ pathname: '/(admin)/manajemen-bukti', params: { search: item.description || item.donator_name } })}
+                      onPress={() => item.receipt_url && router.push({ pathname: '/(admin)/(tabs)/manajemen-bukti', params: { search: item.description || item.donator_name } })}
                     >
                       <View style={[styles.iconBox, { backgroundColor: isIncome ? 'rgba(105, 246, 184, 0.1)' : 'rgba(255, 71, 87, 0.1)' }]}>
                         {isIncome ? <TrendingUp size={18} color="#69f6b8" /> : <Receipt size={18} color="#ff4757" />}

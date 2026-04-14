@@ -260,7 +260,7 @@ export default function CampaignManageScreen() {
         {/* Transaction History */}
         <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Aktivitas Ledger</Text>
-            <TouchableOpacity onPress={() => router.push({ pathname: '/(admin)/manajemen-bukti' })}>
+            <TouchableOpacity onPress={() => router.push({ pathname: '/(admin)/(tabs)/manajemen-bukti' })}>
                 <Text style={styles.viewAllBtn}>Telusuri</Text>
             </TouchableOpacity>
         </View>
@@ -275,7 +275,7 @@ export default function CampaignManageScreen() {
                 <TouchableOpacity 
                   key={item.id || idx} 
                   style={styles.historyCard}
-                  onPress={() => item.receipt_url && router.push({ pathname: '/(admin)/manajemen-bukti', params: { search: item.description || item.donator_name } })}
+                  onPress={() => item.receipt_url && router.push({ pathname: '/(admin)/(tabs)/manajemen-bukti', params: { search: item.description || item.donator_name } })}
                 >
                   <View style={[styles.iconWrap, { backgroundColor: isIncome ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)' }]}>
                     {isIncome ? <TrendingUp size={18} color={AppColors.accent.emerald} /> : <Receipt size={18} color={AppColors.accent.red} />}

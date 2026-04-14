@@ -27,7 +27,7 @@ import type { ExpenseCategory } from '@/constants/types';
 
 export default function AddExpenseModal() {
   const { user, isAdmin } = useAuthContext();
-  const { refetch, showAlert } = useFundTrackerContext();
+  const { refetch, showAlert, activeCampaigns } = useFundTrackerContext();
   const insets = useSafeAreaInsets();
 
   const {
@@ -42,6 +42,7 @@ export default function AddExpenseModal() {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('Logistik');
   const [description, setDescription] = useState('');
+  const [campaignId, setCampaignId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Animation for scanner line
@@ -116,11 +117,16 @@ export default function AddExpenseModal() {
       showAlert('Data Kurang', 'Keterangan transaksi wajib diisi untuk audit.', 'warning');
       return;
     }
+    if (!campaignId) {
+      showAlert('Wadah Belum Dipilih', 'Silakan pilih wadah donasi yang akan digunakan.', 'warning');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
       await createExpense({
         admin_id: user.id,
+        campaign_id: campaignId,
         amount: parseFloat(amount),
         category,
         description: description.trim(),
@@ -264,6 +270,39 @@ export default function AddExpenseModal() {
 
           {/* ===== FORM SECTION ===== */}
           <GlassCard variant="elevated" style={styles.section}>
+            {/* Pilih Wadah Donasi */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Pilih Wadah Donasi (Wajib)</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false} 
+                style={styles.campaignList}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                {activeCampaigns.map((camp: any) => {
+                  const isActive = campaignId === camp.id;
+                  return (
+                    <TouchableOpacity
+                      key={camp.id}
+                      onPress={() => setCampaignId(camp.id)}
+                      style={[
+                        styles.campChip,
+                        isActive && styles.campChipActive
+                      ]}
+                    >
+                      <View style={[styles.statusIndicator, { backgroundColor: isActive ? '#69f6b8' : 'rgba(255,255,255,0.2)' }]} />
+                      <Text style={[
+                        styles.campChipText,
+                        isActive && styles.campChipTextActive
+                      ]}>
+                        {camp.title}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
             {/* Nominal */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Nominal (Rp)</Text>
@@ -620,6 +659,42 @@ const styles = StyleSheet.create({
     ...AppShadows.emerald,
   },
   submitBtnDisabled: { opacity: 0.6 },
+  
+  // Campaign Picker Styles
+  campaignList: {
+    marginTop: 4,
+  },
+  campChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    gap: 8,
+  },
+  campChipActive: {
+    backgroundColor: 'rgba(105, 246, 184, 0.1)',
+    borderColor: '#69f6b8',
+    borderWidth: 1.5,
+  },
+  statusIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  campChipText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  campChipTextActive: {
+    color: '#69f6b8',
+    fontWeight: 'bold',
+  },
+
   submitText: {
     color: '#fff',
     fontSize: AppFonts.sizes.md,

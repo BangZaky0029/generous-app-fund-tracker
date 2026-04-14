@@ -29,45 +29,25 @@ export default function LoginScreen() {
     }
 
     setIsSubmitting(true);
-    setIsVerifying(true); // LOCK NAVIGATION
+    // Lock navigation briefly to allow AuthGate to handle the transition
+    setIsVerifying(true); 
+    
     try {
-      // 1. Sign In ke Supabase
+      // 1. Sign In ke Supabase via hook
+      // Hook useAuth akan mendeteksi session change, ambil profil, dan update state isAdmin otomatis.
       await signIn(email.trim().toLowerCase(), password);
       
-      // 2. Verifikasi Role secara manual untuk keamanan di pintu masuk
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-         const { data: p, error: pErr } = await supabase
-           .from('profiles')
-           .select('role')
-           .eq('id', user.id)
-           .single();
+      // Catatan: Kita tidak perlu cek profil manual lagi di sini.
+      // AuthGate di _layout.tsx akan otomatis memindahkan layar begitu isLoading=false.
 
-         if (p && p.role !== role) {
-            // Mismatch Role!
-            await signOut();
-            showAlert(
-              'Akses Ditolak', 
-              `Maaf, akun ini terdaftar sebagai ${p.role.toUpperCase()}. Silakan pilih role yang sesuai pada menu di atas.`, 
-              'error'
-            );
-            setIsSubmitting(false);
-            setIsVerifying(false); // UNLOCK
-            return;
-         }
-      }
-
-      // Jika lolos, biarkan AuthGate yang menghandle redirect ke /
-      // router.replace('/') // AuthGate akan melakukan ini otomatis
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login gagal';
       showAlert('Login Gagal', message, 'error');
       setIsSubmitting(false);
-      setIsVerifying(false); // UNLOCK
+      setIsVerifying(false); 
     } finally {
-      // Kita buka lock hanya jika proses berhenti di sini (error/mismatch).
-      // Jika berhasil, AuthGate akan memindahkan layar saat isVerifying(false) dipanggil.
+      // Jika berhasil, AuthGate akan memindahkan layar saat isVerifying(false) dipanggil 
+      // dan state auth sudah sinkron.
       setIsVerifying(false);
     }
   };

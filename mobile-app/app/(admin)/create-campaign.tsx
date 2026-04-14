@@ -77,7 +77,7 @@ export default function CreateCampaignScreen() {
         '✅ Berhasil!',
         'Wadah donasi baru berhasil dibuat.',
         'success',
-        () => router.replace('/(admin)/dashboard')
+        () => router.replace('/(admin)/(tabs)/dashboard')
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Gagal menyimpan';

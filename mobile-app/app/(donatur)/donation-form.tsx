@@ -82,7 +82,7 @@ export default function DonationFormScreen() {
         '✅ Donasi Terkirim!',
         'Terima kasih! Donasi Anda sedang diproses oleh admin untuk verifikasi.',
         'success',
-        () => router.replace('/(donatur)/dashboard')
+        () => router.replace('/(donatur)/(tabs)/dashboard')
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Gagal mengirim donasi';

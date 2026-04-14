@@ -57,6 +57,7 @@ export function useAuth(): AuthState & AuthActions {
   const updateFromSession = useCallback(
     async (session: Session | null) => {
       if (!session?.user) {
+        console.log('[useAuth] No session found, clearing state');
         setState({ user: null, session: null, isLoading: false, isVerifying: false, isAdmin: false });
         return;
       }
@@ -177,11 +178,21 @@ export function useAuth(): AuthState & AuthActions {
 
   const signOut = useCallback(async () => {
     console.log('[useAuth] User initiated signOut');
-    setState(prev => ({ ...prev, isLoading: true }));
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    // Segera bersihkan state lokal agar UI langsung bereaksi (mencegah leakage)
+    setState({ user: null, session: null, isLoading: true, isVerifying: false, isAdmin: false });
+    
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('[useAuth] SignOut error:', error.message);
+        setState(prev => ({ ...prev, isLoading: false }));
+        throw new Error(error.message);
+      }
       setState(prev => ({ ...prev, isLoading: false }));
-      throw new Error(error.message);
+      console.log('[useAuth] SignOut complete');
+    } catch (err) {
+      setState(prev => ({ ...prev, isLoading: false }));
+      throw err;
     }
   }, []);
 

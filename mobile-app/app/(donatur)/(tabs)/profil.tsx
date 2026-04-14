@@ -262,7 +262,7 @@ export default function ProfilDonatur() {
             <ChevronRight size={20} color="#334155" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(donatur)/laporan')}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(donatur)/(tabs)/laporan')}>
             <View style={styles.menuLeft}>
               <View style={styles.menuIconBox}>
                 <Receipt size={20} color="#64748b" />
