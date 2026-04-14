@@ -62,11 +62,15 @@ export default function AdminDashboard() {
 
         <View style={styles.heroStats}>
           <View>
-            <Text style={styles.statLabel}>Aset Masuk</Text>
+            <Text style={styles.statLabel}>ASET MASUK</Text>
             <Text style={styles.statIn}>{formatRp(fundData.totalDonations)}</Text>
           </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={styles.statLabel}>Total Keluar</Text>
+          <View>
+            <Text style={styles.statLabel}>ANTRIAN (PENDING)</Text>
+            <Text style={styles.statPending}>{formatRp(fundData.totalDonationsPending)}</Text>
+          </View>
+          <View>
+            <Text style={styles.statLabel}>ASET KELUAR</Text>
             <Text style={styles.statOut}>{formatRp(fundData.totalExpenses)}</Text>
           </View>
         </View>
@@ -107,8 +111,9 @@ export default function AdminDashboard() {
           <Text style={styles.emptyText}>Belum ada wadah donasi aktif.</Text>
         ) : (
           fundData.activeCampaigns.map((camp: any) => {
-            const confirmedProgress = (camp.current_amount / camp.target_amount) * 100;
-            const pendingProgress = (camp.pending_amount / camp.target_amount) * 100;
+            const target = camp.target_amount || 1;
+            const confirmedProgress = (camp.current_amount / target) * 100;
+            const pendingProgress = (camp.pending_amount / target) * 100;
             const totalProgress = Math.min(confirmedProgress + pendingProgress, 100);
 
             return (
@@ -125,23 +130,33 @@ export default function AdminDashboard() {
                   <Text style={styles.campCategory}>{camp.category}</Text>
 
                   <View style={styles.progressRow}>
-                    <View style={styles.progressBar}>
-                      {/* Confirmed Segment */}
-                      <View style={[styles.progressFill, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
-                      {/* Pending Segment */}
-                      <View style={[
-                        styles.progressFillPending, 
-                        { 
-                          width: `${Math.min(pendingProgress, 100 - confirmedProgress)}%`,
-                          left: `${Math.min(confirmedProgress, 100)}%`
-                        }
-                      ]} />
+                    <View style={styles.progressBarDual}>
+                      {/* Upper Bar: Confirmed */}
+                      <View style={styles.barItem}>
+                        <View style={styles.barBg}>
+                          <View style={[styles.progressFill, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
+                        </View>
+                        <Text style={styles.barLabel}>VERIFIKASI</Text>
+                      </View>
+                      
+                      {/* Lower Bar: Pending */}
+                      <View style={styles.barItem}>
+                        <View style={styles.barBg}>
+                          <View style={[styles.progressFillPendingLine, { width: `${Math.min(pendingProgress, 100)}%` }]} />
+                        </View>
+                        <Text style={styles.barLabelPending}>ANTRIAN</Text>
+                      </View>
                     </View>
-                    <Text style={styles.progressText}>{Math.round(totalProgress)}%</Text>
+                    <View style={styles.percentCol}>
+                      <Text style={styles.progressText}>{Math.round(totalProgress)}%</Text>
+                    </View>
                   </View>
 
                   <View style={styles.amountRow}>
-                    <Text style={styles.amountCollected}>{formatRp(camp.current_amount + camp.pending_amount)}</Text>
+                    <Text style={styles.amountCollected}>{formatRp(camp.current_amount)}</Text>
+                    {camp.pending_amount > 0 && (
+                      <Text style={styles.amountPending}> (+ {formatRp(camp.pending_amount)})</Text>
+                    )}
                     <Text style={styles.amountTarget}>/ {formatRp(camp.target_amount)}</Text>
                   </View>
                 </View>
@@ -237,10 +252,11 @@ const styles = StyleSheet.create({
   heroBlur: { position: 'absolute', top: -40, right: -40, width: 120, height: 120, backgroundColor: 'rgba(105, 246, 184, 0.05)', borderRadius: 60 },
   heroLabel: { color: '#94a3b8', fontSize: 12, fontWeight: 'bold', marginBottom: 8 },
   heroBalance: { color: '#fff', fontSize: 32, fontWeight: 'bold', marginBottom: 24 },
-  heroStats: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 },
-  statLabel: { color: '#64748b', fontSize: 10, marginBottom: 4 },
   statIn: { color: '#69f6b8', fontWeight: 'bold' },
   statOut: { color: '#fff', fontWeight: 'bold' },
+  statPending: { color: '#facc15', fontWeight: 'bold' },
+  statLabel: { color: '#64748b', fontSize: 10, marginBottom: 4 },
+  heroStats: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 },
   actionSection: { marginBottom: 32 },
   sectionTitleMain: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginBottom: 16 },
   actionRow: { flexDirection: 'row', gap: 12 },
@@ -264,22 +280,27 @@ const styles = StyleSheet.create({
   campInfo: { flex: 1, gap: 4 },
   campTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
   campCategory: { color: AppColors.accent.emerald, fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
-  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  progressBar: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 10 },
+  progressBarDual: { flex: 1, gap: 8 },
+  barItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  barBg: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' },
+  barLabel: { color: '#69f6b8', fontSize: 7, fontWeight: '900', width: 45 },
+  barLabelPending: { color: '#facc15', fontSize: 7, fontWeight: '900', width: 45 },
+  percentCol: { alignItems: 'center', justifyContent: 'center' },
   progressFill: { 
     height: '100%', 
     backgroundColor: '#69f6b8', 
     borderRadius: 2 
   },
-  progressFillPending: {
+  progressFillPendingLine: {
     height: '100%',
     backgroundColor: '#facc15', // Yellow-400
     borderRadius: 2,
-    position: 'absolute',
   },
-  progressText: { color: '#64748b', fontSize: 10, fontWeight: 'bold' },
-  amountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  progressText: { color: '#fff', fontSize: 12, fontWeight: '900' },
+  amountRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 4, marginTop: 4 },
   amountCollected: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  amountPending: { color: '#facc15', fontSize: 10, fontWeight: 'bold' },
   amountTarget: { color: '#64748b', fontSize: 10 },
   updateBtn: { backgroundColor: 'rgba(105, 246, 184, 0.1)', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)' },
   updateBtnText: { color: '#69f6b8', fontSize: 11, fontWeight: 'bold' },

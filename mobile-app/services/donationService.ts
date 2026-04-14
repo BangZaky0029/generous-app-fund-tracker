@@ -39,17 +39,24 @@ export async function fetchTotalDonations(campaignId?: string, status: DonationS
 
 // --- Hitung total donasi per campaign (Grouping) ---
 export async function fetchDonationTotalsGroupByCampaign(status: DonationStatus = 'confirmed'): Promise<Record<string, number>> {
+  // Ambil semua field untuk menghindari issue seleksi kolom parsial pada FK
   const { data, error } = await supabase
     .from('donations')
-    .select('campaign_id, amount')
+    .select('*')
     .eq('status', status);
 
   if (error) throw new Error(error.message);
 
   const totals: Record<string, number> = {};
   (data ?? []).forEach(row => {
+    // Pastikan campaign_id benar-benar ada dan dikonversi ke string murni
     if (row.campaign_id) {
-      totals[row.campaign_id] = (totals[row.campaign_id] ?? 0) + Number(row.amount);
+      const campId = String(row.campaign_id).trim();
+      const amount = parseFloat(row.amount) || 0;
+      totals[campId] = (totals[campId] ?? 0) + amount;
+    } else {
+       // Log internal sederhana jika ada donasi 'Yatim' (tanpa campaign)
+       totals['umum'] = (totals['umum'] ?? 0) + (parseFloat(row.amount) || 0);
     }
   });
   return totals;

@@ -63,6 +63,14 @@ export default function DonaturDashboard() {
               <ShieldCheck size={14} color="#69f6b8" />
               <Text style={styles.verifiedText}>Dana Tervalidasi Agen</Text>
             </View>
+            {fundData.totalDonationsPending > 0 && (
+               <View style={styles.pendingBadge}>
+                 <Activity size={14} color="#facc15" />
+                 <Text style={styles.pendingBadgeText}>
+                   Dalam Antrian: {formatRp(fundData.totalDonationsPending)}
+                 </Text>
+               </View>
+             )}
          </View>
       </View>
 
@@ -108,8 +116,9 @@ export default function DonaturDashboard() {
               </View>
             ) : (
               fundData.activeCampaigns.map((camp: any) => {
-                const confirmedProgress = (camp.current_amount / camp.target_amount) * 100;
-                const pendingProgress = (camp.pending_amount / camp.target_amount) * 100;
+                const target = camp.target_amount || 1;
+                const confirmedProgress = (camp.current_amount / target) * 100;
+                const pendingProgress = (camp.pending_amount / target) * 100;
                 const totalProgress = Math.min(confirmedProgress + pendingProgress, 100);
 
                 return (
@@ -130,15 +139,22 @@ export default function DonaturDashboard() {
                        <Text style={styles.campaignCat}>{camp.category}</Text>
                        
                        <View style={styles.campProgressRow}>
-                          <View style={styles.campProgressBarBg}>
-                             <View style={[styles.campProgressBarFill, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
-                             <View style={[
-                               styles.campProgressBarFillPending, 
-                               { 
-                                 width: `${Math.min(pendingProgress, 100 - confirmedProgress)}%`,
-                                 left: `${Math.min(confirmedProgress, 100)}%`
-                               }
-                             ]} />
+                          <View style={styles.campProgressBarDual}>
+                             {/* Upper: Confirmed */}
+                             <View style={styles.campBarItem}>
+                                <View style={styles.campBarBg}>
+                                   <View style={[styles.campProgressBarFill, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
+                                </View>
+                                <Text style={styles.campBarLabel}>VERIFIED</Text>
+                             </View>
+                             
+                             {/* Lower: Pending */}
+                             <View style={styles.campBarItem}>
+                                <View style={styles.campBarBg}>
+                                   <View style={[styles.campProgressBarFillPendingLine, { width: `${Math.min(pendingProgress, 100)}%` }]} />
+                                </View>
+                                <Text style={styles.campBarLabelPending}>QUEUE</Text>
+                             </View>
                           </View>
                           <Text style={styles.campProgressText}>{Math.round(totalProgress)}%</Text>
                        </View>
@@ -255,15 +271,20 @@ const styles = StyleSheet.create({
   campaignInfo: { padding: 12, gap: 4 },
   campaignTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold', height: 40 },
   campaignCat: { color: '#69f6b8', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
-  campProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  campProgressBarBg: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' },
-  campProgressBarFill: { height: '100%', backgroundColor: '#06b77f', borderRadius: 2 },
-  campProgressBarFillPending: {
+  campProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 },
+  campProgressBarDual: { flex: 1, gap: 6 },
+  campBarItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  campBarBg: { flex: 1, height: 3, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 1.5, overflow: 'hidden' },
+  campBarLabel: { color: '#69f6b8', fontSize: 6, fontWeight: '900', width: 35 },
+  campBarLabelPending: { color: '#facc15', fontSize: 6, fontWeight: '900', width: 35 },
+  campProgressBarFill: { height: '100%', backgroundColor: '#06b77f', borderRadius: 1.5 },
+  campProgressBarFillPendingLine: {
     height: '100%',
-    backgroundColor: '#facc15', // Yellow-400
-    borderRadius: 2,
-    position: 'absolute',
+    backgroundColor: '#facc15',
+    borderRadius: 1.5,
   },
-  campProgressText: { color: '#64748b', fontSize: 10, fontWeight: 'bold' },
+  campProgressText: { color: '#fff', fontSize: 10, fontWeight: '900' },
+  pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(250, 204, 21, 0.08)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginLeft: 8 },
+  pendingBadgeText: { color: '#facc15', fontSize: 11, fontWeight: 'bold' },
   emptyCampaign: { width: 300, padding: 40, alignItems: 'center', justifyContent: 'center' },
 });

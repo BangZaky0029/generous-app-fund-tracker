@@ -29,7 +29,7 @@ const formatRp = (amount: number) => {
 
 export default function CampaignDetailScreen() {
   const { id } = useLocalSearchParams();
-  const { showAlert } = useFundTrackerContext();
+  const fundData = useFundTrackerContext();
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [updates, setUpdates] = useState<CampaignUpdate[]>([]);
@@ -64,7 +64,7 @@ export default function CampaignDetailScreen() {
 
       setTransactions(combined);
     } catch (err) {
-      showAlert('Error', 'Gagal memuat detail campaign.', 'error');
+      fundData.showAlert('Error', 'Gagal memuat detail campaign.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +89,15 @@ export default function CampaignDetailScreen() {
     );
   }
 
-  const progress = Math.min((campaign.current_amount / campaign.target_amount) * 100, 100);
+  // Find the augmented campaign from context if available for real-time totals
+  const augmentedCampaign = fundData.activeCampaigns.find((c: any) => c.id === campaign?.id) || campaign;
+  const confirmedAmount = augmentedCampaign?.current_amount || 0;
+  const pendingAmount = (augmentedCampaign as any)?.pending_amount || 0;
+  
+  const target = campaign?.target_amount || 1;
+  const confirmedProgress = (confirmedAmount / target) * 100;
+  const pendingProgress = (pendingAmount / target) * 100;
+  const totalProgress = Math.min(confirmedProgress + pendingProgress, 100);
 
   return (
     <View style={styles.root}>
@@ -109,7 +117,7 @@ export default function CampaignDetailScreen() {
             <ArrowLeft size={22} color="#fff" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.shareBtn} onPress={() => showAlert('Info', 'Fitur bagi-bagi segera hadir!', 'info')}>
+          <TouchableOpacity style={styles.shareBtn} onPress={() => fundData.showAlert('Info', 'Fitur bagi-bagi segera hadir!', 'info')}>
             <Share2 size={20} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -124,19 +132,36 @@ export default function CampaignDetailScreen() {
 
           <GlassCard variant="elevated" style={styles.statsCard}>
             <View style={styles.progressHeader}>
-              <Text style={styles.amountText}>{formatRp(campaign.current_amount)}</Text>
+              <Text style={styles.amountText}>{formatRp(confirmedAmount)}</Text>
+              {pendingAmount > 0 && (
+                <Text style={styles.pendingText}> (+ {formatRp(pendingAmount)} dalam antrian)</Text>
+              )}
               <Text style={styles.targetText}>terkumpul dari {formatRp(campaign.target_amount)}</Text>
             </View>
 
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
+            <View style={styles.progressBarWrapper}>
+              {/* Confirmed Bar */}
+              <View style={styles.barContainer}>
+                <View style={styles.barBgCustom}>
+                  <View style={[styles.barFillGreen, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
+                </View>
+                <Text style={styles.barHint}>TERVERIFIKASI</Text>
+              </View>
+              
+              {/* Pending Bar */}
+              <View style={styles.barContainer}>
+                <View style={styles.barBgCustom}>
+                  <View style={[styles.barFillYellow, { width: `${Math.min(pendingProgress, 100)}%` }]} />
+                </View>
+                <Text style={styles.barHintPending}>ANTRIAN</Text>
+              </View>
             </View>
 
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <TrendingUp size={16} color="#69f6b8" />
-                <Text style={styles.statVal}>{Math.round(progress)}%</Text>
-                <Text style={styles.statLbl}>Progres</Text>
+                <Text style={styles.statVal}>{Math.round(totalProgress)}%</Text>
+                <Text style={styles.statLbl}>Total Progres</Text>
               </View>
               <View style={styles.statItem}>
                 <User size={16} color="#69f6b8" />
@@ -261,10 +286,16 @@ const styles = StyleSheet.create({
   title: { color: '#fff', fontSize: 24, fontWeight: '900', marginBottom: 20 },
   statsCard: { padding: 20, marginBottom: 32 },
   progressHeader: { marginBottom: 16 },
-  amountText: { color: '#fff', fontSize: 22, fontWeight: '900' },
-  targetText: { color: '#64748b', fontSize: 12, marginTop: 4 },
-  progressBarBg: { height: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden', marginBottom: 20 },
-  progressBarFill: { height: '100%', backgroundColor: '#69f6b8', borderRadius: 4 },
+  amountText: { color: '#fff', fontSize: 24, fontWeight: '900' },
+  pendingText: { color: '#facc15', fontSize: 12, fontWeight: 'bold', marginBottom: 4 },
+  targetText: { color: '#64748b', fontSize: 12 },
+  progressBarWrapper: { gap: 12, marginBottom: 24 },
+  barContainer: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  barBgCustom: { flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' },
+  barFillGreen: { height: '100%', backgroundColor: '#69f6b8', borderRadius: 3 },
+  barFillYellow: { height: '100%', backgroundColor: '#facc15', borderRadius: 3 },
+  barHint: { color: '#69f6b8', fontSize: 8, fontWeight: '900', width: 80 },
+  barHintPending: { color: '#facc15', fontSize: 8, fontWeight: '900', width: 80 },
   statsRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 },
   statItem: { alignItems: 'center', gap: 4 },
   statVal: { color: '#fff', fontSize: 14, fontWeight: 'bold' },

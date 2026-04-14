@@ -27,6 +27,7 @@ type FundTrackerContextType = FundTrackerState & {
 
 const EMPTY_FUND_STATE: FundTrackerContextType = {
   totalDonations: 0,
+  totalDonationsPending: 0,
   totalExpenses: 0,
   remainingFunds: 0,
   usagePercentage: 0,

@@ -22,6 +22,7 @@ import type { FundTrackerState, CategorySummary, ExpenseCategory, Campaign } fro
 
 const INITIAL_STATE: FundTrackerState = {
   totalDonations: 0,
+  totalDonationsPending: 0,
   totalExpenses: 0,
   remainingFunds: 0,
   usagePercentage: 0,
@@ -46,6 +47,7 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
       // Fetch semua data secara paralel (efisien)
       const [
         totalDonations, 
+        totalDonationsPending,
         expensesByCategory, 
         recentExpenses, 
         recentDonations,
@@ -53,7 +55,8 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         totalsConfirmed,
         totalsPending
       ] = await Promise.all([
-          fetchTotalDonations(),
+          fetchTotalDonations('confirmed'),
+          fetchTotalDonations('pending'),
           fetchExpensesByCategory(),
           fetchRecentExpenses(20),
           fetchRecentDonations(20),
@@ -62,12 +65,19 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
           fetchDonationTotalsGroupByCampaign('pending'),
         ]);
 
-      // Augment campaigns with dynamic totals
-      const augmentedCampaigns = activeCampaigns.map(camp => ({
-        ...camp,
-        current_amount: totalsConfirmed[camp.id] ?? 0,
-        pending_amount: totalsPending[camp.id] ?? 0, // Custom field for UI
-      }));
+      // Augment campaigns with dynamic totals (Safe Mapping)
+      const augmentedCampaigns = activeCampaigns.map(camp => {
+        const campId = String(camp.id).trim();
+        const confAmount = totalsConfirmed[campId] || 0;
+        const pendAmount = totalsPending[campId] || 0;
+        
+        return {
+          ...camp,
+          // Gunakan hasil hitung dinamis jika > 0, atau fallback ke DB current_amount jika hitungan 0
+          current_amount: confAmount > 0 ? confAmount : (camp.current_amount || 0),
+          pending_amount: pendAmount, 
+        };
+      });
 
       // Hitung total expenses
       const totalExpenses = Object.values(expensesByCategory).reduce(
@@ -101,6 +111,7 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
 
       setState({
         totalDonations,
+        totalDonationsPending,
         totalExpenses,
         remainingFunds,
         usagePercentage,

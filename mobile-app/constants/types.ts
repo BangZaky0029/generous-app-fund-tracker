@@ -92,6 +92,7 @@ export type CategorySummary = {
 
 export type FundTrackerState = {
   totalDonations: number,
+  totalDonationsPending: number,
   totalExpenses: number,
   remainingFunds: number,
   usagePercentage: number,
