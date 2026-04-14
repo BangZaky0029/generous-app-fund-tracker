@@ -20,13 +20,15 @@ import type { ExpenseCategory } from '@/constants/types';
 
 export default function AddExpenseScreen() {
   const { user, isAdmin } = useAuthContext();
-  const { refetch, showAlert } = useFundTrackerContext();
+  const fundData = useFundTrackerContext();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
 
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<ExpenseCategory>('Logistik');
   const [description, setDescription] = useState('');
+  const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [campaignTitle, setCampaignTitle] = useState<string | null>(null);
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const processedUriRef = useRef<string | null>(null);
@@ -44,33 +46,41 @@ export default function AddExpenseScreen() {
     }, [params.capturedUri])
   );
 
-  // Auto-fill data jika datang dari Kamera Scanner (Hanya jika ada data BARU)
+  // Fill data dari params (Scanner & Campaign Context)
   useEffect(() => {
     const newUri = params.capturedUri as string | undefined;
     
-    // Jika ada capturedUri di params dan belum pernah kita proses sebelumnya
     if (newUri && newUri !== processedUriRef.current) {
       if (params.amount) setAmount(params.amount as string);
       if (params.description) setDescription(params.description as string);
       if (params.category) setCategory(params.category as ExpenseCategory);
       setCapturedUri(newUri);
-      
-      // Tandai URI ini sudah diproses agar tidak menimpa editan manual nanti
       processedUriRef.current = newUri;
     }
-  }, [params.capturedUri, params.amount, params.description, params.category]);
+
+    if (params.campaignId) {
+      setCampaignId(params.campaignId as string);
+    }
+    if (params.campaignTitle) {
+      setCampaignTitle(params.campaignTitle as string);
+    }
+  }, [params.capturedUri, params.amount, params.description, params.category, params.campaignId, params.campaignTitle]);
 
   const handleSubmit = async () => {
     if (!isAdmin || !user?.id) {
-      showAlert('Akses Ditolak', 'Hanya Admin yang dapat mencatat pengeluaran.', 'error');
+      fundData.showAlert('Akses Ditolak', 'Hanya Admin yang dapat mencatat pengeluaran.', 'error');
       return;
     }
     if (!amount || parseFloat(amount) <= 0) {
-      showAlert('Data Tidak Valid', 'Nominal pengeluaran harus diisi dan lebih dari 0.', 'warning');
+      fundData.showAlert('Data Tidak Valid', 'Nominal pengeluaran harus diisi dan lebih dari 0.', 'warning');
       return;
     }
     if (!description.trim()) {
-      showAlert('Data Kurang', 'Keterangan transaksi wajib diisi.', 'warning');
+      fundData.showAlert('Data Kurang', 'Keterangan transaksi wajib diisi.', 'warning');
+      return;
+    }
+    if (!campaignId) {
+      fundData.showAlert('Data Kurang', 'Silahkan pilih wadah donasi terlebih dahulu.', 'warning');
       return;
     }
 
@@ -78,15 +88,16 @@ export default function AddExpenseScreen() {
     try {
       await createExpense({
         admin_id: user.id,
+        campaign_id: campaignId,
         amount: parseFloat(amount),
         category,
         description: description.trim(),
         receiptLocalUri: capturedUri,
       });
 
-      await refetch();
+      await fundData.refetch();
 
-      showAlert(
+      fundData.showAlert(
         '✅ Berhasil!',
         'Pengeluaran berhasil diverifikasi dan dicatat.',
         'success',
@@ -94,7 +105,7 @@ export default function AddExpenseScreen() {
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Gagal menyimpan';
-      showAlert('Gagal Simpan', message, 'error');
+      fundData.showAlert('Gagal Simpan', message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -114,6 +125,12 @@ export default function AddExpenseScreen() {
           <View style={styles.headerInfo}>
             <Text style={styles.title}>Simpan Pengeluaran</Text>
             <Text style={styles.subtitle}>Verifikasi Data Transaksi</Text>
+            {campaignTitle && (
+              <View style={styles.contextBadge}>
+                <Text style={styles.contextLabel}>WADAH:</Text>
+                <Text style={styles.contextValue} numberOfLines={1}>{campaignTitle}</Text>
+              </View>
+            )}
           </View>
           <TouchableOpacity 
             style={styles.scanToggleBtn} 
@@ -131,6 +148,35 @@ export default function AddExpenseScreen() {
           contentContainerStyle={styles.scroll} 
           showsVerticalScrollIndicator={false}
         >
+          {/* ===== CAMPAIGN PICKER (If missing) ===== */}
+          {!params.campaignId && (
+            <GlassCard variant="elevated" style={styles.section}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Pilih Wadah Donasi</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.campaignList}>
+                  {fundData.activeCampaigns.map((camp: any) => (
+                    <TouchableOpacity
+                      key={camp.id}
+                      onPress={() => {
+                        setCampaignId(camp.id);
+                        setCampaignTitle(camp.title);
+                      }}
+                      style={[
+                        styles.campChip,
+                        campaignId === camp.id && styles.campChipActive
+                      ]}
+                    >
+                      <Text style={[
+                        styles.campChipText,
+                        campaignId === camp.id && styles.campChipTextActive
+                      ]}>{camp.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </GlassCard>
+          )}
+
           {/* ===== BUKTI SECTION ===== */}
           {capturedUri && (
             <GlassCard variant="elevated" style={styles.section}>
@@ -264,6 +310,54 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  contextBadge: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(105, 246, 184, 0.1)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(105, 246, 184, 0.2)',
+  },
+  contextLabel: {
+    color: AppColors.accent.emerald,
+    fontSize: 8,
+    fontWeight: '900',
+  },
+  contextValue: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '800',
+    maxWidth: 150,
+  },
+  campaignList: {
+    marginTop: 8,
+  },
+  campChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    marginRight: 8,
+  },
+  campChipActive: {
+    backgroundColor: 'rgba(105, 246, 184, 0.1)',
+    borderColor: '#69f6b8',
+  },
+  campChipText: {
+    color: '#64748b',
+    fontSize: 13,
+  },
+  campChipTextActive: {
+    color: '#69f6b8',
+    fontWeight: 'bold',
   },
   scanToggleBtn: {
     flexDirection: 'row',

@@ -38,51 +38,17 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="input-pengeluaran"
         options={{
+          href: null,
           title: 'Input',
-          tabBarIcon: ({ color, size }) => <UploadCloud size={size} color={color} />,
+          tabBarStyle: { display: 'none' },
         }}
       />
       
       <Tabs.Screen
         name="validasi-kamera"
         options={{
-          title: 'Kamera',
+          href: null,
           tabBarStyle: { display: 'none' },
-          tabBarButton: (props) => (
-            <TouchableOpacity
-              onPress={() => {
-                router.push({
-                  pathname: '/(admin)/validasi-kamera',
-                  params: { mode: 'scan' }
-                });
-              }}
-              onLongPress={props.onLongPress ?? undefined}
-              activeOpacity={0.8}
-              style={{
-                top: -30,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <View
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  backgroundColor: '#69f6b8',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  shadowColor: '#69f6b8',
-                  shadowOffset: { width: 0, height: 10 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 15,
-                  elevation: 5,
-                }}
-              >
-                <Camera size={32} color="#060e20" />
-              </View>
-            </TouchableOpacity>
-          ),
         }}
       />
 
@@ -127,6 +93,13 @@ export default function AdminLayout() {
       />
       <Tabs.Screen
         name="add-campaign-update"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="campaign-manage"
         options={{
           href: null,
           tabBarStyle: { display: 'none' },

@@ -109,7 +109,14 @@ export default function AdminDashboard() {
             fundData.activeCampaigns.map((camp: any) => {
               const progress = Math.min((camp.current_amount / camp.target_amount) * 100, 100);
               return (
-                <View key={camp.id} style={styles.campaignCard}>
+                <TouchableOpacity 
+                  key={camp.id} 
+                  style={styles.campaignCard}
+                  onPress={() => router.push({
+                    pathname: '/(admin)/campaign-manage',
+                    params: { id: camp.id }
+                  })}
+                >
                    <View style={styles.campInfo}>
                       <Text style={styles.campTitle} numberOfLines={1}>{camp.title}</Text>
                       <Text style={styles.campCategory}>{camp.category}</Text>
@@ -127,17 +134,10 @@ export default function AdminDashboard() {
                       </View>
                    </View>
                    
-                   <TouchableOpacity 
-                    style={styles.updateBtn}
-                    onPress={() => router.push({ 
-                      pathname: '/(admin)/add-campaign-update', 
-                      params: { campaignId: camp.id, campaignTitle: camp.title } 
-                    })}
-                   >
-                     <Receipt size={16} color="#69f6b8" />
-                     <Text style={styles.updateBtnText}>Update Berita</Text>
-                   </TouchableOpacity>
-                </View>
+                   <View style={styles.manageIconWrap}>
+                     <TrendingUp size={20} color="#69f6b8" />
+                   </View>
+                </TouchableOpacity>
               )
             })
           )}
@@ -261,6 +261,16 @@ const styles = StyleSheet.create({
   amountTarget: { color: '#64748b', fontSize: 10 },
   updateBtn: { backgroundColor: 'rgba(105, 246, 184, 0.1)', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)' },
   updateBtnText: { color: '#69f6b8', fontSize: 11, fontWeight: 'bold' },
+  manageIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(105, 246, 184, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(105, 246, 184, 0.2)',
+  },
   footerBadge: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(105, 246, 184, 0.05)', padding: 12, borderRadius: 12 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#69f6b8' },

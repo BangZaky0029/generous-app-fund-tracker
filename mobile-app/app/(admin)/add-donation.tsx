@@ -20,11 +20,13 @@ import { AppColors, AppFonts, AppRadius, AppSpacing, AppShadows } from '@/consta
 
 export default function AddDonationScreen() {
   const { user, isAdmin } = useAuthContext();
-  const { refetch, showAlert } = useFundTrackerContext();
+  const fundData = useFundTrackerContext();
   const params = useLocalSearchParams();
   const [donatorName, setDonatorName] = useState('');
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
+  const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [campaignTitle, setCampaignTitle] = useState<string | null>(null);
   const [capturedUri, setCapturedUri] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const processedUriRef = useRef<string | null>(null);
@@ -43,14 +45,21 @@ export default function AddDonationScreen() {
     }, [params.capturedUri])
   );
 
-  // Tangkap foto dari Kamera Kustom
+  // Tangkap data dari params (termasuk Campaign Context)
   useEffect(() => {
     const newUri = params.capturedUri as string | undefined;
     if (newUri && newUri !== processedUriRef.current) {
       setCapturedUri(newUri);
       processedUriRef.current = newUri;
     }
-  }, [params.capturedUri]);
+    
+    if (params.campaignId) {
+      setCampaignId(params.campaignId as string);
+    }
+    if (params.campaignTitle) {
+      setCampaignTitle(params.campaignTitle as string);
+    }
+  }, [params.capturedUri, params.campaignId, params.campaignTitle]);
 
   const handlePickImage = async (useCamera: boolean) => {
     if (useCamera) {
@@ -78,11 +87,16 @@ export default function AddDonationScreen() {
 
   const handleSubmit = async () => {
     if (!isAdmin) {
-      showAlert('Akses Ditolak', 'Hanya Admin yang dapat mencatat dana masuk.', 'error');
+      fundData.showAlert('Akses Ditolak', 'Hanya Admin yang dapat mencatat dana masuk.', 'error');
       return;
     }
     if (!amount || parseFloat(amount) <= 0) {
-      showAlert('Data Tidak Valid', 'Nominal dana masuk harus diisi dan lebih dari 0.', 'warning');
+      fundData.showAlert('Data Tidak Valid', 'Nominal dana masuk harus diisi dan lebih dari 0.', 'warning');
+      return;
+    }
+
+    if (!campaignId) {
+      fundData.showAlert('Data Kurang', 'Silahkan pilih wadah donasi terlebih dahulu.', 'warning');
       return;
     }
 
@@ -92,20 +106,21 @@ export default function AddDonationScreen() {
         donator_name: donatorName.trim() || 'Hamba Allah',
         amount: amount,
         message: message.trim() || '-',
+        campaign_id: campaignId,
         receiptLocalUri: capturedUri,
       });
 
-      await refetch();
+      await fundData.refetch();
 
-      showAlert(
+      fundData.showAlert(
         '✅ Berhasil!',
         'Dana masuk berhasil dicatat. Bukti transaksi telah aman di server.',
         'success',
         () => router.back()
       );
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Gagal menyimpan';
-      showAlert('Gagal Simpan', msg, 'error');
+      const msg = err instanceof Error ? err.message : 'Gagal simpan';
+      fundData.showAlert('Gagal', msg, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -142,7 +157,43 @@ export default function AddDonationScreen() {
             <Text style={styles.sectionSubtitle}>
               Gunakan formulir ini untuk mencatat uang kas, sumbangan, atau donasi yang masuk agar saldo sistem bertambah secara realtime.
             </Text>
+            
+            {campaignTitle && (
+              <View style={styles.contextBadge}>
+                <Text style={styles.contextLabel}>WADAH:</Text>
+                <Text style={styles.contextValue}>{campaignTitle}</Text>
+              </View>
+            )}
           </GlassCard>
+
+          {/* ===== CAMPAIGN PICKER (If missing) ===== */}
+          {!params.campaignId && (
+            <GlassCard variant="elevated" style={styles.section}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Pilih Wadah Donasi</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.campaignList}>
+                  {fundData.activeCampaigns.map((camp: any) => (
+                    <TouchableOpacity
+                      key={camp.id}
+                      onPress={() => {
+                        setCampaignId(camp.id);
+                        setCampaignTitle(camp.title);
+                      }}
+                      style={[
+                        styles.campChip,
+                        campaignId === camp.id && styles.campChipActive
+                      ]}
+                    >
+                      <Text style={[
+                        styles.campChipText,
+                        campaignId === camp.id && styles.campChipTextActive
+                      ]}>{camp.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </GlassCard>
+          )}
 
           {/* ===== PROOF SECTION ===== */}
           <GlassCard variant="elevated" style={styles.section}>
@@ -301,6 +352,53 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontSize: 13,
     lineHeight: 20,
+  },
+  contextBadge: {
+    marginTop: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(105, 246, 184, 0.1)',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(105, 246, 184, 0.2)',
+  },
+  contextLabel: {
+    color: AppColors.accent.emerald,
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  contextValue: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  campaignList: {
+    marginTop: 8,
+  },
+  campChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    marginRight: 8,
+  },
+  campChipActive: {
+    backgroundColor: 'rgba(105, 246, 184, 0.1)',
+    borderColor: '#69f6b8',
+  },
+  campChipText: {
+    color: '#64748b',
+    fontSize: 13,
+  },
+  campChipTextActive: {
+    color: '#69f6b8',
+    fontWeight: 'bold',
   },
   inputGroup: {
     gap: 8,
