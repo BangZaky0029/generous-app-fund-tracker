@@ -252,7 +252,14 @@ export default function ManajemenBukti() {
               
               if (layoutMode === 'list') {
                 return (
-                  <GlassCard key={item.id} style={[styles.cardList, isIncome && styles.incomeCard]}>
+                  <GlassCard 
+                    key={item.id} 
+                    style={[
+                      styles.cardList, 
+                      isIncome && styles.incomeCard,
+                      isIncome && item.status === 'pending' && styles.pendingCardHighlight
+                    ]}
+                  >
                     <TouchableOpacity 
                       style={styles.imageContainerList} 
                       onPress={() => item.receipt_url && setPreviewImage(item.receipt_url)}
@@ -318,7 +325,14 @@ export default function ManajemenBukti() {
               }
 
               return (
-                <GlassCard key={item.id} style={[styles.card, isIncome && styles.incomeCard]}>
+                <GlassCard 
+                  key={item.id} 
+                  style={[
+                    styles.card, 
+                    isIncome && styles.incomeCard,
+                    isIncome && item.status === 'pending' && styles.pendingCardHighlight
+                  ]}
+                >
                   {/* Image Section */}
                   <TouchableOpacity 
                     style={styles.imageContainer} 
@@ -598,6 +612,14 @@ const styles = StyleSheet.create({
   },
   incomeCard: {
      borderColor: 'rgba(105, 246, 184, 0.1)',
+  },
+  pendingCardHighlight: {
+    borderColor: 'rgba(250, 204, 21, 0.4)',
+    shadowColor: '#facc15',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   headerActions: {
     flexDirection: 'row',

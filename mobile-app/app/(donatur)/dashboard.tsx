@@ -108,7 +108,10 @@ export default function DonaturDashboard() {
               </View>
             ) : (
               fundData.activeCampaigns.map((camp: any) => {
-                const progress = Math.min((camp.current_amount / camp.target_amount) * 100, 100);
+                const confirmedProgress = (camp.current_amount / camp.target_amount) * 100;
+                const pendingProgress = (camp.pending_amount / camp.target_amount) * 100;
+                const totalProgress = Math.min(confirmedProgress + pendingProgress, 100);
+
                 return (
                   <TouchableOpacity 
                     key={camp.id} 
@@ -128,9 +131,16 @@ export default function DonaturDashboard() {
                        
                        <View style={styles.campProgressRow}>
                           <View style={styles.campProgressBarBg}>
-                             <View style={[styles.campProgressBarFill, { width: `${progress}%` }]} />
+                             <View style={[styles.campProgressBarFill, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
+                             <View style={[
+                               styles.campProgressBarFillPending, 
+                               { 
+                                 width: `${Math.min(pendingProgress, 100 - confirmedProgress)}%`,
+                                 left: `${Math.min(confirmedProgress, 100)}%`
+                               }
+                             ]} />
                           </View>
-                          <Text style={styles.campProgressText}>{Math.round(progress)}%</Text>
+                          <Text style={styles.campProgressText}>{Math.round(totalProgress)}%</Text>
                        </View>
                     </View>
                   </TouchableOpacity>
@@ -247,7 +257,13 @@ const styles = StyleSheet.create({
   campaignCat: { color: '#69f6b8', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
   campProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   campProgressBarBg: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' },
-  campProgressBarFill: { height: '100%', backgroundColor: '#69f6b8', borderRadius: 2 },
+  campProgressBarFill: { height: '100%', backgroundColor: '#06b77f', borderRadius: 2 },
+  campProgressBarFillPending: {
+    height: '100%',
+    backgroundColor: '#facc15', // Yellow-400
+    borderRadius: 2,
+    position: 'absolute',
+  },
   campProgressText: { color: '#64748b', fontSize: 10, fontWeight: 'bold' },
   emptyCampaign: { width: 300, padding: 40, alignItems: 'center', justifyContent: 'center' },
 });

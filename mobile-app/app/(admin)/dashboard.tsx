@@ -18,22 +18,22 @@ const formatRp = (amount: number) => {
 export default function AdminDashboard() {
   const { user, isAdmin } = useAuthContext();
   const fundData = useFundTrackerContext();
-  
+
   // Ambil inisial 
   const fullName = user?.profile?.full_name || 'Administrator';
   const initals = fullName.substring(0, 2).toUpperCase();
 
   if (fundData.isLoading) {
-     return (
-       <View style={styles.loadingRoot}>
-         <ActivityIndicator size="large" color="#69f6b8" />
-         <Text style={styles.loadingText}>Menghubungkan ke Ledger...</Text>
-       </View>
-     );
+    return (
+      <View style={styles.loadingRoot}>
+        <ActivityIndicator size="large" color="#69f6b8" />
+        <Text style={styles.loadingText}>Menghubungkan ke Ledger...</Text>
+      </View>
+    );
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.root}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
@@ -42,7 +42,7 @@ export default function AdminDashboard() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <LinearGradient colors={['#69f6b8', '#00c37b']} style={styles.avatar}>
-             <Text style={styles.avatarText}>{initals}</Text>
+            <Text style={styles.avatarText}>{initals}</Text>
           </LinearGradient>
           <View>
             <Text style={styles.headerRole}>Otoritas Admin</Text>
@@ -56,35 +56,35 @@ export default function AdminDashboard() {
 
       {/* Hero Section */}
       <View style={styles.heroCard}>
-         <View style={styles.heroBlur} />
-         <Text style={styles.heroLabel}>Total Saldo Terkelola</Text>
-         <Text style={styles.heroBalance}>{formatRp(fundData.remainingFunds)}</Text>
-         
-         <View style={styles.heroStats}>
-            <View>
-              <Text style={styles.statLabel}>Aset Masuk</Text>
-              <Text style={styles.statIn}>{formatRp(fundData.totalDonations)}</Text>
-            </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.statLabel}>Total Keluar</Text>
-              <Text style={styles.statOut}>{formatRp(fundData.totalExpenses)}</Text>
-            </View>
-         </View>
+        <View style={styles.heroBlur} />
+        <Text style={styles.heroLabel}>Total Saldo Terkelola</Text>
+        <Text style={styles.heroBalance}>{formatRp(fundData.remainingFunds)}</Text>
+
+        <View style={styles.heroStats}>
+          <View>
+            <Text style={styles.statLabel}>Aset Masuk</Text>
+            <Text style={styles.statIn}>{formatRp(fundData.totalDonations)}</Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.statLabel}>Total Keluar</Text>
+            <Text style={styles.statOut}>{formatRp(fundData.totalExpenses)}</Text>
+          </View>
+        </View>
       </View>
 
       {/* Quick Actions */}
       <View style={styles.actionSection}>
         <Text style={styles.sectionTitleMain}>Aksi Cepat</Text>
         <View style={styles.actionRow}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.push('/(admin)/create-campaign')}
             style={styles.actionBtnPrimary}
           >
             <PlusSquare size={24} color="#002919" />
-            <Text style={styles.actionTextPrimary}>Buat Wadah</Text>
+            <Text style={styles.actionTextPrimary}>Buat Donasi</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             onPress={() => router.push('/(admin)/validasi-kamera')}
             style={styles.actionBtnSecondary}
           >
@@ -96,114 +96,126 @@ export default function AdminDashboard() {
 
       {/* Manajemen Wadah Donasi */}
       <View style={styles.campaignSection}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <TrendingUp size={20} color="#69f6b8" />
-              <Text style={styles.sectionTitle}>Wadah Donasi Aktif</Text>
-            </View>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <TrendingUp size={20} color="#69f6b8" />
+            <Text style={styles.sectionTitle}>Wadah Donasi Aktif</Text>
           </View>
+        </View>
 
-          {fundData.activeCampaigns.length === 0 ? (
-            <Text style={styles.emptyText}>Belum ada wadah donasi aktif.</Text>
-          ) : (
-            fundData.activeCampaigns.map((camp: any) => {
-              const progress = Math.min((camp.current_amount / camp.target_amount) * 100, 100);
-              return (
-                <TouchableOpacity 
-                  key={camp.id} 
-                  style={styles.campaignCard}
-                  onPress={() => router.push({
-                    pathname: '/(admin)/campaign-manage',
-                    params: { id: camp.id }
-                  })}
-                >
-                   <View style={styles.campInfo}>
-                      <Text style={styles.campTitle} numberOfLines={1}>{camp.title}</Text>
-                      <Text style={styles.campCategory}>{camp.category}</Text>
-                      
-                      <View style={styles.progressRow}>
-                         <View style={styles.progressBar}>
-                            <View style={[styles.progressFill, { width: `${progress}%` }]} />
-                         </View>
-                         <Text style={styles.progressText}>{Math.round(progress)}%</Text>
-                      </View>
-                      
-                      <View style={styles.amountRow}>
-                         <Text style={styles.amountCollected}>{formatRp(camp.current_amount)}</Text>
-                         <Text style={styles.amountTarget}>/ {formatRp(camp.target_amount)}</Text>
-                      </View>
-                   </View>
-                   
-                   <View style={styles.manageIconWrap}>
-                     <TrendingUp size={20} color="#69f6b8" />
-                   </View>
-                </TouchableOpacity>
-              )
-            })
-          )}
+        {fundData.activeCampaigns.length === 0 ? (
+          <Text style={styles.emptyText}>Belum ada wadah donasi aktif.</Text>
+        ) : (
+          fundData.activeCampaigns.map((camp: any) => {
+            const confirmedProgress = (camp.current_amount / camp.target_amount) * 100;
+            const pendingProgress = (camp.pending_amount / camp.target_amount) * 100;
+            const totalProgress = Math.min(confirmedProgress + pendingProgress, 100);
+
+            return (
+              <TouchableOpacity
+                key={camp.id}
+                style={styles.campaignCard}
+                onPress={() => router.push({
+                  pathname: '/(admin)/campaign-manage',
+                  params: { id: camp.id }
+                })}
+              >
+                <View style={styles.campInfo}>
+                  <Text style={styles.campTitle} numberOfLines={1}>{camp.title}</Text>
+                  <Text style={styles.campCategory}>{camp.category}</Text>
+
+                  <View style={styles.progressRow}>
+                    <View style={styles.progressBar}>
+                      {/* Confirmed Segment */}
+                      <View style={[styles.progressFill, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
+                      {/* Pending Segment */}
+                      <View style={[
+                        styles.progressFillPending, 
+                        { 
+                          width: `${Math.min(pendingProgress, 100 - confirmedProgress)}%`,
+                          left: `${Math.min(confirmedProgress, 100)}%`
+                        }
+                      ]} />
+                    </View>
+                    <Text style={styles.progressText}>{Math.round(totalProgress)}%</Text>
+                  </View>
+
+                  <View style={styles.amountRow}>
+                    <Text style={styles.amountCollected}>{formatRp(camp.current_amount + camp.pending_amount)}</Text>
+                    <Text style={styles.amountTarget}>/ {formatRp(camp.target_amount)}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.manageIconWrap}>
+                  <TrendingUp size={20} color="#69f6b8" />
+                </View>
+              </TouchableOpacity>
+            )
+          })
+        )}
       </View>
 
       {/* Log Aktivitas */}
       <View style={styles.activitySection}>
-         <View style={styles.sectionHeader}>
-            <View style={styles.sectionTitleRow}>
-              <Bot size={20} color="#69f6b8" />
-              <Text style={styles.sectionTitle}>Log Aktivitas</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push('/(admin)/manajemen-bukti')}>
-              <Text style={styles.viewAllText}>Lihat Semua</Text>
-            </TouchableOpacity>
-         </View>
-         
-         <View style={{ gap: 12 }}>
-             {fundData.recentExpenses.length === 0 && fundData.recentDonations.length === 0 ? (
-                <Text style={styles.emptyText}>Belum ada aktivitas hari ini.</Text>
-             ) : (
-                <>
-                  {[
-                    ...fundData.recentDonations.slice(0, 3).map(d => ({ ...d, type: 'income' })),
-                    ...fundData.recentExpenses.slice(0, 3).map(e => ({ ...e, type: 'expense' }))
-                  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                   .slice(0, 5)
-                   .map((item: any, idx) => {
-                     const isIncome = item.type === 'income';
-                     const campaignTitle = item.campaigns?.title || 'Umum';
-                     
-                     return (
-                       <TouchableOpacity 
-                         key={item.id || idx} 
-                         style={styles.activityCard}
-                         onPress={() => item.receipt_url && router.push({ pathname: '/(admin)/manajemen-bukti', params: { search: item.description || item.donator_name } })}
-                       >
-                           <View style={[styles.iconBox, { backgroundColor: isIncome ? 'rgba(105, 246, 184, 0.1)' : 'rgba(255, 71, 87, 0.1)' }]}>
-                             {isIncome ? <TrendingUp size={18} color="#69f6b8" /> : <Receipt size={18} color="#ff4757" />}
-                           </View>
-                           <View style={{ flex: 1 }}>
-                               <Text style={styles.activityName} numberOfLines={1}>
-                                    {isIncome ? `Donasi: ${item.donator_name || 'Hamba Allah'}` : (item.description || item.category)}
-                               </Text>
-                               <Text style={styles.activityMeta}>
-                                    {campaignTitle} • {isIncome ? 'Masuk' : item.category}
-                               </Text>
-                           </View>
-                           <Text style={[styles.activityAmount, { color: isIncome ? '#69f6b8' : '#fff' }]}>
-                               {isIncome ? '+' : '-'}{formatRp(item.amount)}
-                           </Text>
-                       </TouchableOpacity>
-                     );
-                   })
-                  }
-                </>
-             )}
-         </View>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleRow}>
+            <Bot size={20} color="#69f6b8" />
+            <Text style={styles.sectionTitle}>Log Aktivitas</Text>
+          </View>
+          <TouchableOpacity onPress={() => router.push('/(admin)/manajemen-bukti')}>
+            <Text style={styles.viewAllText}>Lihat Semua</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ gap: 12 }}>
+          {fundData.recentExpenses.length === 0 && fundData.recentDonations.length === 0 ? (
+            <Text style={styles.emptyText}>Belum ada aktivitas hari ini.</Text>
+          ) : (
+            <>
+              {[
+                ...fundData.recentDonations.slice(0, 3).map(d => ({ ...d, type: 'income' })),
+                ...fundData.recentExpenses.slice(0, 3).map(e => ({ ...e, type: 'expense' }))
+              ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 5)
+                .map((item: any, idx) => {
+                  const isIncome = item.type === 'income';
+                  const campaignTitle = item.campaigns?.title || 'Umum';
+
+                  return (
+                    <TouchableOpacity
+                      key={item.id || idx}
+                      style={styles.activityCard}
+                      onPress={() => item.receipt_url && router.push({ pathname: '/(admin)/manajemen-bukti', params: { search: item.description || item.donator_name } })}
+                    >
+                      <View style={[styles.iconBox, { backgroundColor: isIncome ? 'rgba(105, 246, 184, 0.1)' : 'rgba(255, 71, 87, 0.1)' }]}>
+                        {isIncome ? <TrendingUp size={18} color="#69f6b8" /> : <Receipt size={18} color="#ff4757" />}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.activityName} numberOfLines={1}>
+                          {isIncome ? `Donasi: ${item.donator_name || 'Hamba Allah'}` : (item.description || item.category)}
+                        </Text>
+                        <Text style={styles.activityMeta}>
+                          {campaignTitle} • {isIncome ? 'Masuk' : item.category}
+                        </Text>
+                      </View>
+                      <Text style={[styles.activityAmount, { color: isIncome ? '#69f6b8' : '#fff' }]}>
+                        {isIncome ? '+' : '-'}{formatRp(item.amount)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })
+              }
+            </>
+          )}
+        </View>
       </View>
 
       <View style={styles.footerBadge}>
-         <View style={styles.statusRow}>
-            <View style={styles.statusDot} />
-            <Text style={styles.statusText}>SISTEM AKTIF</Text>
-         </View>
-         <Text style={styles.footerVersion}>v2.0.4 Premium</Text>
+        <View style={styles.statusRow}>
+          <View style={styles.statusDot} />
+          <Text style={styles.statusText}>SISTEM AKTIF</Text>
+        </View>
+        <Text style={styles.footerVersion}>v2.0.4 Premium</Text>
       </View>
     </ScrollView>
   );
@@ -254,7 +266,17 @@ const styles = StyleSheet.create({
   campCategory: { color: AppColors.accent.emerald, fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   progressBar: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: '#69f6b8', borderRadius: 2 },
+  progressFill: { 
+    height: '100%', 
+    backgroundColor: '#69f6b8', 
+    borderRadius: 2 
+  },
+  progressFillPending: {
+    height: '100%',
+    backgroundColor: '#facc15', // Yellow-400
+    borderRadius: 2,
+    position: 'absolute',
+  },
   progressText: { color: '#64748b', fontSize: 10, fontWeight: 'bold' },
   amountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
   amountCollected: { color: '#fff', fontSize: 12, fontWeight: 'bold' },

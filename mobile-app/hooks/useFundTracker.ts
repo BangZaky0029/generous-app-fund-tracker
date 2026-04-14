@@ -14,7 +14,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { AppRealtime } from '@/lib/supabaseConfig';
-import { fetchTotalDonations, fetchRecentDonations } from '@/services/donationService';
+import { fetchTotalDonations, fetchRecentDonations, fetchDonationTotalsGroupByCampaign } from '@/services/donationService';
 import { fetchExpensesByCategory, fetchRecentExpenses } from '@/services/expenseService';
 import { fetchActiveCampaigns } from '@/services/campaignService'; // New
 import { CATEGORIES } from '@/constants/theme';
@@ -49,14 +49,25 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         expensesByCategory, 
         recentExpenses, 
         recentDonations,
-        activeCampaigns
+        activeCampaigns,
+        totalsConfirmed,
+        totalsPending
       ] = await Promise.all([
           fetchTotalDonations(),
           fetchExpensesByCategory(),
           fetchRecentExpenses(20),
           fetchRecentDonations(20),
           fetchActiveCampaigns(),
+          fetchDonationTotalsGroupByCampaign('confirmed'),
+          fetchDonationTotalsGroupByCampaign('pending'),
         ]);
+
+      // Augment campaigns with dynamic totals
+      const augmentedCampaigns = activeCampaigns.map(camp => ({
+        ...camp,
+        current_amount: totalsConfirmed[camp.id] ?? 0,
+        pending_amount: totalsPending[camp.id] ?? 0, // Custom field for UI
+      }));
 
       // Hitung total expenses
       const totalExpenses = Object.values(expensesByCategory).reduce(
@@ -96,7 +107,7 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         categories,
         recentExpenses,
         recentDonations,
-        activeCampaigns,
+        activeCampaigns: augmentedCampaigns as any,
         isLoading: false,
         error: null,
         lastUpdated: new Date(),

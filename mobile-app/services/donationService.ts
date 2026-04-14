@@ -3,7 +3,7 @@
  * CRUD operations untuk tabel donations di Supabase
  */
 import { supabase } from '@/lib/supabaseConfig';
-import type { Donation, AddDonationForm } from '@/constants/types';
+import type { Donation, AddDonationForm, DonationStatus } from '@/constants/types';
 
 // --- Ambil semua donasi (descending by created_at) ---
 export async function fetchAllDonations(campaignId?: string): Promise<Donation[]> {
@@ -22,11 +22,11 @@ export async function fetchAllDonations(campaignId?: string): Promise<Donation[]
 }
 
 // --- Hitung total donasi (Hanya yang sudah confirmed) ---
-export async function fetchTotalDonations(campaignId?: string): Promise<number> {
+export async function fetchTotalDonations(campaignId?: string, status: DonationStatus = 'confirmed'): Promise<number> {
   let query = supabase
     .from('donations')
     .select('amount')
-    .eq('status', 'confirmed');
+    .eq('status', status);
 
   if (campaignId) {
     query = query.eq('campaign_id', campaignId);
@@ -35,6 +35,24 @@ export async function fetchTotalDonations(campaignId?: string): Promise<number> 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []).reduce((sum, row) => sum + Number(row.amount), 0);
+}
+
+// --- Hitung total donasi per campaign (Grouping) ---
+export async function fetchDonationTotalsGroupByCampaign(status: DonationStatus = 'confirmed'): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('donations')
+    .select('campaign_id, amount')
+    .eq('status', status);
+
+  if (error) throw new Error(error.message);
+
+  const totals: Record<string, number> = {};
+  (data ?? []).forEach(row => {
+    if (row.campaign_id) {
+      totals[row.campaign_id] = (totals[row.campaign_id] ?? 0) + Number(row.amount);
+    }
+  });
+  return totals;
 }
 
 // --- Ambil N donasi terbaru ---
