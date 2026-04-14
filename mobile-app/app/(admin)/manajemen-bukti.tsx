@@ -50,7 +50,12 @@ export default function ManajemenBukti() {
   // Simplified Unified List Logic
   const unifiedItems = useMemo(() => {
     const expenses = recentExpenses.map(e => ({ ...e, type: 'expense' as const }));
-    const donations = recentDonations.map(d => ({ ...d, type: 'income' as const, category: 'Donasi' }));
+    const donations = recentDonations.map(d => ({ 
+      ...d, 
+      type: 'income' as const, 
+      category: 'Donasi',
+      receipt_url: d.payment_proof_url // Normalize field name for unified UI
+    }));
     
     let combined = [...expenses, ...donations];
     

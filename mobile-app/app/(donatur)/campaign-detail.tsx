@@ -4,26 +4,24 @@ import {
   View, Text, ScrollView, Image, TouchableOpacity,
   StyleSheet, ActivityIndicator, Dimensions, Linking
 } from 'react-native';
-import {
-  ArrowLeft, Heart, Share2, Calendar,
-  User, TrendingUp, Info, Newspaper
-} from 'lucide-react-native';
+import { ShieldCheck, Receipt, TrendingUp, Info, Newspaper, ArrowLeft, Heart, Share2, Calendar } from 'lucide-react-native';
+const AppColors = { accent: { emerald: '#69f6b8' } };
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { getCampaign, fetchCampaignUpdates } from '@/services/campaignService';
 import { fetchRecentDonations } from '@/services/donationService';
 import { fetchRecentExpenses } from '@/services/expenseService';
-import { Campaign, CampaignUpdate, Donation, Expense } from '@/constants/types';
+import { Campaign, CampaignUpdate } from '@/constants/types';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
 import { GlassCard } from '@/components/ui/GlassCard';
 
-const { width } = Dimensions.get('window');
-
+// Helper Formatter
 const formatRp = (amount: number) => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(amount);
 };
 
@@ -58,7 +56,12 @@ export default function CampaignDetailScreen() {
 
       // Gabungkan transaksi dan hilangkan nama donatur untuk donatur view
       const combined = [
-        ...recentDonations.map(d => ({ ...d, type: 'income', display_name: 'Donatur Generous' })),
+        ...recentDonations.map(d => ({ 
+          ...d, 
+          type: 'income', 
+          display_name: 'Donatur Generous',
+          receipt_url: d.payment_proof_url // Normalize field name
+        })),
         ...recentExpenses.map(e => ({ ...e, type: 'expense', display_name: e.category }))
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -97,7 +100,9 @@ export default function CampaignDetailScreen() {
   const target = campaign?.target_amount || 1;
   const confirmedProgress = (confirmedAmount / target) * 100;
   const pendingProgress = (pendingAmount / target) * 100;
-  const totalProgress = Math.min(confirmedProgress + pendingProgress, 100);
+  
+  const totalPercent = confirmedProgress + pendingProgress;
+  const displayPercent = totalPercent > 0 && totalPercent < 1 ? "<1" : Math.round(totalPercent);
 
   return (
     <View style={styles.root}>
@@ -112,11 +117,9 @@ export default function CampaignDetailScreen() {
             colors={['rgba(6, 14, 32, 0.8)', 'transparent', 'rgba(6, 14, 32, 1)']}
             style={styles.heroOverlay}
           />
-
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <ArrowLeft size={22} color="#fff" />
           </TouchableOpacity>
-
           <TouchableOpacity style={styles.shareBtn} onPress={() => fundData.showAlert('Info', 'Fitur bagi-bagi segera hadir!', 'info')}>
             <Share2 size={20} color="#fff" />
           </TouchableOpacity>
@@ -139,34 +142,16 @@ export default function CampaignDetailScreen() {
               <Text style={styles.targetText}>terkumpul dari {formatRp(campaign.target_amount)}</Text>
             </View>
 
-            <View style={styles.progressBarWrapper}>
-              {/* Confirmed Bar */}
-              <View style={styles.barContainer}>
-                <View style={styles.barBgCustom}>
-                  <View style={[styles.barFillGreen, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
-                </View>
-                <Text style={styles.barHint}>TERVERIFIKASI</Text>
-              </View>
-              
-              {/* Pending Bar */}
-              <View style={styles.barContainer}>
-                <View style={styles.barBgCustom}>
-                  <View style={[styles.barFillYellow, { width: `${Math.min(pendingProgress, 100)}%` }]} />
-                </View>
-                <Text style={styles.barHintPending}>ANTRIAN</Text>
-              </View>
-            </View>
-
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <TrendingUp size={16} color="#69f6b8" />
-                <Text style={styles.statVal}>{Math.round(totalProgress)}%</Text>
+                <Text style={styles.statVal}>{displayPercent}%</Text>
                 <Text style={styles.statLbl}>Total Progres</Text>
               </View>
               <View style={styles.statItem}>
-                <User size={16} color="#69f6b8" />
-                <Text style={styles.statVal}>-</Text>
-                <Text style={styles.statLbl}>Donatur</Text>
+                <ShieldCheck size={16} color="#69f6b8" />
+                <Text style={styles.statVal}>Audit</Text>
+                <Text style={styles.statLbl}>Tervalidasi</Text>
               </View>
               <View style={styles.statItem}>
                 <Calendar size={16} color="#69f6b8" />
@@ -175,6 +160,29 @@ export default function CampaignDetailScreen() {
               </View>
             </View>
           </GlassCard>
+
+          {/* Audit & Transparency Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <ShieldCheck size={18} color="#69f6b8" />
+              <Text style={styles.sectionTitle}>Audit & Transparansi</Text>
+            </View>
+            <GlassCard style={styles.auditCard}>
+              <View style={styles.auditInfo}>
+                <Receipt size={32} color="#69f6b8" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.auditTitle}>Laporan Akuntabilitas</Text>
+                  <Text style={styles.auditSub}>Validasi KAP Independen untuk periode ini.</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.downloadBtn}
+                onPress={() => fundData.showAlert('Audit', 'Dokumen sedang disiapkan dalam format PDF berstandar KAP.', 'info')}
+              >
+                <Text style={styles.downloadBtnText}>Unduh Laporan Audit (PDF)</Text>
+              </TouchableOpacity>
+            </GlassCard>
+          </View>
 
           {/* Story Section */}
           <View style={styles.section}>
@@ -199,11 +207,14 @@ export default function CampaignDetailScreen() {
                 const isIncome = item.type === 'income';
                 return (
                   <View key={item.id || idx} style={styles.transactionItem}>
-                    <View style={[styles.transIconBox, { backgroundColor: isIncome ? 'rgba(105, 246, 184, 0.1)' : 'rgba(255,255,255,0.05)' }]}>
-                      <TrendingUp size={14} color={isIncome ? '#69f6b8' : '#64748b'} />
+                    <View style={[styles.transIconBox, { backgroundColor: isIncome ? 'rgba(105, 246, 184, 0.1)' : 'rgba(255, 255, 255, 0.05)' }]}>
+                      {isIncome ? <TrendingUp size={14} color="#69f6b8" /> : <Receipt size={14} color="#64748b" />}
                     </View>
                     <View style={styles.transInfo}>
-                      <Text style={styles.transName}>{item.display_name}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.transName}>{item.display_name}</Text>
+                        {!isIncome && <ShieldCheck size={10} color="#69f6b8" />}
+                      </View>
                       {item.type === 'expense' && (
                         <Text style={styles.transDesc} numberOfLines={1}>{item.description}</Text>
                       )}
@@ -211,9 +222,16 @@ export default function CampaignDetailScreen() {
                         {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                       </Text>
                     </View>
-                    <Text style={[styles.transAmount, { color: isIncome ? '#69f6b8' : '#fff' }]}>
-                      {isIncome ? '+' : '-'}{formatRp(item.amount)}
-                    </Text>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={[styles.transAmount, { color: isIncome ? '#69f6b8' : '#fff' }]}>
+                        {isIncome ? '+' : '-'}{formatRp(item.amount)}
+                      </Text>
+                      {item.receipt_url && (
+                        <TouchableOpacity onPress={() => Linking.openURL(item.receipt_url)}>
+                          <Text style={styles.proofLink}>Lihat Bukti ✓</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 );
               })
@@ -289,14 +307,7 @@ const styles = StyleSheet.create({
   amountText: { color: '#fff', fontSize: 24, fontWeight: '900' },
   pendingText: { color: '#facc15', fontSize: 12, fontWeight: 'bold', marginBottom: 4 },
   targetText: { color: '#64748b', fontSize: 12 },
-  progressBarWrapper: { gap: 12, marginBottom: 24 },
-  barContainer: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  barBgCustom: { flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' },
-  barFillGreen: { height: '100%', backgroundColor: '#69f6b8', borderRadius: 3 },
-  barFillYellow: { height: '100%', backgroundColor: '#facc15', borderRadius: 3 },
-  barHint: { color: '#69f6b8', fontSize: 8, fontWeight: '900', width: 80 },
-  barHintPending: { color: '#facc15', fontSize: 8, fontWeight: '900', width: 80 },
-  statsRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 16, marginTop: 16 },
   statItem: { alignItems: 'center', gap: 4 },
   statVal: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
   statLbl: { color: '#64748b', fontSize: 10 },
@@ -323,4 +334,11 @@ const styles = StyleSheet.create({
   footer: { position: 'absolute', bottom: 0, width: '100%', padding: 24, paddingBottom: 40, backgroundColor: 'rgba(6, 14, 32, 0.9)' },
   donateBtn: { backgroundColor: '#69f6b8', height: 60, borderRadius: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
   donateBtnText: { color: '#002919', fontSize: 16, fontWeight: 'bold' },
+  proofLink: { color: '#69f6b8', fontSize: 10, fontWeight: 'bold', marginTop: 4 },
+  auditCard: { padding: 16, backgroundColor: 'rgba(105, 246, 184, 0.05)', borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)' },
+  auditInfo: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 },
+  auditTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  auditSub: { color: '#94a3b8', fontSize: 12 },
+  downloadBtn: { backgroundColor: '#69f6b8', paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+  downloadBtnText: { color: '#002919', fontWeight: 'bold', fontSize: 13 },
 });

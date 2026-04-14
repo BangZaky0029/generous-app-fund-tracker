@@ -79,6 +79,18 @@ export async function fetchRecentDonations(limit = 5, campaignId?: string): Prom
   return (data as Donation[]) ?? [];
 }
 
+// --- Ambil donasi berdasarkan ID donatur (untuk Riwayat Privat) ---
+export async function fetchUserDonations(userId: string): Promise<Donation[]> {
+  const { data, error } = await supabase
+    .from('donations')
+    .select('*, campaigns(title)')
+    .eq('donator_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data as Donation[]) ?? [];
+}
+
 import { uploadToStorage } from '@/lib/upload';
 
 // --- Tambah donasi baru ---
@@ -92,6 +104,7 @@ export async function createDonation(form: AddDonationForm & { campaign_id: stri
 
   const payload = {
     campaign_id: form.campaign_id,
+    donator_id: form.donator_id || null,
     donator_name: form.donator_name.trim() || 'Hamba Allah',
     amount: parseFloat(form.amount),
     message: form.message.trim() || null,

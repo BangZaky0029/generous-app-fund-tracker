@@ -11,6 +11,7 @@ export type Profile = {
   id: string;
   full_name: string | null;
   role: UserRole;
+  avatar_url?: string | null;
   updated_at: string;
 };
 
@@ -40,11 +41,11 @@ export type DonationStatus = 'pending' | 'confirmed' | 'rejected';
 
 export type Donation = {
   id: string;
+  donator_id: string | null;
   campaign_id: string | null;
   donator_name: string;
   amount: number;
   message: string | null;
-  receipt_url: string | null; // This might be used for something else, adding payment_proof_url for naming consistency with SQL
   payment_proof_url: string | null;
   status: DonationStatus;
   created_at: string;
@@ -116,6 +117,7 @@ export type AddExpenseForm = {
 };
 
 export type AddDonationForm = {
+  donator_id?: string | null;
   donator_name: string;
   amount: string;
   message: string;

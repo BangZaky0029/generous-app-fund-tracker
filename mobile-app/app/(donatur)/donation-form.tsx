@@ -62,6 +62,7 @@ export default function DonationFormScreen() {
     setIsSubmitting(true);
     try {
       await createDonation({
+        donator_id: user?.id,
         donator_name: isAnonymous ? 'Hamba Allah' : (donatorName.trim() || 'Kontributor'),
         amount: amount,
         message: message.trim() || 'Bismillah, semoga berkah.',
@@ -71,6 +72,11 @@ export default function DonationFormScreen() {
       });
 
       await refetch();
+
+      // Reset Form State explicitly
+      setAmount('');
+      setMessage('');
+      setProofUri(null);
 
       showAlert(
         '✅ Donasi Terkirim!',

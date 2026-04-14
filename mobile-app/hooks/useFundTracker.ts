@@ -55,8 +55,8 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         totalsConfirmed,
         totalsPending
       ] = await Promise.all([
-          fetchTotalDonations('confirmed'),
-          fetchTotalDonations('pending'),
+          fetchTotalDonations(undefined, 'confirmed'),
+          fetchTotalDonations(undefined, 'pending'),
           fetchExpensesByCategory(),
           fetchRecentExpenses(20),
           fetchRecentDonations(20),

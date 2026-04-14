@@ -19,7 +19,7 @@ type AuthActions = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, role?: 'donatur' | 'admin') => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  updateProfile: (fullName: string) => Promise<void>;
+  updateProfile: (fullName: string, avatarUrl?: string) => Promise<void>;
   signOut: () => Promise<void>;
   setIsVerifying: (val: boolean) => void;
 };
@@ -154,12 +154,15 @@ export function useAuth(): AuthState & AuthActions {
     if (error) throw new Error(error.message);
   }, []);
 
-  const updateProfile = useCallback(async (fullName: string) => {
+  const updateProfile = useCallback(async (fullName: string, avatarUrl?: string) => {
     if (!state.user?.id) return;
+    
+    const payload: any = { full_name: fullName.trim() };
+    if (avatarUrl) payload.avatar_url = avatarUrl;
     
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName.trim() })
+      .update(payload)
       .eq('id', state.user.id);
 
     if (error) throw new Error(error.message);

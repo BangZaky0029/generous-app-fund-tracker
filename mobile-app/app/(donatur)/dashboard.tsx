@@ -52,49 +52,31 @@ export default function DonaturDashboard() {
         </TouchableOpacity>
       </View>
 
-      {/* Hero Section */}
-      <View style={styles.heroCard}>
-         <View style={styles.heroBlur} />
-         <Text style={styles.heroLabel}>Total Dana Terkumpul</Text>
-         <Text style={styles.heroBalance}>{formatRp(fundData.totalDonations)}</Text>
-         
-         <View style={styles.badgeRow}>
-            <View style={styles.verifiedBadge}>
-              <ShieldCheck size={14} color="#69f6b8" />
-              <Text style={styles.verifiedText}>Dana Tervalidasi Agen</Text>
+      {/* Transparansi Bar - Status Penyaluran */}
+      <View style={styles.transparencyCard}>
+        <View style={styles.cardHeader}>
+           <Activity size={20} color="#69f6b8" />
+           <Text style={styles.cardTitle}>Status Penyaluran Dana Publik</Text>
+        </View>
+        
+        <View style={styles.statsList}>
+          <View>
+            <View style={styles.statInfoRow}>
+              <Text style={styles.statLabel}>Dana Telah Disalurkan</Text>
+              <Text style={styles.statValuePrimary}>
+                  {formatRp(fundData.totalExpenses)}
+              </Text>
             </View>
-            {fundData.totalDonationsPending > 0 && (
-               <View style={styles.pendingBadge}>
-                 <Activity size={14} color="#facc15" />
-                 <Text style={styles.pendingBadgeText}>
-                   Dalam Antrian: {formatRp(fundData.totalDonationsPending)}
-                 </Text>
-               </View>
-             )}
-         </View>
+            <View style={styles.progressBarBg}>
+               <View style={[styles.progressBarFill, { width: `${fundData.usagePercentage}%`, backgroundColor: '#69f6b8' }]} />
+            </View>
+            <View style={styles.statMetaRow}>
+               <Text style={styles.statMetaText}>Transparansi: {fundData.usagePercentage}% Terpakai</Text>
+               <Text style={styles.statMetaText}>Sisa: {formatRp(fundData.remainingFunds)}</Text>
+            </View>
+          </View>
+        </View>
       </View>
-
-       {/* Transparansi Bar */}
-       <View style={styles.transparencyCard}>
-         <View style={styles.cardHeader}>
-            <Activity size={20} color="#69f6b8" />
-            <Text style={styles.cardTitle}>Status Penyaluran</Text>
-         </View>
-         
-         <View style={styles.statsList}>
-           <View>
-             <View style={styles.statInfoRow}>
-               <Text style={styles.statLabel}>Telah Disalurkan</Text>
-               <Text style={styles.statValuePrimary}>
-                   {formatRp(fundData.totalExpenses)} ({fundData.usagePercentage}%)
-               </Text>
-             </View>
-             <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${fundData.usagePercentage}%`, backgroundColor: '#69f6b8' }]} />
-             </View>
-           </View>
-         </View>
-       </View>
 
        {/* Wadah Donasi Section */}
        <View style={styles.campaignListSection}>
@@ -119,7 +101,13 @@ export default function DonaturDashboard() {
                 const target = camp.target_amount || 1;
                 const confirmedProgress = (camp.current_amount / target) * 100;
                 const pendingProgress = (camp.pending_amount / target) * 100;
-                const totalProgress = Math.min(confirmedProgress + pendingProgress, 100);
+                
+                // Visual Floor: Jika ada uang masuk, berikan lebar minimal 2% agar garis tetap kelihatan
+                const visualConfirmed = camp.current_amount > 0 ? Math.max(confirmedProgress, 2) : 0;
+                const visualPending = camp.pending_amount > 0 ? Math.max(pendingProgress, 2) : 0;
+                
+                const totalPercent = confirmedProgress + pendingProgress;
+                const displayPercent = totalPercent > 0 && totalPercent < 1 ? "<1" : Math.round(totalPercent);
 
                 return (
                   <TouchableOpacity 
@@ -143,7 +131,7 @@ export default function DonaturDashboard() {
                              {/* Upper: Confirmed */}
                              <View style={styles.campBarItem}>
                                 <View style={styles.campBarBg}>
-                                   <View style={[styles.campProgressBarFill, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
+                                   <View style={[styles.campProgressBarFill, { width: `${Math.min(visualConfirmed, 100)}%` }]} />
                                 </View>
                                 <Text style={styles.campBarLabel}>VERIFIED</Text>
                              </View>
@@ -151,12 +139,12 @@ export default function DonaturDashboard() {
                              {/* Lower: Pending */}
                              <View style={styles.campBarItem}>
                                 <View style={styles.campBarBg}>
-                                   <View style={[styles.campProgressBarFillPendingLine, { width: `${Math.min(pendingProgress, 100)}%` }]} />
+                                   <View style={[styles.campProgressBarFillPendingLine, { width: `${Math.min(visualPending, 100)}%` }]} />
                                 </View>
                                 <Text style={styles.campBarLabelPending}>QUEUE</Text>
                              </View>
                           </View>
-                          <Text style={styles.campProgressText}>{Math.round(totalProgress)}%</Text>
+                          <Text style={styles.campProgressText}>{displayPercent}%</Text>
                        </View>
                     </View>
                   </TouchableOpacity>
@@ -173,9 +161,6 @@ export default function DonaturDashboard() {
               <TrendingUp size={20} color="#69f6b8" />
               <Text style={styles.sectionTitle}>Aktivitas Terkini</Text>
             </View>
-            <TouchableOpacity onPress={() => router.push('/(donatur)/laporan')}>
-              <Text style={styles.viewAllText}>Laporan Detail</Text>
-            </TouchableOpacity>
          </View>
          
          <View style={{ gap: 12 }}>
@@ -184,7 +169,11 @@ export default function DonaturDashboard() {
              ) : (
                 <>
                   {[
-                    ...fundData.recentDonations.slice(0, 3).map(d => ({ ...d, type: 'income' })),
+                    ...fundData.recentDonations.slice(0, 3).map(d => ({ 
+                      ...d, 
+                      type: 'income',
+                      receipt_url: d.payment_proof_url // Normalize field name
+                    })),
                     ...fundData.recentExpenses.slice(0, 3).map(e => ({ ...e, type: 'expense' }))
                   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                    .slice(0, 5)
@@ -235,23 +224,30 @@ const styles = StyleSheet.create({
   headerRole: { color: '#64748b', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
   headerName: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   notifBtn: { padding: 10, backgroundColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 14 },
-  heroCard: { backgroundColor: '#0f172a', borderRadius: 24, padding: 24, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.05)', overflow: 'hidden' },
-  heroBlur: { position: 'absolute', bottom: -40, left: -40, width: 100, height: 100, backgroundColor: 'rgba(105, 246, 184, 0.03)', borderRadius: 50 },
-  heroLabel: { color: '#94a3b8', fontSize: 13, marginBottom: 8 },
-  heroBalance: { color: '#fff', fontSize: 32, fontWeight: 'bold' },
-  badgeRow: { flexDirection: 'row', marginTop: 16 },
-  verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(105, 246, 184, 0.08)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   verifiedText: { color: '#69f6b8', fontSize: 11, fontWeight: 'bold' },
-  transparencyCard: { backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: 24, padding: 24, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
+  transparencyCard: { 
+    backgroundColor: '#0f172a', 
+    borderRadius: 24, 
+    padding: 24, 
+    marginBottom: 24, 
+    borderWidth: 1, 
+    borderColor: 'rgba(255,255,255,0.05)',
+    shadowColor: '#69f6b8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5
+  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24 },
   cardTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   statsList: { gap: 20 },
-  statInfoRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  statLabel: { fontSize: 12, color: '#94a3b8' },
-  statValuePrimary: { fontSize: 12, color: '#69f6b8', fontWeight: 'bold' },
-  statValueSecondary: { fontSize: 12, color: '#fff', fontWeight: 'bold' },
-  progressBarBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' },
-  progressBarFill: { height: '100%', borderRadius: 3 },
+  statInfoRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  statLabel: { fontSize: 14, color: '#94a3b8' },
+  statValuePrimary: { fontSize: 20, color: '#69f6b8', fontWeight: 'bold' },
+  statMetaRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  statMetaText: { fontSize: 11, color: '#64748b', fontWeight: 'bold' },
+  progressBarBg: { height: 10, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 5, overflow: 'hidden' },
+  progressBarFill: { height: '100%', borderRadius: 5 },
   activitySection: { backgroundColor: 'rgba(25,37,64,0.3)', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

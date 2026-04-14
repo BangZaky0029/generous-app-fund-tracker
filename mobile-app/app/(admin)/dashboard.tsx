@@ -16,7 +16,7 @@ const formatRp = (amount: number) => {
 };
 
 export default function AdminDashboard() {
-  const { user, isAdmin } = useAuthContext();
+  const { user } = useAuthContext();
   const fundData = useFundTrackerContext();
 
   // Ambil inisial 
@@ -114,7 +114,13 @@ export default function AdminDashboard() {
             const target = camp.target_amount || 1;
             const confirmedProgress = (camp.current_amount / target) * 100;
             const pendingProgress = (camp.pending_amount / target) * 100;
-            const totalProgress = Math.min(confirmedProgress + pendingProgress, 100);
+
+            // Visual Floor: Pastikan bar kelihatan kalau ada uangnya
+            const visualConfirmed = camp.current_amount > 0 ? Math.max(confirmedProgress, 2) : 0;
+            const visualPending = camp.pending_amount > 0 ? Math.max(pendingProgress, 2) : 0;
+
+            const totalPercent = confirmedProgress + pendingProgress;
+            const displayPercent = totalPercent > 0 && totalPercent < 1 ? "<1" : Math.round(totalPercent);
 
             return (
               <TouchableOpacity
@@ -130,35 +136,33 @@ export default function AdminDashboard() {
                   <Text style={styles.campCategory}>{camp.category}</Text>
 
                   <View style={styles.progressRow}>
-                    <View style={styles.progressBarDual}>
-                      {/* Upper Bar: Confirmed */}
-                      <View style={styles.barItem}>
-                        <View style={styles.barBg}>
-                          <View style={[styles.progressFill, { width: `${Math.min(confirmedProgress, 100)}%` }]} />
-                        </View>
-                        <Text style={styles.barLabel}>VERIFIKASI</Text>
+                    {/* Upper Bar: Confirmed */}
+                    <View style={styles.barItem}>
+                      <View style={styles.barBg}>
+                        <View style={[styles.progressFill, { width: `${Math.min(visualConfirmed, 100)}%` }]} />
                       </View>
-                      
-                      {/* Lower Bar: Pending */}
-                      <View style={styles.barItem}>
-                        <View style={styles.barBg}>
-                          <View style={[styles.progressFillPendingLine, { width: `${Math.min(pendingProgress, 100)}%` }]} />
-                        </View>
-                        <Text style={styles.barLabelPending}>ANTRIAN</Text>
-                      </View>
+                      <Text style={styles.barLabel}>VERIFIKASI</Text>
                     </View>
-                    <View style={styles.percentCol}>
-                      <Text style={styles.progressText}>{Math.round(totalProgress)}%</Text>
-                    </View>
-                  </View>
 
-                  <View style={styles.amountRow}>
-                    <Text style={styles.amountCollected}>{formatRp(camp.current_amount)}</Text>
-                    {camp.pending_amount > 0 && (
-                      <Text style={styles.amountPending}> (+ {formatRp(camp.pending_amount)})</Text>
-                    )}
-                    <Text style={styles.amountTarget}>/ {formatRp(camp.target_amount)}</Text>
+                    {/* Lower Bar: Pending */}
+                    <View style={styles.barItem}>
+                      <View style={styles.barBg}>
+                        <View style={[styles.progressFillPendingLine, { width: `${Math.min(visualPending, 100)}%` }]} />
+                      </View>
+                      <Text style={styles.barLabelPending}>ANTRIAN</Text>
+                    </View>
                   </View>
+                  <View style={styles.percentCol}>
+                    <Text style={styles.progressText}>{displayPercent}%</Text>
+                  </View>
+                </View>
+
+                <View style={styles.amountRow}>
+                  <Text style={styles.amountCollected}>{formatRp(camp.current_amount)}</Text>
+                  {camp.pending_amount > 0 && (
+                    <Text style={styles.amountPending}> (+ {formatRp(camp.pending_amount)})</Text>
+                  )}
+                  <Text style={styles.amountTarget}>/ {formatRp(camp.target_amount)}</Text>
                 </View>
 
                 <View style={styles.manageIconWrap}>
@@ -188,7 +192,11 @@ export default function AdminDashboard() {
           ) : (
             <>
               {[
-                ...fundData.recentDonations.slice(0, 3).map(d => ({ ...d, type: 'income' })),
+                ...fundData.recentDonations.slice(0, 3).map(d => ({ 
+                  ...d, 
+                  type: 'income',
+                  receipt_url: d.payment_proof_url // Normalize field name
+                })),
                 ...fundData.recentExpenses.slice(0, 3).map(e => ({ ...e, type: 'expense' }))
               ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                 .slice(0, 5)
@@ -287,14 +295,14 @@ const styles = StyleSheet.create({
   barLabel: { color: '#69f6b8', fontSize: 7, fontWeight: '900', width: 45 },
   barLabelPending: { color: '#facc15', fontSize: 7, fontWeight: '900', width: 45 },
   percentCol: { alignItems: 'center', justifyContent: 'center' },
-  progressFill: { 
-    height: '100%', 
-    backgroundColor: '#69f6b8', 
-    borderRadius: 2 
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#69f6b8',
+    borderRadius: 2
   },
   progressFillPendingLine: {
     height: '100%',
-    backgroundColor: '#facc15', // Yellow-400
+    backgroundColor: '#facc15',
     borderRadius: 2,
   },
   progressText: { color: '#fff', fontSize: 12, fontWeight: '900' },

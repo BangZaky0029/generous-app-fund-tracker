@@ -69,7 +69,11 @@ export default function CampaignManageScreen() {
 
       // Gabungkan dan urutkan transaksi
       const combined = [
-        ...recentDonations.map(d => ({ ...d, type: 'income' })),
+        ...recentDonations.map(d => ({ 
+          ...d, 
+          type: 'income',
+          receipt_url: d.payment_proof_url // Normalize field name
+        })),
         ...recentExpenses.map(e => ({ ...e, type: 'expense' }))
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 

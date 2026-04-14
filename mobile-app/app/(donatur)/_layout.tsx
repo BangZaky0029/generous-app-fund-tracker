@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { LayoutDashboard, FileText, User } from 'lucide-react-native';
+import { LayoutDashboard, Receipt, User } from 'lucide-react-native';
 
 export default function DonaturLayout() {
   return (
@@ -37,8 +37,8 @@ export default function DonaturLayout() {
       <Tabs.Screen
         name="laporan"
         options={{
-          title: 'Laporan',
-          tabBarIcon: ({ color, size }) => <FileText size={size} color={color} />,
+          title: 'Riwayat',
+          tabBarIcon: ({ color, size }) => <Receipt size={size} color={color} />,
         }}
       />
       <Tabs.Screen
