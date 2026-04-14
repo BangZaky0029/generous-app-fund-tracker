@@ -7,12 +7,17 @@ import * as FileSystem from 'expo-file-system/legacy';
 import type { Expense, ExpenseCategory } from '@/constants/types';
 
 // --- Ambil semua expenses ---
-export async function fetchAllExpenses(): Promise<Expense[]> {
+export async function fetchAllExpenses(campaignId?: string): Promise<Expense[]> {
   console.log('[ExpenseService] Fetching all expenses...');
-  const { data, error } = await supabase
+  let query = supabase
     .from('expenses')
-    .select('*, profiles(full_name, role)')
-    .order('created_at', { ascending: false });
+    .select('*, profiles(full_name, role), campaigns(title)');
+
+  if (campaignId) {
+    query = query.eq('campaign_id', campaignId);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) {
     console.error('[ExpenseService] Error:', error.message);
@@ -22,14 +27,20 @@ export async function fetchAllExpenses(): Promise<Expense[]> {
 }
 
 // --- Ambil N expenses terbaru ---
-export async function fetchRecentExpenses(limit = 10): Promise<Expense[]> {
+export async function fetchRecentExpenses(limit = 10, campaignId?: string): Promise<Expense[]> {
   console.log(`[ExpenseService] Fetching recent ${limit} expenses...`);
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('expenses')
-      .select('*, profiles(full_name, role)')
+      .select('*, profiles(full_name, role), campaigns(title)')
       .order('created_at', { ascending: false })
       .limit(limit);
+
+    if (campaignId) {
+      query = query.eq('campaign_id', campaignId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('[ExpenseService] Supabase Error:', error.message);
@@ -43,12 +54,18 @@ export async function fetchRecentExpenses(limit = 10): Promise<Expense[]> {
 }
 
 // --- Hitung total expenses per kategori ---
-export async function fetchExpensesByCategory(): Promise<
+export async function fetchExpensesByCategory(campaignId?: string): Promise<
   Record<ExpenseCategory, number>
 > {
-  const { data, error } = await supabase
+  let query = supabase
     .from('expenses')
     .select('category, amount');
+
+  if (campaignId) {
+    query = query.eq('campaign_id', campaignId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw new Error(error.message);
 
@@ -118,6 +135,7 @@ export async function uploadReceipt(
 // --- Tambah expense baru (dengan optional upload receipt) ---
 export async function createExpense(params: {
   admin_id: string;
+  campaign_id: string; // Wajib di sistem baru
   amount: number;
   category: ExpenseCategory;
   description: string;
@@ -133,12 +151,13 @@ export async function createExpense(params: {
     .from('expenses')
     .insert({
       admin_id: params.admin_id,
+      campaign_id: params.campaign_id,
       amount: params.amount,
       category: params.category,
       description: params.description.trim() || null,
       receipt_url: receiptUrl,
     })
-    .select('*, profiles(full_name, role)')
+    .select('*, profiles(full_name, role), campaigns(title)')
     .single();
 
   if (error) throw new Error(error.message);

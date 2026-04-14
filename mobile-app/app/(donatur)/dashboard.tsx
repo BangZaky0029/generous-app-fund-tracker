@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Image } from 'react-native';
 import { Bell, TrendingUp, Heart, ShieldCheck, Receipt, Bot, ChevronRight, Activity } from 'lucide-react-native';
 import { useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
 import { router } from 'expo-router';
@@ -66,39 +66,79 @@ export default function DonaturDashboard() {
          </View>
       </View>
 
-      {/* Transparansi Bar */}
-      <View style={styles.transparencyCard}>
-        <View style={styles.cardHeader}>
-           <Activity size={20} color="#69f6b8" />
-           <Text style={styles.cardTitle}>Status Penyaluran</Text>
-        </View>
-        
-        <View style={styles.statsList}>
-          <View>
-            <View style={styles.statInfoRow}>
-              <Text style={styles.statLabel}>Telah Disalurkan</Text>
-              <Text style={styles.statValuePrimary}>
-                  {formatRp(fundData.totalExpenses)} ({fundData.usagePercentage}%)
-              </Text>
-            </View>
-            <View style={styles.progressBarBg}>
-               <View style={[styles.progressBarFill, { width: `${fundData.usagePercentage}%`, backgroundColor: '#69f6b8' }]} />
+       {/* Transparansi Bar */}
+       <View style={styles.transparencyCard}>
+         <View style={styles.cardHeader}>
+            <Activity size={20} color="#69f6b8" />
+            <Text style={styles.cardTitle}>Status Penyaluran</Text>
+         </View>
+         
+         <View style={styles.statsList}>
+           <View>
+             <View style={styles.statInfoRow}>
+               <Text style={styles.statLabel}>Telah Disalurkan</Text>
+               <Text style={styles.statValuePrimary}>
+                   {formatRp(fundData.totalExpenses)} ({fundData.usagePercentage}%)
+               </Text>
+             </View>
+             <View style={styles.progressBarBg}>
+                <View style={[styles.progressBarFill, { width: `${fundData.usagePercentage}%`, backgroundColor: '#69f6b8' }]} />
+             </View>
+           </View>
+         </View>
+       </View>
+
+       {/* Wadah Donasi Section */}
+       <View style={styles.campaignListSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <Heart size={20} color="#69f6b8" />
+              <Text style={styles.sectionTitle}>Wadah Donasi</Text>
             </View>
           </View>
 
-          <View>
-            <View style={styles.statInfoRow}>
-              <Text style={styles.statLabel}>Saldo Reserve</Text>
-              <Text style={styles.statValueSecondary}>
-                  {formatRp(fundData.remainingFunds)} ({100 - fundData.usagePercentage}%)
-              </Text>
-            </View>
-            <View style={styles.progressBarBg}>
-               <View style={[styles.progressBarFill, { width: `${Math.max(0, 100 - fundData.usagePercentage)}%`, backgroundColor: '#64748b' }]} />
-            </View>
-          </View>
-        </View>
-      </View>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.campaignScroll}
+          >
+            {fundData.activeCampaigns.length === 0 ? (
+              <View style={styles.emptyCampaign}>
+                <Text style={styles.emptyText}>Belum ada wadah aktif.</Text>
+              </View>
+            ) : (
+              fundData.activeCampaigns.map((camp: any) => {
+                const progress = Math.min((camp.current_amount / camp.target_amount) * 100, 100);
+                return (
+                  <TouchableOpacity 
+                    key={camp.id} 
+                    style={styles.campaignCard}
+                    onPress={() => router.push({
+                      pathname: '/(donatur)/campaign-detail',
+                      params: { id: camp.id }
+                    })}
+                  >
+                    <Image 
+                      source={{ uri: camp.poster_url || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800&auto=format&fit=crop' }} 
+                      style={styles.campaignPoster} 
+                    />
+                    <View style={styles.campaignInfo}>
+                       <Text style={styles.campaignTitle} numberOfLines={2}>{camp.title}</Text>
+                       <Text style={styles.campaignCat}>{camp.category}</Text>
+                       
+                       <View style={styles.campProgressRow}>
+                          <View style={styles.campProgressBarBg}>
+                             <View style={[styles.campProgressBarFill, { width: `${progress}%` }]} />
+                          </View>
+                          <Text style={styles.campProgressText}>{Math.round(progress)}%</Text>
+                       </View>
+                    </View>
+                  </TouchableOpacity>
+                )
+              })
+            )}
+          </ScrollView>
+       </View>
 
       {/* Aktivitas Terkini */}
       <View style={styles.activitySection}>
@@ -134,7 +174,7 @@ export default function DonaturDashboard() {
                                     {isIncome ? `${item.donator_name || 'Hamba Allah'}` : (item.description || item.category)}
                                </Text>
                                <Text style={styles.activityMeta}>
-                                    {isIncome ? 'Dana Masuk' : `Laporan: ${item.category}`} • {new Date(item.created_at).toLocaleDateString('id-ID')}
+                                    {item.campaigns?.title || 'Umum'} • {isIncome ? 'Dana Masuk' : `Laporan: ${item.category}`}
                                </Text>
                            </View>
                            <View style={{ alignItems: 'flex-end' }}>
@@ -197,5 +237,17 @@ const styles = StyleSheet.create({
   activityMeta: { color: '#64748b', fontSize: 11 },
   activityAmount: { fontSize: 14, fontWeight: 'bold' },
   proofBadge: { color: '#69f6b8', fontSize: 9, fontWeight: 'bold', marginTop: 2 },
-  emptyText: { color: '#64748b', textAlign: 'center', paddingVertical: 20, fontSize: 13 }
+  emptyText: { color: '#64748b', textAlign: 'center', paddingVertical: 20, fontSize: 13 },
+  campaignListSection: { marginBottom: 32 },
+  campaignScroll: { gap: 16, paddingRight: 40 },
+  campaignCard: { width: 220, backgroundColor: '#0f172a', borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  campaignPoster: { width: '100%', height: 120, resizeMode: 'cover' },
+  campaignInfo: { padding: 12, gap: 4 },
+  campaignTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold', height: 40 },
+  campaignCat: { color: '#69f6b8', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
+  campProgressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  campProgressBarBg: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' },
+  campProgressBarFill: { height: '100%', backgroundColor: '#69f6b8', borderRadius: 2 },
+  campProgressText: { color: '#64748b', fontSize: 10, fontWeight: 'bold' },
+  emptyCampaign: { width: 300, padding: 40, alignItems: 'center', justifyContent: 'center' },
 });

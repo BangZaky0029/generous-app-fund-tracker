@@ -14,13 +14,41 @@ export type Profile = {
   updated_at: string;
 };
 
+export type Campaign = {
+  id: string;
+  title: string;
+  category: string;
+  description: string | null;
+  target_amount: number;
+  current_amount: number;
+  poster_url: string | null;
+  status: 'active' | 'completed';
+  admin_id: string | null;
+  created_at: string;
+};
+
+export type CampaignUpdate = {
+  id: string;
+  campaign_id: string;
+  title: string;
+  content: string | null;
+  image_url: string | null;
+  created_at: string;
+};
+
+export type DonationStatus = 'pending' | 'confirmed' | 'rejected';
+
 export type Donation = {
   id: string;
+  campaign_id: string | null;
   donator_name: string;
   amount: number;
   message: string | null;
-  receipt_url: string | null;
+  receipt_url: string | null; // This might be used for something else, adding payment_proof_url for naming consistency with SQL
+  payment_proof_url: string | null;
+  status: DonationStatus;
   created_at: string;
+  campaigns?: Campaign; // joined
 };
 
 export type ExpenseCategory =
@@ -32,6 +60,7 @@ export type ExpenseCategory =
 
 export type Expense = {
   id: string;
+  campaign_id: string | null;
   admin_id: string | null;
   amount: number;
   category: ExpenseCategory;
@@ -39,6 +68,7 @@ export type Expense = {
   receipt_url: string | null;
   created_at: string;
   profiles?: Profile; // joined
+  campaigns?: Campaign; // joined
 };
 
 export type FundSummary = {
@@ -61,13 +91,14 @@ export type CategorySummary = {
 };
 
 export type FundTrackerState = {
-  totalDonations: number;
-  totalExpenses: number;
-  remainingFunds: number;
-  usagePercentage: number;
+  totalDonations: number,
+  totalExpenses: number,
+  remainingFunds: number,
+  usagePercentage: number,
   categories: CategorySummary[];
   recentExpenses: Expense[];
   recentDonations: Donation[];
+  activeCampaigns: Campaign[]; // New
   isLoading: boolean;
   error: string | null;
   lastUpdated: Date | null;
@@ -88,6 +119,7 @@ export type AddDonationForm = {
   amount: string;
   message: string;
   receiptLocalUri?: string | null;
+  status?: DonationStatus; // Added for flexibility in UI calls
 };
 
 // ========== OCR TYPES ==========

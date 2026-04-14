@@ -6,34 +6,50 @@ import { supabase } from '@/lib/supabaseConfig';
 import type { Donation, AddDonationForm } from '@/constants/types';
 
 // --- Ambil semua donasi (descending by created_at) ---
-export async function fetchAllDonations(): Promise<Donation[]> {
-  const { data, error } = await supabase
+export async function fetchAllDonations(campaignId?: string): Promise<Donation[]> {
+  let query = supabase
     .from('donations')
-    .select('*')
+    .select('*, campaigns(title)')
     .order('created_at', { ascending: false });
 
+  if (campaignId) {
+    query = query.eq('campaign_id', campaignId);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data as Donation[]) ?? [];
 }
 
-// --- Hitung total donasi ---
-export async function fetchTotalDonations(): Promise<number> {
-  const { data, error } = await supabase
+// --- Hitung total donasi (Hanya yang sudah confirmed) ---
+export async function fetchTotalDonations(campaignId?: string): Promise<number> {
+  let query = supabase
     .from('donations')
-    .select('amount');
+    .select('amount')
+    .eq('status', 'confirmed');
 
+  if (campaignId) {
+    query = query.eq('campaign_id', campaignId);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data ?? []).reduce((sum, row) => sum + Number(row.amount), 0);
 }
 
 // --- Ambil N donasi terbaru ---
-export async function fetchRecentDonations(limit = 5): Promise<Donation[]> {
-  const { data, error } = await supabase
+export async function fetchRecentDonations(limit = 5, campaignId?: string): Promise<Donation[]> {
+  let query = supabase
     .from('donations')
-    .select('*')
+    .select('*, campaigns(title)')
     .order('created_at', { ascending: false })
     .limit(limit);
 
+  if (campaignId) {
+    query = query.eq('campaign_id', campaignId);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data as Donation[]) ?? [];
 }
@@ -41,28 +57,41 @@ export async function fetchRecentDonations(limit = 5): Promise<Donation[]> {
 import { uploadToStorage } from '@/lib/upload';
 
 // --- Tambah donasi baru ---
-export async function createDonation(form: AddDonationForm): Promise<Donation> {
-  let receiptUrl: string | null = null;
+export async function createDonation(form: AddDonationForm & { campaign_id: string }): Promise<Donation> {
+  let proofUrl: string | null = null;
   
   if (form.receiptLocalUri) {
-    receiptUrl = await uploadToStorage(form.receiptLocalUri, 'receipts', 'donations');
+    // Gunakan folder 'receipts' sesuai instruksi user
+    proofUrl = await uploadToStorage(form.receiptLocalUri, 'receipts', 'donations');
   }
 
   const payload = {
+    campaign_id: form.campaign_id,
     donator_name: form.donator_name.trim() || 'Hamba Allah',
     amount: parseFloat(form.amount),
     message: form.message.trim() || null,
-    receipt_url: receiptUrl,
+    payment_proof_url: proofUrl,
+    status: 'pending', // Default pending sampai dikonfirmasi admin
   };
 
   const { data, error } = await supabase
     .from('donations')
     .insert(payload)
-    .select()
+    .select('*, campaigns(title)')
     .single();
 
   if (error) throw new Error(error.message);
   return data as Donation;
+}
+
+// --- Konfirmasi Donasi (Admin Only) ---
+export async function confirmDonation(id: string, status: 'confirmed' | 'rejected' = 'confirmed'): Promise<void> {
+  const { error } = await supabase
+    .from('donations')
+    .update({ status })
+    .eq('id', id);
+
+  if (error) throw new Error(error.message);
 }
 // --- Hapus donasi ---
 export async function deleteDonation(id: string): Promise<void> {

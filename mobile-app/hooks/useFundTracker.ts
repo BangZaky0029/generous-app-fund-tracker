@@ -16,8 +16,9 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { AppRealtime } from '@/lib/supabaseConfig';
 import { fetchTotalDonations, fetchRecentDonations } from '@/services/donationService';
 import { fetchExpensesByCategory, fetchRecentExpenses } from '@/services/expenseService';
+import { fetchActiveCampaigns } from '@/services/campaignService'; // New
 import { CATEGORIES } from '@/constants/theme';
-import type { FundTrackerState, CategorySummary, ExpenseCategory } from '@/constants/types';
+import type { FundTrackerState, CategorySummary, ExpenseCategory, Campaign } from '@/constants/types';
 
 const INITIAL_STATE: FundTrackerState = {
   totalDonations: 0,
@@ -27,6 +28,7 @@ const INITIAL_STATE: FundTrackerState = {
   categories: [],
   recentExpenses: [],
   recentDonations: [],
+  activeCampaigns: [],
   isLoading: true,
   error: null,
   lastUpdated: null,
@@ -42,12 +44,18 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       // Fetch semua data secara paralel (efisien)
-      const [totalDonations, expensesByCategory, recentExpenses, recentDonations] =
-        await Promise.all([
+      const [
+        totalDonations, 
+        expensesByCategory, 
+        recentExpenses, 
+        recentDonations,
+        activeCampaigns
+      ] = await Promise.all([
           fetchTotalDonations(),
           fetchExpensesByCategory(),
           fetchRecentExpenses(20),
           fetchRecentDonations(20),
+          fetchActiveCampaigns(),
         ]);
 
       // Hitung total expenses
@@ -57,7 +65,6 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
       );
 
       // Kalkulasi persentase per kategori
-      // Formula: (Total Kategori / Total Donasi) × 100%
       const categories: CategorySummary[] = CATEGORIES.map((cat) => {
         const catTotal = expensesByCategory[cat.name as ExpenseCategory] ?? 0;
         const percentage =
@@ -89,6 +96,7 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         categories,
         recentExpenses,
         recentDonations,
+        activeCampaigns,
         isLoading: false,
         error: null,
         lastUpdated: new Date(),
@@ -116,33 +124,23 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
       },
     });
 
-    // Subscribe ke perubahan tabel 'expenses'
-    channel.on(
-      'postgres_changes' as any,
-      {
-        event: '*',        // INSERT, UPDATE, DELETE
-        schema: 'public',
-        table: 'expenses',
-      },
-      (payload: any) => {
-        console.log('[Agent] Expenses changed:', payload.eventType, '→ Recalculating...');
-        calculateFundState(); // Agentic: auto recalculate!
-      }
-    );
-
-    // Subscribe ke perubahan tabel 'donations'
-    channel.on(
-      'postgres_changes' as any,
-      {
-        event: '*',        // INSERT, UPDATE, DELETE
-        schema: 'public',
-        table: 'donations',
-      },
-      (payload: any) => {
-        console.log('[Agent] Donations changed:', payload.eventType, '→ Recalculating...');
-        calculateFundState(); // Agentic: auto recalculate!
-      }
-    );
+    // Subscribe ke semua tabel relevan
+    const tables = ['expenses', 'donations', 'campaigns', 'campaign_updates'];
+    
+    tables.forEach(table => {
+      channel.on(
+        'postgres_changes' as any,
+        {
+          event: '*',        // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: table,
+        },
+        (payload: any) => {
+          console.log(`[Agent] ${table} changed:`, payload.eventType, '→ Recalculating...');
+          calculateFundState(); // Auto recalculate for any change
+        }
+      );
+    });
 
     // Subscribe dan simpan channel reference
     channel.subscribe((status) => {

@@ -23,7 +23,7 @@ const { width } = Dimensions.get('window');
 
 export default function ManajemenBukti() {
   const { recentExpenses, recentDonations, isLoading, refetch, showAlert } = useFundTrackerContext();
-  const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'income' | 'expense' | 'pending'>('all');
   const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
 
   // Auto Refresh saat masuk ke layar ini
@@ -37,6 +37,7 @@ export default function ManajemenBukti() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState<string | null>(null);
 
   const formatRp = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -54,15 +55,18 @@ export default function ManajemenBukti() {
     let combined = [...expenses, ...donations];
     
     // Global filter by Type
-    if (filterType === 'income') combined = combined.filter(i => i.type === 'income');
+    if (filterType === 'income') combined = combined.filter(i => i.type === 'income' && i.status === 'confirmed');
     if (filterType === 'expense') combined = combined.filter(i => i.type === 'expense');
+    if (filterType === 'pending') combined = combined.filter(i => i.type === 'income' && i.status === 'pending');
 
     // Search and Category Filter
     return combined.filter(item => {
       const title = item.type === 'income' ? (item as any).donator_name : (item as any).description;
+      const campaignTitle = item.campaigns?.title || 'Umum';
       const matchQuery = title?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          item.amount.toString().includes(searchQuery) ||
-                         item.category.toLowerCase().includes(searchQuery.toLowerCase());
+                         item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         campaignTitle.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchCategory = selectedCategory ? item.category === selectedCategory : true;
       return matchQuery && matchCategory;
@@ -94,6 +98,28 @@ export default function ManajemenBukti() {
     );
   };
 
+  const handleConfirm = async (id: string, status: 'confirmed' | 'rejected') => {
+    const title = status === 'confirmed' ? 'Konfirmasi' : 'Tolak';
+    showAlert(
+      `${title} Donasi`,
+      `Apakah Anda yakin ingin ${title.toLowerCase()} donasi ini?`,
+      'info',
+      async () => {
+        setIsConfirming(id);
+        try {
+          const { confirmDonation } = await import('@/services/donationService');
+          await confirmDonation(id, status);
+          await refetch();
+          showAlert('Berhasil', `Donasi berhasil ${status === 'confirmed' ? 'dikonfirmasi' : 'ditolak'}.`, 'success');
+        } catch (err) {
+          showAlert('Gagal', 'Terjadi kesalahan saat memproses donasi.', 'error');
+        } finally {
+          setIsConfirming(null);
+        }
+      }
+    );
+  };
+
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <View style={styles.header}>
@@ -114,37 +140,43 @@ export default function ManajemenBukti() {
             </View>
           </View>
 
-          <View style={styles.headerActions}>
-            <View style={styles.statChip}>
-              <Text style={styles.statCount}>{unifiedItems.length}</Text>
-              <Text style={styles.statLabel}>
-                {filterType === 'all' ? 'Total Aset' : filterType === 'income' ? 'Donasi' : 'Pengeluaran'}
-              </Text>
-            </View>
+        <View style={styles.headerActions}>
+          <View style={styles.statChip}>
+            <Text style={styles.statCount}>{unifiedItems.length}</Text>
+            <Text style={styles.statLabel}>
+              {filterType === 'all' ? 'Total Aset' : filterType === 'income' ? 'Donasi' : filterType === 'expense' ? 'Pengeluaran' : 'Menunggu'}
+            </Text>
           </View>
         </View>
+      </View>
 
-        {/* Unified Tab Filter */}
-        <View style={styles.tabScrollWrapp}>
-           <TouchableOpacity 
-             onPress={() => setFilterType('all')}
-             style={[styles.tabItem, filterType === 'all' && styles.tabItemActive]}
-           >
-              <Text style={[styles.tabText, filterType === 'all' && styles.tabTextActive]}>Semua</Text>
-           </TouchableOpacity>
-           <TouchableOpacity 
-             onPress={() => setFilterType('income')}
-             style={[styles.tabItem, filterType === 'income' && styles.tabItemActive]}
-           >
-              <Text style={[styles.tabText, filterType === 'income' && styles.tabTextActive]}>Donasi</Text>
-           </TouchableOpacity>
-           <TouchableOpacity 
-             onPress={() => setFilterType('expense')}
-             style={[styles.tabItem, filterType === 'expense' && styles.tabItemActive]}
-           >
-              <Text style={[styles.tabText, filterType === 'expense' && styles.tabTextActive]}>Pengeluaran</Text>
-           </TouchableOpacity>
-        </View>
+      {/* Unified Tab Filter */}
+      <View style={styles.tabScrollWrapp}>
+         <TouchableOpacity 
+           onPress={() => setFilterType('all')}
+           style={[styles.tabItem, filterType === 'all' && styles.tabItemActive]}
+         >
+            <Text style={[styles.tabText, filterType === 'all' && styles.tabTextActive]}>Semua</Text>
+         </TouchableOpacity>
+         <TouchableOpacity 
+           onPress={() => setFilterType('pending')}
+           style={[styles.tabItem, filterType === 'pending' && styles.tabItemActive]}
+         >
+            <Text style={[styles.tabText, filterType === 'pending' && styles.tabTextActive]}>Menunggu</Text>
+         </TouchableOpacity>
+         <TouchableOpacity 
+           onPress={() => setFilterType('income')}
+           style={[styles.tabItem, filterType === 'income' && styles.tabItemActive]}
+         >
+            <Text style={[styles.tabText, filterType === 'income' && styles.tabTextActive]}>Donasi</Text>
+         </TouchableOpacity>
+         <TouchableOpacity 
+           onPress={() => setFilterType('expense')}
+           style={[styles.tabItem, filterType === 'expense' && styles.tabItemActive]}
+         >
+            <Text style={[styles.tabText, filterType === 'expense' && styles.tabTextActive]}>Keluar</Text>
+         </TouchableOpacity>
+      </View>
 
         {/* Floating Search Bar */}
         {/* Floating Search Bar & Toggle */}
@@ -238,7 +270,7 @@ export default function ManajemenBukti() {
                       <View style={styles.rowBetween}>
                         <View style={[styles.categoryBadge, { backgroundColor: `${accentColor}20`, borderColor: `${accentColor}40` }]}>
                           <Text style={[styles.categoryBadgeText, { color: accentColor }]}>
-                            {isIncome ? 'MASUK' : item.category}
+                            {isIncome ? (item.status === 'pending' ? 'MENUNGGU' : 'MASUK') : item.category}
                           </Text>
                         </View>
                         <Text style={[styles.expensePriceList, isIncome && { color: AppColors.accent.emerald }]}>
@@ -247,6 +279,7 @@ export default function ManajemenBukti() {
                       </View>
                       
                       <Text style={styles.expenseDescList} numberOfLines={1}>{title || 'Tanpa keterangan'}</Text>
+                      <Text style={styles.campaignSubtitleList} numberOfLines={1}>{item.campaigns?.title || 'Umum / Pusat'}</Text>
                       
                       <View style={styles.cardFooterList}>
                          <View style={styles.footerInfo}>
@@ -255,17 +288,29 @@ export default function ManajemenBukti() {
                               {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                             </Text>
                          </View>
-                         <TouchableOpacity 
-                            style={styles.deleteBtnSmall}
-                            onPress={() => handleDelete(item.id, item.type)}
-                            disabled={isDeleting === item.id}
-                         >
-                            {isDeleting === item.id ? (
-                               <ActivityIndicator size="small" color={AppColors.accent.red} />
-                            ) : (
-                               <Trash2 size={12} color="#94a3b8" />
-                            )}
-                         </TouchableOpacity>
+                         
+                         {isIncome && item.status === 'pending' ? (
+                           <View style={styles.actionRowSmall}>
+                              <TouchableOpacity onPress={() => handleConfirm(item.id, 'confirmed')} style={styles.confirmBtnSmall}>
+                                 <Sparkles size={12} color="#002919" />
+                              </TouchableOpacity>
+                              <TouchableOpacity onPress={() => handleConfirm(item.id, 'rejected')} style={styles.rejectBtnSmall}>
+                                 <X size={12} color="#fff" />
+                              </TouchableOpacity>
+                           </View>
+                         ) : (
+                           <TouchableOpacity 
+                              style={styles.deleteBtnSmall}
+                              onPress={() => handleDelete(item.id, item.type)}
+                              disabled={isDeleting === item.id}
+                           >
+                              {isDeleting === item.id ? (
+                                 <ActivityIndicator size="small" color={AppColors.accent.red} />
+                              ) : (
+                                 <Trash2 size={12} color="#94a3b8" />
+                              )}
+                           </TouchableOpacity>
+                         )}
                       </View>
                     </View>
                   </GlassCard>
@@ -295,22 +340,36 @@ export default function ManajemenBukti() {
                       style={StyleSheet.absoluteFill}
                     >
                       <View style={styles.cardHeader}>
-                         <View style={[styles.categoryBadge, { backgroundColor: `${accentColor}30`, borderColor: `${accentColor}50` }]}>
-                            <Text style={[styles.categoryBadgeText, { color: accentColor }]}>
-                              {isIncome ? 'MASUK' : item.category}
-                            </Text>
-                         </View>
-                         <TouchableOpacity 
-                            style={[styles.deleteBtn, isIncome && { backgroundColor: 'rgba(239, 68, 68, 0.4)' }]}
-                            onPress={() => handleDelete(item.id, item.type)}
-                            disabled={isDeleting === item.id}
-                         >
-                            {isDeleting === item.id ? (
-                               <ActivityIndicator size="small" color={AppColors.accent.red} />
-                            ) : (
-                               <Trash2 size={12} color="#fff" />
-                            )}
-                         </TouchableOpacity>
+                          <View style={[styles.categoryBadge, { backgroundColor: `${accentColor}30`, borderColor: `${accentColor}50` }]}>
+                             <Text style={[styles.categoryBadgeText, { color: accentColor }]}>
+                               {isIncome ? (item.status === 'pending' ? 'MENUNGGU' : 'MASUK') : item.category}
+                             </Text>
+                          </View>
+                          
+                          <View style={styles.actionRowSmall}>
+                             {isIncome && item.status === 'pending' ? (
+                               <>
+                                 <TouchableOpacity onPress={() => handleConfirm(item.id, 'confirmed')} style={styles.confirmBtnSmall}>
+                                    <Sparkles size={12} color="#002919" />
+                                 </TouchableOpacity>
+                                 <TouchableOpacity onPress={() => handleConfirm(item.id, 'rejected')} style={styles.rejectBtnSmall}>
+                                    <X size={12} color="#fff" />
+                                 </TouchableOpacity>
+                               </>
+                             ) : (
+                               <TouchableOpacity 
+                                  style={[styles.deleteBtn, isIncome && { backgroundColor: 'rgba(239, 68, 68, 0.4)' }]}
+                                  onPress={() => handleDelete(item.id, item.type)}
+                                  disabled={isDeleting === item.id}
+                               >
+                                  {isDeleting === item.id ? (
+                                     <ActivityIndicator size="small" color={AppColors.accent.red} />
+                                  ) : (
+                                     <Trash2 size={12} color="#fff" />
+                                  )}
+                               </TouchableOpacity>
+                             )}
+                          </View>
                       </View>
                     </LinearGradient>
   
@@ -327,6 +386,7 @@ export default function ManajemenBukti() {
                        {isIncome ? '+' : '-'}{formatRp(item.amount)}
                      </Text>
                      <Text style={styles.expenseDesc} numberOfLines={1}>{title || 'Tanpa keterangan'}</Text>
+                     <Text style={styles.campaignSubtitle} numberOfLines={1}>{item.campaigns?.title || 'Umum / Pusat'}</Text>
                      
                      <View style={styles.cardFooter}>
                         <Calendar size={10} color="#64748b" />
@@ -609,7 +669,14 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 11,
     fontWeight: '600',
-    marginVertical: 4,
+    marginTop: 4,
+  },
+  campaignSubtitleList: {
+    color: AppColors.accent.emerald,
+    fontSize: 9,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    marginBottom: 4,
   },
   cardFooterList: {
     flexDirection: 'row',
@@ -620,6 +687,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  actionRowSmall: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  confirmBtnSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: AppColors.accent.emerald,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rejectBtnSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: AppColors.accent.red,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   deleteBtnSmall: {
     width: 28,
@@ -716,8 +803,15 @@ const styles = StyleSheet.create({
   expenseDesc: {
     color: '#94a3b8',
     fontSize: 11,
-    marginBottom: 10,
+    marginBottom: 4,
     fontWeight: '500',
+  },
+  campaignSubtitle: {
+    color: AppColors.accent.emerald,
+    fontSize: 9,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    marginBottom: 10,
   },
   cardFooter: {
     flexDirection: 'row',

@@ -77,11 +77,11 @@ export default function AdminDashboard() {
         <Text style={styles.sectionTitleMain}>Aksi Cepat</Text>
         <View style={styles.actionRow}>
           <TouchableOpacity 
-            onPress={() => router.push('/(admin)/input-pengeluaran')}
+            onPress={() => router.push('/(admin)/create-campaign')}
             style={styles.actionBtnPrimary}
           >
             <PlusSquare size={24} color="#002919" />
-            <Text style={styles.actionTextPrimary}>Tambah Data</Text>
+            <Text style={styles.actionTextPrimary}>Buat Wadah</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -92,6 +92,55 @@ export default function AdminDashboard() {
             <Text style={styles.actionTextSecondary}>Scan Struk</Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      {/* Manajemen Wadah Donasi */}
+      <View style={styles.campaignSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <TrendingUp size={20} color="#69f6b8" />
+              <Text style={styles.sectionTitle}>Wadah Donasi Aktif</Text>
+            </View>
+          </View>
+
+          {fundData.activeCampaigns.length === 0 ? (
+            <Text style={styles.emptyText}>Belum ada wadah donasi aktif.</Text>
+          ) : (
+            fundData.activeCampaigns.map((camp: any) => {
+              const progress = Math.min((camp.current_amount / camp.target_amount) * 100, 100);
+              return (
+                <View key={camp.id} style={styles.campaignCard}>
+                   <View style={styles.campInfo}>
+                      <Text style={styles.campTitle} numberOfLines={1}>{camp.title}</Text>
+                      <Text style={styles.campCategory}>{camp.category}</Text>
+                      
+                      <View style={styles.progressRow}>
+                         <View style={styles.progressBar}>
+                            <View style={[styles.progressFill, { width: `${progress}%` }]} />
+                         </View>
+                         <Text style={styles.progressText}>{Math.round(progress)}%</Text>
+                      </View>
+                      
+                      <View style={styles.amountRow}>
+                         <Text style={styles.amountCollected}>{formatRp(camp.current_amount)}</Text>
+                         <Text style={styles.amountTarget}>/ {formatRp(camp.target_amount)}</Text>
+                      </View>
+                   </View>
+                   
+                   <TouchableOpacity 
+                    style={styles.updateBtn}
+                    onPress={() => router.push({ 
+                      pathname: '/(admin)/add-campaign-update', 
+                      params: { campaignId: camp.id, campaignTitle: camp.title } 
+                    })}
+                   >
+                     <Receipt size={16} color="#69f6b8" />
+                     <Text style={styles.updateBtnText}>Update Berita</Text>
+                   </TouchableOpacity>
+                </View>
+              )
+            })
+          )}
       </View>
 
       {/* Log Aktivitas */}
@@ -112,12 +161,14 @@ export default function AdminDashboard() {
              ) : (
                 <>
                   {[
-                    ...fundData.recentDonations.slice(0, 2).map(d => ({ ...d, type: 'income' })),
+                    ...fundData.recentDonations.slice(0, 3).map(d => ({ ...d, type: 'income' })),
                     ...fundData.recentExpenses.slice(0, 3).map(e => ({ ...e, type: 'expense' }))
                   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                    .slice(0, 5)
                    .map((item: any, idx) => {
                      const isIncome = item.type === 'income';
+                     const campaignTitle = item.campaigns?.title || 'Umum';
+                     
                      return (
                        <TouchableOpacity 
                          key={item.id || idx} 
@@ -129,10 +180,10 @@ export default function AdminDashboard() {
                            </View>
                            <View style={{ flex: 1 }}>
                                <Text style={styles.activityName} numberOfLines={1}>
-                                    {isIncome ? `Donasi: ${item.donator_name}` : (item.description || item.category)}
+                                    {isIncome ? `Donasi: ${item.donator_name || 'Hamba Allah'}` : (item.description || item.category)}
                                </Text>
                                <Text style={styles.activityMeta}>
-                                    {new Date(item.created_at).toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })} • {isIncome ? 'Masuk' : item.category}
+                                    {campaignTitle} • {isIncome ? 'Masuk' : item.category}
                                </Text>
                            </View>
                            <Text style={[styles.activityAmount, { color: isIncome ? '#69f6b8' : '#fff' }]}>
@@ -196,6 +247,20 @@ const styles = StyleSheet.create({
   activityMeta: { color: '#64748b', fontSize: 11 },
   activityAmount: { fontSize: 14, fontWeight: 'bold' },
   emptyText: { color: '#475569', textAlign: 'center', paddingVertical: 20, fontSize: 13 },
+  campaignSection: { marginBottom: 32 },
+  campaignCard: { backgroundColor: '#0f172a', borderRadius: 20, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', flexDirection: 'row', alignItems: 'center', gap: 12 },
+  campInfo: { flex: 1, gap: 4 },
+  campTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  campCategory: { color: AppColors.accent.emerald, fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  progressBar: { flex: 1, height: 4, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: '#69f6b8', borderRadius: 2 },
+  progressText: { color: '#64748b', fontSize: 10, fontWeight: 'bold' },
+  amountRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  amountCollected: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  amountTarget: { color: '#64748b', fontSize: 10 },
+  updateBtn: { backgroundColor: 'rgba(105, 246, 184, 0.1)', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)' },
+  updateBtnText: { color: '#69f6b8', fontSize: 11, fontWeight: 'bold' },
   footerBadge: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(105, 246, 184, 0.05)', padding: 12, borderRadius: 12 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#69f6b8' },

@@ -33,6 +33,7 @@ const EMPTY_FUND_STATE: FundTrackerContextType = {
   categories: [],
   recentExpenses: [],
   recentDonations: [],
+  activeCampaigns: [],
   isLoading: false,
   error: null,
   lastUpdated: null,
