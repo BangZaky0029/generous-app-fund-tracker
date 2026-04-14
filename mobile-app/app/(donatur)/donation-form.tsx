@@ -102,8 +102,12 @@ export default function DonationFormScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-              <ArrowLeft size={22} color="#fff" />
+            <TouchableOpacity 
+              style={styles.backBtn} 
+              onPress={() => router.back()}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <ArrowLeft size={24} color="#fff" />
             </TouchableOpacity>
             <View style={styles.headerInfo}>
                 <Text style={styles.title}>Kirim Donasi</Text>

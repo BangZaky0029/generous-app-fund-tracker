@@ -119,8 +119,12 @@ export default function AddExpenseScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color={AppColors.text.primary} />
+          <TouchableOpacity 
+            style={styles.backBtn} 
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <ArrowLeft size={24} color={AppColors.text.primary} />
           </TouchableOpacity>
           <View style={styles.headerInfo}>
             <Text style={styles.title}>Simpan Pengeluaran</Text>

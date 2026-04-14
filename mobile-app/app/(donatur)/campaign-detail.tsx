@@ -132,8 +132,12 @@ export default function CampaignDetailScreen() {
             colors={['rgba(6, 14, 32, 0.8)', 'transparent', 'rgba(6, 14, 32, 1)']}
             style={styles.heroOverlay}
           />
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <ArrowLeft size={22} color="#fff" />
+          <TouchableOpacity 
+            style={styles.backBtn} 
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <ArrowLeft size={24} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.shareBtn} onPress={() => fundData.showAlert('Info', 'Fitur bagi-bagi segera hadir!', 'info')}>
             <Share2 size={20} color="#fff" />
