@@ -1,10 +1,10 @@
-import { 
-  View, Text, ScrollView, TouchableOpacity, 
-  ActivityIndicator, StyleSheet, TextInput, Image, 
-  Modal, Dimensions, Alert 
+import {
+  View, Text, ScrollView, TouchableOpacity,
+  ActivityIndicator, StyleSheet, TextInput, Image,
+  Modal, Dimensions, Alert
 } from 'react-native';
-import { 
-  ShieldCheck, LogOut, ChevronRight, Heart, 
+import {
+  ShieldCheck, LogOut, ChevronRight, Heart,
   Award, Calendar, Receipt, TrendingUp, Camera,
   Edit2, Save, X, Target, Info
 } from 'lucide-react-native';
@@ -34,7 +34,7 @@ const formatRp = (amount: number) => {
 export default function ProfilDonatur() {
   const { user, signOut, updateProfile } = useAuthContext();
   const { showAlert } = useFundTrackerContext();
-  
+
   const [userStats, setUserStats] = useState({
     totalDonated: 0,
     count: 0,
@@ -43,7 +43,7 @@ export default function ProfilDonatur() {
   const [activeCampaigns, setActiveCampaigns] = useState<Campaign[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isQuickDonationVisible, setIsQuickDonationVisible] = useState(false);
-  
+
   // Edit Profile States
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(user?.profile?.full_name || '');
@@ -76,12 +76,12 @@ export default function ProfilDonatur() {
 
       if (!error && donations) {
         const total = donations.reduce((sum, d) => sum + Number(d.amount), 0);
-        
+
         // Hitung UNIQ campaign_id untuk statistik "KAMPANYE"
         const uniqueCampaigns = new Set(donations.map(d => d.campaign_id).filter(Boolean)).size;
 
         // Ambil join date (dari data profil atau donasi pertama)
-        const joined = user.profile?.updated_at 
+        const joined = user.profile?.updated_at
           ? new Date(user.profile.updated_at).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })
           : 'Jan 2024';
 
@@ -136,6 +136,15 @@ export default function ProfilDonatur() {
     }
   };
 
+  const handleLogout = () => {
+    showAlert(
+      'Konfirmasi Keluar',
+      'Apakah Anda yakin ingin mengakhiri sesi kontribusi Anda?',
+      'warning',
+      signOut
+    );
+  };
+
   const getTier = (amount: number) => {
     if (amount >= 5000000) return { name: 'Platinum Contributor', color: '#e5e7eb' };
     if (amount >= 1000000) return { name: 'Gold Contributor', color: '#facc15' };
@@ -168,14 +177,14 @@ export default function ProfilDonatur() {
                 ) : (
                   <Text style={styles.avatarText}>{initial}</Text>
                 )}
-                <View style={styles.cameraBadge}>
-                  <Camera size={12} color="#fff" />
-                </View>
+              </View>
+              <View style={styles.cameraBadge}>
+                <Camera size={12} color="#fff" />
               </View>
               {isUpdating && (
-                 <View style={styles.avatarOverlay}>
-                    <ActivityIndicator size="small" color="#69f6b8" />
-                 </View>
+                <View style={styles.avatarOverlay}>
+                  <ActivityIndicator size="small" color="#69f6b8" />
+                </View>
               )}
             </TouchableOpacity>
 
@@ -213,22 +222,22 @@ export default function ProfilDonatur() {
         <View style={styles.statsGrid}>
           <GlassCard variant="elevated" style={styles.statBoxLarge}>
             <View>
-              <Text style={styles.statLabel}>TOTAL DONASI</Text>
+              <Text style={styles.statLabel}>TOTAL DONASi YANG DISALURKAN</Text>
               <Text style={styles.statValue}>{formatRp(userStats.totalDonated)}</Text>
             </View>
             <TrendingUp size={24} color="#69f6b8" />
           </GlassCard>
-          
+
           <View style={styles.statBoxRow}>
             <GlassCard style={[styles.statBoxSmall, { flex: 1 }]}>
-               <Text style={styles.statLabel}>KAMPANYE</Text>
-               <Text style={styles.statValueSmall}>{userStats.count} Wadah</Text>
-               <Heart size={16} color="#69f6b8" style={styles.statIndicator} />
+              <Text style={styles.statLabel}>KAMPANYE</Text>
+              <Text style={styles.statValueSmall}>{userStats.count} Wadah</Text>
+              <Heart size={16} color="#69f6b8" style={styles.statIndicator} />
             </GlassCard>
             <GlassCard style={[styles.statBoxSmall, { flex: 1 }]}>
-               <Text style={styles.statLabel}>BERGABUNG</Text>
-               <Text style={styles.statValueSmall}>{userStats.joinedDate}</Text>
-               <Calendar size={16} color="#64748b" style={styles.statIndicator} />
+              <Text style={styles.statLabel}>BERGABUNG</Text>
+              <Text style={styles.statValueSmall}>{userStats.joinedDate}</Text>
+              <Calendar size={16} color="#64748b" style={styles.statIndicator} />
             </GlassCard>
           </View>
         </View>
@@ -236,9 +245,9 @@ export default function ProfilDonatur() {
         {/* Action Menu */}
         <View style={styles.menuContainer}>
           <Text style={styles.sectionTitle}>Aksi Cepat</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuItem} 
+
+          <TouchableOpacity
+            style={styles.menuItem}
             onPress={() => setIsQuickDonationVisible(true)}
           >
             <View style={styles.menuLeft}>
@@ -263,7 +272,7 @@ export default function ProfilDonatur() {
             <ChevronRight size={20} color="#334155" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, { marginTop: 12 }]} onPress={signOut}>
+          <TouchableOpacity style={[styles.menuItem, { marginTop: 12 }]} onPress={handleLogout}>
             <View style={styles.menuLeft}>
               <View style={[styles.menuIconBox, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
                 <LogOut size={20} color="#ef4444" />
@@ -288,51 +297,51 @@ export default function ProfilDonatur() {
         onRequestClose={() => setIsQuickDonationVisible(false)}
       >
         <View style={styles.modalOverlay}>
-           <TouchableOpacity 
-             style={styles.modalDismiss} 
-             onPress={() => setIsQuickDonationVisible(false)} 
-           />
-           <GlassCard style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                 <Heart size={24} color="#69f6b8" fill="#69f6b8" />
-                 <Text style={styles.modalTitle}>Mau Bantu Siapa?</Text>
-                 <TouchableOpacity onPress={() => setIsQuickDonationVisible(false)}>
-                    <X size={20} color="#64748b" />
-                 </TouchableOpacity>
-              </View>
+          <TouchableOpacity
+            style={styles.modalDismiss}
+            onPress={() => setIsQuickDonationVisible(false)}
+          />
+          <GlassCard style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Heart size={24} color="#69f6b8" fill="#69f6b8" />
+              <Text style={styles.modalTitle}>Mau Bantu Siapa?</Text>
+              <TouchableOpacity onPress={() => setIsQuickDonationVisible(false)}>
+                <X size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
 
-              <ScrollView style={styles.campaignList} showsVerticalScrollIndicator={false}>
-                 {activeCampaigns.map(camp => (
-                    <TouchableOpacity 
-                       key={camp.id} 
-                       style={styles.campItem}
-                       onPress={() => {
-                          setIsQuickDonationVisible(false);
-                          router.push({
-                            pathname: '/(donatur)/donation-form',
-                            params: { campaignId: camp.id, campaignTitle: camp.title }
-                          });
-                       }}
-                    >
-                       <Image source={{ uri: camp.poster_url || '' }} style={styles.campItemImg} />
-                       <View style={styles.campItemInfo}>
-                          <Text style={styles.campItemTitle} numberOfLines={1}>{camp.title}</Text>
-                          <View style={styles.campItemSub}>
-                             <Target size={10} color="#64748b" />
-                             <Text style={styles.campItemCategory}>{camp.category}</Text>
-                          </View>
-                       </View>
-                       <ChevronRight size={16} color="#334155" />
-                    </TouchableOpacity>
-                 ))}
-                 {activeCampaigns.length === 0 && (
-                    <View style={styles.emptyCampaign}>
-                       <Info size={40} color="#1e293b" />
-                       <Text style={styles.emptyCampaignText}>Tidak ada kampanye aktif saat ini.</Text>
+            <ScrollView style={styles.campaignList} showsVerticalScrollIndicator={false}>
+              {activeCampaigns.map(camp => (
+                <TouchableOpacity
+                  key={camp.id}
+                  style={styles.campItem}
+                  onPress={() => {
+                    setIsQuickDonationVisible(false);
+                    router.push({
+                      pathname: '/(donatur)/donation-form',
+                      params: { campaignId: camp.id, campaignTitle: camp.title }
+                    });
+                  }}
+                >
+                  <Image source={{ uri: camp.poster_url || '' }} style={styles.campItemImg} />
+                  <View style={styles.campItemInfo}>
+                    <Text style={styles.campItemTitle} numberOfLines={1}>{camp.title}</Text>
+                    <View style={styles.campItemSub}>
+                      <Target size={10} color="#64748b" />
+                      <Text style={styles.campItemCategory}>{camp.category}</Text>
                     </View>
-                 )}
-              </ScrollView>
-           </GlassCard>
+                  </View>
+                  <ChevronRight size={16} color="#334155" />
+                </TouchableOpacity>
+              ))}
+              {activeCampaigns.length === 0 && (
+                <View style={styles.emptyCampaign}>
+                  <Info size={40} color="#1e293b" />
+                  <Text style={styles.emptyCampaignText}>Tidak ada kampanye aktif saat ini.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </GlassCard>
         </View>
       </Modal>
     </View>
@@ -344,20 +353,20 @@ const styles = StyleSheet.create({
   content: { padding: 24, paddingTop: 60, paddingBottom: 100 },
   loadingRoot: { flex: 1, backgroundColor: '#060e20', alignItems: 'center', justifyContent: 'center' },
   header: { marginBottom: 32 },
-  profileCard: { 
-    borderRadius: 32, 
-    padding: 32, 
-    alignItems: 'center', 
-    borderWidth: 1, 
-    borderColor: 'rgba(255,255,255,0.05)' 
+  profileCard: {
+    borderRadius: 32,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)'
   },
   avatarContainer: { position: 'relative', marginBottom: 20 },
-  avatar: { 
-    width: 100, 
-    height: 100, 
-    borderRadius: 50, 
-    backgroundColor: 'rgba(105, 246, 184, 0.05)', 
-    alignItems: 'center', 
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(105, 246, 184, 0.05)',
+    alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#69f6b8',
@@ -366,41 +375,42 @@ const styles = StyleSheet.create({
   avatarImg: { width: '100%', height: '100%', resizeMode: 'cover' },
   avatarText: { color: '#69f6b8', fontSize: 40, fontWeight: '900' },
   avatarOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 50, alignItems: 'center', justifyContent: 'center' },
-  cameraBadge: { 
-    position: 'absolute', 
-    bottom: 0, 
-    right: 0, 
-    backgroundColor: '#69f6b8', 
-    width: 28, 
-    height: 28, 
-    borderRadius: 14, 
-    alignItems: 'center', 
+  cameraBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#69f6b8',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#0f172a'
+    borderColor: '#0f172a',
+    zIndex: 10,
   },
   nameDisplayRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
   editNameRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   nameInput: { color: '#fff', fontSize: 20, fontWeight: 'bold', borderBottomWidth: 1, borderBottomColor: '#69f6b8', paddingBottom: 4, textAlign: 'center', minWidth: 200 },
   saveBtn: { backgroundColor: 'rgba(105, 246, 184, 0.1)', padding: 8, borderRadius: 10 },
   userName: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
-  tierBadge: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 6, 
-    paddingHorizontal: 12, 
-    paddingVertical: 6, 
+  tierBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
   },
   tierText: { fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
   statsGrid: { gap: 12, marginBottom: 40 },
-  statBoxLarge: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    padding: 24, 
-    backgroundColor: 'rgba(105, 246, 184, 0.05)' 
+  statBoxLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 24,
+    backgroundColor: 'rgba(105, 246, 184, 0.05)'
   },
   statBoxRow: { flexDirection: 'row', gap: 12 },
   statBoxSmall: { padding: 20, position: 'relative' },
@@ -410,39 +420,39 @@ const styles = StyleSheet.create({
   statIndicator: { position: 'absolute', right: 16, top: 16, opacity: 0.3 },
   menuContainer: { gap: 12 },
   sectionTitle: { color: '#fff', fontSize: 16, fontWeight: '900', marginBottom: 12, marginLeft: 4 },
-  menuItem: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    backgroundColor: '#0f172a', 
-    padding: 18, 
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0f172a',
+    padding: 18,
     borderRadius: 22,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.03)'
   },
   menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  menuIconBox: { 
-    width: 44, 
-    height: 44, 
-    borderRadius: 14, 
-    backgroundColor: 'rgba(255,255,255,0.03)', 
-    alignItems: 'center', 
-    justifyContent: 'center' 
+  menuIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   menuTextMain: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   menuTextSub: { color: '#475569', fontSize: 11, marginTop: 2 },
   footer: { marginTop: 40, alignItems: 'center', gap: 6 },
   footerText: { color: '#1e293b', fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
   footerSub: { color: '#0f172a', fontSize: 10, fontWeight: '800' },
-  
+
   // MODAL STYLES
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
   modalDismiss: { flex: 1 },
-  modalContent: { 
-    backgroundColor: '#0f172a', 
-    borderTopLeftRadius: 40, 
-    borderTopRightRadius: 40, 
-    padding: 24, 
+  modalContent: {
+    backgroundColor: '#0f172a',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    padding: 24,
     maxHeight: height * 0.7,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)'
@@ -450,13 +460,13 @@ const styles = StyleSheet.create({
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 },
   modalTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold', flex: 1, marginLeft: 12 },
   campaignList: { gap: 12 },
-  campItem: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 16, 
-    backgroundColor: 'rgba(255,255,255,0.02)', 
-    padding: 12, 
-    borderRadius: 20, 
+  campItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    padding: 12,
+    borderRadius: 20,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)'

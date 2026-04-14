@@ -126,32 +126,44 @@ export default function CampaignManageScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={AppColors.accent.emerald} />
         }
       >
-        {/* Quick Stats Grid */}
-        <View style={styles.statsGrid}>
-          <GlassCard style={[styles.statItem, { flex: 2 }]}>
-            <View style={styles.statIconBox}>
-                <Wallet size={20} color={AppColors.accent.emerald} />
+        {/* Tiered Stats Section (Overhauled) */}
+        <View style={styles.statsContainer}>
+          <GlassCard variant="elevated" style={styles.mainSaldoCard}>
+            <View style={styles.saldoHeader}>
+              <View style={styles.statIconBoxMain}>
+                 <Wallet size={24} color={AppColors.accent.emerald} />
+              </View>
+              <View>
+                <Text style={styles.statLabelMain}>SALDO TERSEDIA</Text>
+                <Text style={styles.statValueMain}>{formatRp(stats.balance)}</Text>
+              </View>
             </View>
-            <Text style={styles.statLabel}>Saldo Tersedia</Text>
-            <Text style={styles.statValueMain}>{formatRp(stats.balance)}</Text>
+            
             <View style={styles.progressBarWrap}>
                 <View style={[styles.progressBarFull]}>
                     <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
                 </View>
-                <Text style={styles.progressLabelText}>{Math.round(progress)}% dari target</Text>
+                <View style={styles.progressRowText}>
+                  <Text style={styles.progressLabelText}>Progress: {Math.round(progress)}%</Text>
+                  <Text style={styles.targetTotalText}>Target: {formatRp(campaign.target_amount)}</Text>
+                </View>
             </View>
           </GlassCard>
           
-          <View style={styles.statsColumn}>
-             <GlassCard style={styles.statItemMini}>
-                <TrendingUp size={16} color={AppColors.accent.emerald} />
+          <View style={styles.secondaryStatsRow}>
+             <GlassCard style={styles.secondaryStatBox}>
+                <View style={styles.miniIconBoxIn}>
+                  <TrendingUp size={16} color={AppColors.accent.emerald} />
+                </View>
                 <View>
                    <Text style={styles.miniLabel}>Total Masuk</Text>
                    <Text style={styles.miniValue}>{formatRp(stats.totalIn)}</Text>
                 </View>
              </GlassCard>
-             <GlassCard style={styles.statItemMini}>
-                <TrendingDown size={16} color={AppColors.accent.red} />
+             <GlassCard style={styles.secondaryStatBox}>
+                <View style={styles.miniIconBoxOut}>
+                  <TrendingDown size={16} color={AppColors.accent.red} />
+                </View>
                 <View>
                    <Text style={styles.miniLabel}>Penyaluran</Text>
                    <Text style={styles.miniValue}>{formatRp(stats.totalOut)}</Text>
@@ -160,46 +172,55 @@ export default function CampaignManageScreen() {
           </View>
         </View>
 
-        {/* Action Center */}
-        <Text style={styles.sectionLabel}>Pusat Kendali</Text>
-        <View style={styles.actionRow}>
+        {/* Action Center - More Space & Descriptions */}
+        <Text style={styles.sectionLabel}>PUSAT KENDALI TRANSAKSI</Text>
+        <View style={styles.actionGrid}>
           <TouchableOpacity 
-            style={styles.actionBtn}
+            style={styles.actionCard}
             onPress={() => router.push({
               pathname: '/(admin)/add-donation',
               params: { campaignId: campaign.id, campaignTitle: campaign.title }
             })}
           >
-            <LinearGradient colors={['#10b981', '#059669']} style={styles.actionIcon}>
-              <PlusCircle size={22} color="#fff" />
+            <LinearGradient colors={['#10b981', '#059669']} style={styles.actionIconLarge}>
+              <PlusCircle size={24} color="#fff" />
             </LinearGradient>
-            <Text style={styles.actionText}>Kas Masuk</Text>
+            <View style={styles.actionInfo}>
+              <Text style={styles.actionTitle}>Kas Masuk</Text>
+              <Text style={styles.actionSub}>Catat donasi baru</Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.actionBtn}
+            style={styles.actionCard}
             onPress={() => router.push({
               pathname: '/(admin)/add-expense',
               params: { campaignId: campaign.id, campaignTitle: campaign.title }
             })}
           >
-            <LinearGradient colors={['#f43f5e', '#e11d48']} style={styles.actionIcon}>
-              <TrendingDown size={22} color="#fff" />
+            <LinearGradient colors={['#f43f5e', '#e11d48']} style={styles.actionIconLarge}>
+              <TrendingDown size={24} color="#fff" />
             </LinearGradient>
-            <Text style={styles.actionText}>Pengeluaran</Text>
+            <View style={styles.actionInfo}>
+              <Text style={styles.actionTitle}>Pengeluaran</Text>
+              <Text style={styles.actionSub}>Input biaya keluar</Text>
+            </View>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.actionBtn}
+            style={[styles.actionCard, { width: '100%' }]}
             onPress={() => router.push({
               pathname: '/(admin)/add-campaign-update',
               params: { campaignId: campaign.id, campaignTitle: campaign.title }
             })}
           >
-            <LinearGradient colors={['#3b82f6', '#2563eb']} style={styles.actionIcon}>
-              <Newspaper size={22} color="#fff" />
+            <LinearGradient colors={['#3b82f6', '#2563eb']} style={styles.actionIconLarge}>
+              <Newspaper size={24} color="#fff" />
             </LinearGradient>
-            <Text style={styles.actionText}>Update Berita</Text>
+            <View style={styles.actionInfo}>
+              <Text style={styles.actionTitle}>Update Berita Kampanye</Text>
+              <Text style={styles.actionSub}>Bagikan progres terkini kepada donatur</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -207,7 +228,7 @@ export default function CampaignManageScreen() {
         <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Berita Terbaru</Text>
             <TouchableOpacity onPress={() => router.push({ pathname: '/(admin)/add-campaign-update', params: { campaignId: campaign.id, campaignTitle: campaign.title } })}>
-                <Text style={styles.viewAllBtn}>Tambah</Text>
+                <Text style={styles.viewAllBtn}>Lihat Semua</Text>
             </TouchableOpacity>
         </View>
         
@@ -234,9 +255,9 @@ export default function CampaignManageScreen() {
 
         {/* Transaction History */}
         <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Riwayat Transaksi</Text>
+            <Text style={styles.sectionTitle}>Aktivitas Ledger</Text>
             <TouchableOpacity onPress={() => router.push({ pathname: '/(admin)/manajemen-bukti' })}>
-                <Text style={styles.viewAllBtn}>Semua</Text>
+                <Text style={styles.viewAllBtn}>Telusuri</Text>
             </TouchableOpacity>
         </View>
 
@@ -283,46 +304,59 @@ const styles = StyleSheet.create({
   loadingRoot: { flex: 1, backgroundColor: '#060e20', alignItems: 'center', justifyContent: 'center', gap: 16 },
   loadingText: { color: AppColors.text.tertiary, fontSize: 13, fontWeight: 'bold' },
   navBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingVertical: 16, gap: 16 },
-  backBtn: { width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  backBtn: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.03)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   navInfo: { flex: 1 },
   navTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
-  navSubtitle: { color: AppColors.accent.emerald, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  navSubtitle: { color: AppColors.accent.emerald, fontSize: 10, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase' },
   scroll: { padding: 24 },
-  statsGrid: { flexDirection: 'row', gap: 12, marginBottom: 32 },
-  statItem: { padding: 20, gap: 8 },
-  statIconBox: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(16, 185, 129, 0.1)', alignItems: 'center', justifyContent: 'center' },
-  statLabel: { color: AppColors.text.tertiary, fontSize: 12, fontWeight: 'bold' },
-  statValueMain: { color: '#fff', fontSize: 24, fontWeight: '900' },
-  progressBarWrap: { marginTop: 12, gap: 6 },
-  progressBarFull: { height: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' },
+  
+  // STATS STYLES
+  statsContainer: { gap: 12, marginBottom: 32 },
+  mainSaldoCard: { padding: 24, gap: 16 },
+  saldoHeader: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  statIconBoxMain: { width: 48, height: 48, borderRadius: 16, backgroundColor: 'rgba(16, 185, 129, 0.1)', alignItems: 'center', justifyContent: 'center' },
+  statLabelMain: { color: AppColors.text.tertiary, fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  statValueMain: { color: '#fff', fontSize: 28, fontWeight: '900' },
+  progressBarWrap: { marginTop: 8, gap: 8 },
+  progressBarFull: { height: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' },
   progressBarFill: { height: '100%', backgroundColor: AppColors.accent.emerald },
-  progressLabelText: { color: AppColors.text.tertiary, fontSize: 10, fontWeight: 'bold' },
-  statsColumn: { flex: 1.2, gap: 12 },
-  statItemMini: { flex: 1, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  miniLabel: { color: AppColors.text.tertiary, fontSize: 9, fontWeight: 'bold', textTransform: 'uppercase' },
-  miniValue: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-  sectionLabel: { color: AppColors.text.tertiary, fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 16 },
-  actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
-  actionBtn: { alignItems: 'center', gap: 10, width: '30%' },
-  actionIcon: { width: 56, height: 56, borderRadius: 20, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 5 },
-  actionText: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
+  progressRowText: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  progressLabelText: { color: AppColors.accent.emerald, fontSize: 10, fontWeight: 'bold' },
+  targetTotalText: { color: AppColors.text.tertiary, fontSize: 10, fontWeight: 'bold' },
+  
+  secondaryStatsRow: { flexDirection: 'row', gap: 12 },
+  secondaryStatBox: { flex: 1, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  miniIconBoxIn: { width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(16, 185, 129, 0.1)', alignItems: 'center', justifyContent: 'center' },
+  miniIconBoxOut: { width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(244, 63, 94, 0.1)', alignItems: 'center', justifyContent: 'center' },
+  miniLabel: { color: AppColors.text.tertiary, fontSize: 9, fontWeight: '900', textTransform: 'uppercase' },
+  miniValue: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  
+  // ACTION CENTER
+  sectionLabel: { color: AppColors.text.tertiary, fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16, marginLeft: 4 },
+  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 40 },
+  actionCard: { width: '48%', backgroundColor: 'rgba(15, 23, 42, 0.5)', padding: 16, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.03)', gap: 12 },
+  actionIconLarge: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  actionInfo: { gap: 2 },
+  actionTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  actionSub: { color: AppColors.text.tertiary, fontSize: 10 },
+  
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   sectionTitle: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   viewAllBtn: { color: AppColors.accent.emerald, fontSize: 12, fontWeight: 'bold' },
-  emptyCard: { padding: 24, alignItems: 'center', gap: 12, borderStyle: 'dashed', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  emptyCard: { padding: 32, alignItems: 'center', gap: 12, borderStyle: 'dashed', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   emptyText: { color: AppColors.text.tertiary, fontSize: 13, textAlign: 'center' },
   updateScroll: { marginBottom: 32 },
-  updateCard: { width: 200, marginRight: 12, overflow: 'hidden', padding: 0 },
-  updateImg: { width: '100%', height: 100, resizeMode: 'cover' },
+  updateCard: { width: 220, marginRight: 16, overflow: 'hidden', padding: 0 },
+  updateImg: { width: '100%', height: 110, resizeMode: 'cover' },
   updateContent: { padding: 12, gap: 4 },
-  updateCardTitle: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  updateCardTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
   updateCardDate: { color: AppColors.text.tertiary, fontSize: 11 },
   historyList: { gap: 12 },
-  historyCard: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'rgba(15, 23, 42, 0.4)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', gap: 16 },
+  historyCard: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'rgba(15, 23, 42, 0.3)', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.03)', gap: 16 },
   iconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   historyInfo: { flex: 1, gap: 2 },
-  historyTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  historyTitle: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
   historyDate: { color: AppColors.text.tertiary, fontSize: 11 },
-  historyAmount: { fontSize: 15, fontWeight: '900' },
-  emptyTextCenter: { color: AppColors.text.tertiary, textAlign: 'center', paddingVertical: 20 }
+  historyAmount: { fontSize: 16, fontWeight: '900' },
+  emptyTextCenter: { color: AppColors.text.tertiary, textAlign: 'center', paddingVertical: 40 }
 });

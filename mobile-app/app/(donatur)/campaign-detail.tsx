@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getCampaign, fetchCampaignUpdates } from '@/services/campaignService';
 import { fetchRecentDonations } from '@/services/donationService';
 import { fetchRecentExpenses } from '@/services/expenseService';
+import { generateAuditPDF } from '@/services/pdfService';
 import { Campaign, CampaignUpdate } from '@/constants/types';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
 import { GlassCard } from '@/components/ui/GlassCard';
@@ -33,6 +34,7 @@ export default function CampaignDetailScreen() {
   const [updates, setUpdates] = useState<CampaignUpdate[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -70,6 +72,19 @@ export default function CampaignDetailScreen() {
       fundData.showAlert('Error', 'Gagal memuat detail campaign.', 'error');
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const handleDownloadAudit = async () => {
+    if (!campaign) return;
+    setIsExporting(true);
+    try {
+      await generateAuditPDF(campaign, transactions.slice(0, 20));
+      fundData.showAlert('Audit Selesai', 'Laporan audit telah berhasil diunduh dan siap dibagikan.', 'success');
+    } catch (err) {
+      fundData.showAlert('Error', 'Gagal menghasilkan laporan PDF.', 'error');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -176,10 +191,15 @@ export default function CampaignDetailScreen() {
                 </View>
               </View>
               <TouchableOpacity 
-                style={styles.downloadBtn}
-                onPress={() => fundData.showAlert('Audit', 'Dokumen sedang disiapkan dalam format PDF berstandar KAP.', 'info')}
+                style={[styles.downloadBtn, isExporting && { opacity: 0.7 }]}
+                onPress={handleDownloadAudit}
+                disabled={isExporting}
               >
-                <Text style={styles.downloadBtnText}>Unduh Laporan Audit (PDF)</Text>
+                {isExporting ? (
+                  <ActivityIndicator color="#002919" size="small" />
+                ) : (
+                  <Text style={styles.downloadBtnText}>Unduh Laporan Audit (PDF)</Text>
+                )}
               </TouchableOpacity>
             </GlassCard>
           </View>

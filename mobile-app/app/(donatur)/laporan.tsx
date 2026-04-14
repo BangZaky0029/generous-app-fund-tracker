@@ -1,5 +1,12 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Linking } from 'react-native';
-import { Receipt, Clock, CheckCircle2, AlertCircle, ChevronRight, TrendingUp } from 'lucide-react-native';
+import { 
+  View, Text, ScrollView, TouchableOpacity, 
+  ActivityIndicator, StyleSheet, Modal, Image, 
+  Dimensions, Pressable 
+} from 'react-native';
+import { 
+  Receipt, Clock, CheckCircle2, AlertCircle, 
+  ChevronRight, TrendingUp, X, ZoomIn 
+} from 'lucide-react-native';
 import { useAuthContext, useFundTrackerContext } from '@/context/FundTrackerContext';
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
@@ -7,6 +14,8 @@ import { fetchUserDonations } from '@/services/donationService';
 import { Donation } from '@/constants/types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard } from '@/components/ui/GlassCard';
+
+const { width, height } = Dimensions.get('window');
 
 const formatRp = (amount: number) => {
   return new Intl.NumberFormat('id-ID', {
@@ -22,6 +31,10 @@ export default function RiwayatDonasiScreen() {
   const { showAlert } = useFundTrackerContext();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Image Preview State
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -40,6 +53,11 @@ export default function RiwayatDonasiScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleShowProof = (url: string) => {
+    setPreviewImage(url);
+    setIsModalVisible(true);
   };
 
   if (isLoading) {
@@ -119,10 +137,10 @@ export default function RiwayatDonasiScreen() {
                     {item.payment_proof_url && (
                       <TouchableOpacity 
                         style={styles.proofBtn} 
-                        onPress={() => Linking.openURL(item.payment_proof_url!)}
+                        onPress={() => handleShowProof(item.payment_proof_url!)}
                       >
                         <Text style={styles.proofText}>Lihat Bukti</Text>
-                        <ChevronRight size={14} color="#69f6b8" />
+                        <ZoomIn size={14} color="#69f6b8" />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -139,6 +157,50 @@ export default function RiwayatDonasiScreen() {
         )}
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Image Preview Modal */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setIsModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Bukti Pembayaran</Text>
+              <TouchableOpacity 
+                style={styles.closeBtn}
+                onPress={() => setIsModalVisible(false)}
+              >
+                <X size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.imageContainer}>
+              {previewImage ? (
+                <Image 
+                  source={{ uri: previewImage }} 
+                  style={styles.previewImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <ActivityIndicator color="#69f6b8" />
+              )}
+            </View>
+
+            <TouchableOpacity 
+              style={styles.closeActionBtn}
+              onPress={() => setIsModalVisible(false)}
+            >
+              <Text style={styles.closeActionText}>Tutup Preview</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -169,4 +231,48 @@ const styles = StyleSheet.create({
   proofText: { color: '#69f6b8', fontSize: 11, fontWeight: 'bold' },
   messageBox: { padding: 12, backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: 10, borderLeftWidth: 2, borderLeftColor: 'rgba(105, 246, 184, 0.3)' },
   messageText: { color: '#94a3b8', fontSize: 12, fontStyle: 'italic' },
+
+  // Modal Styles
+  modalOverlay: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0, 0, 0, 0.9)', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    padding: 24
+  },
+  modalContent: { 
+    width: '100%', 
+    maxWidth: 500,
+    backgroundColor: '#0f172a', 
+    borderRadius: 24, 
+    borderWidth: 1, 
+    borderColor: 'rgba(255,255,255,0.1)',
+    overflow: 'hidden'
+  },
+  modalHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)'
+  },
+  modalTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  closeBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 10 },
+  imageContainer: { 
+    width: '100%', 
+    height: height * 0.5, 
+    backgroundColor: '#060e20',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  previewImage: { width: '100%', height: '100%' },
+  closeActionBtn: { 
+    margin: 20, 
+    backgroundColor: '#69f6b8', 
+    paddingVertical: 14, 
+    borderRadius: 16, 
+    alignItems: 'center' 
+  },
+  closeActionText: { color: '#002919', fontWeight: 'bold', fontSize: 14 }
 });
