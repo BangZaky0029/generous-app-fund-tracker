@@ -35,6 +35,41 @@
         "column_default": "now()"
     },
     {
+        "table_name": "donations",
+        "column_name": "receipt_url",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "donations",
+        "column_name": "campaign_id",
+        "data_type": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "donations",
+        "column_name": "status",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": "'pending'::text"
+    },
+    {
+        "table_name": "donations",
+        "column_name": "payment_proof_url",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "donations",
+        "column_name": "donator_id",
+        "data_type": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
         "table_name": "expenses",
         "column_name": "id",
         "data_type": "uuid",
@@ -82,6 +117,13 @@
         "data_type": "timestamp with time zone",
         "is_nullable": "YES",
         "column_default": "now()"
+    },
+    {
+        "table_name": "expenses",
+        "column_name": "campaign_id",
+        "data_type": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
     },
     {
         "table_name": "fund_summary",
@@ -145,5 +187,12 @@
         "data_type": "timestamp with time zone",
         "is_nullable": "YES",
         "column_default": "now()"
+    },
+    {
+        "table_name": "profiles",
+        "column_name": "avatar_url",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
     }
 ]

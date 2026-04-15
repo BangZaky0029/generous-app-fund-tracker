@@ -1,8 +1,9 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Image } from 'react-native';
-import { Bell, TrendingUp, Heart, ShieldCheck, Receipt, Bot, ChevronRight, Activity } from 'lucide-react-native';
+import { TrendingUp, Heart, ShieldCheck, Receipt, Bot, ChevronRight, Activity } from 'lucide-react-native';
 import { useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 
 // Helper Formatter
 const formatRp = (amount: number) => {
@@ -40,45 +41,21 @@ export default function DonaturDashboard() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.avatar}>
-             <Text style={styles.avatarText}>{initals}</Text>
+             {user?.profile?.avatar_url ? (
+               <Image source={{ uri: user.profile.avatar_url }} style={styles.avatarImg} />
+             ) : (
+               <Text style={styles.avatarText}>{initals}</Text>
+             )}
           </View>
           <View>
             <Text style={styles.headerRole}>Kontributor Aktif</Text>
             <Text style={styles.headerName}>{fullName}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.notifBtn}>
-          <Bell size={20} color="#64748b" />
-        </TouchableOpacity>
+        <NotificationBell />
       </View>
 
-      {/* Transparansi Bar - Status Penyaluran */}
-      <View style={styles.transparencyCard}>
-        <View style={styles.cardHeader}>
-           <Activity size={20} color="#69f6b8" />
-           <Text style={styles.cardTitle}>Status Penyaluran Dana Publik</Text>
-        </View>
-        
-        <View style={styles.statsList}>
-          <View>
-            <View style={styles.statInfoRow}>
-              <Text style={styles.statLabel}>Dana Telah Disalurkan</Text>
-              <Text style={styles.statValuePrimary}>
-                  {formatRp(fundData.totalExpenses)}
-              </Text>
-            </View>
-            <View style={styles.progressBarBg}>
-               <View style={[styles.progressBarFill, { width: `${fundData.usagePercentage}%`, backgroundColor: '#69f6b8' }]} />
-            </View>
-            <View style={styles.statMetaRow}>
-               <Text style={styles.statMetaText}>Transparansi: {fundData.usagePercentage}% Terpakai</Text>
-               <Text style={styles.statMetaText}>Sisa: {formatRp(fundData.remainingFunds)}</Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-       {/* Wadah Donasi Section */}
+      {/* Wadah Donasi Section */}
        <View style={styles.campaignListSection}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
@@ -100,10 +77,12 @@ export default function DonaturDashboard() {
               fundData.activeCampaigns.map((camp: any) => {
                 const target = camp.target_amount || 1;
                 const confirmedProgress = (camp.current_amount / target) * 100;
+                const expenseProgress = ((camp.expense_amount || 0) / target) * 100;
                 const pendingProgress = (camp.pending_amount / target) * 100;
                 
-                // Visual Floor: Jika ada uang masuk, berikan lebar minimal 2% agar garis tetap kelihatan
+                // Visual Floor
                 const visualConfirmed = camp.current_amount > 0 ? Math.max(confirmedProgress, 2) : 0;
+                const visualExpense = (camp.expense_amount || 0) > 0 ? Math.max(expenseProgress, 2) : 0;
                 const visualPending = camp.pending_amount > 0 ? Math.max(pendingProgress, 2) : 0;
                 
                 const totalPercent = confirmedProgress + pendingProgress;
@@ -126,27 +105,37 @@ export default function DonaturDashboard() {
                        <Text style={styles.campaignTitle} numberOfLines={2}>{camp.title}</Text>
                        <Text style={styles.campaignCat}>{camp.category}</Text>
                        
-                       <View style={styles.campProgressRow}>
-                          <View style={styles.campProgressBarDual}>
-                             {/* Upper: Confirmed */}
-                             <View style={styles.campBarItem}>
-                                <View style={styles.campBarBg}>
-                                   <View style={[styles.campProgressBarFill, { width: `${Math.min(visualConfirmed, 100)}%` }]} />
-                                </View>
-                                <Text style={styles.campBarLabel}>VERIFIED</Text>
-                             </View>
-                             
-                             {/* Lower: Pending */}
-                             <View style={styles.campBarItem}>
-                                <View style={styles.campBarBg}>
-                                   <View style={[styles.campProgressBarFillPendingLine, { width: `${Math.min(visualPending, 100)}%` }]} />
-                                </View>
-                                <Text style={styles.campBarLabelPending}>QUEUE</Text>
-                             </View>
-                          </View>
-                          <Text style={styles.campProgressText}>{displayPercent}%</Text>
-                       </View>
-                    </View>
+                        <View style={styles.campProgressRow}>
+                           <View style={styles.campProgressBarDual}>
+                              {/* Upper: Confirmed */}
+                              <View style={styles.campBarItem}>
+                                 <View style={styles.campBarBg}>
+                                    <View style={[styles.campProgressBarFill, { width: `${Math.min(visualConfirmed, 100)}%` }]} />
+                                 </View>
+                                 <Text style={styles.campBarLabel}>VERIFIED</Text>
+                              </View>
+                              
+                              {/* Middle: Disbursed/Spent */}
+                              <View style={styles.campBarItem}>
+                                 <View style={styles.campBarBg}>
+                                    <View style={[styles.campProgressBarFill, { width: `${Math.min(visualExpense, 100)}%`, backgroundColor: '#ff4757' }]} />
+                                 </View>
+                                 <Text style={styles.campBarLabelExpense}>DISBURSED</Text>
+                              </View>
+                           </View>
+                           <Text style={styles.campProgressText}>{displayPercent}%</Text>
+                        </View>
+
+                        {/* Social Proof: Total Donors & Top Hero */}
+                        <View style={styles.socialStats}>
+                           <View style={styles.socialItem}>
+                              <Text style={styles.socialLabel}>🚀 {camp.total_donors || 0} Donatur</Text>
+                           </View>
+                           <View style={styles.socialItem}>
+                              <Text style={styles.socialHero} numberOfLines={1}>👑 {camp.top_donator_name || '-'}</Text>
+                           </View>
+                        </View>
+                     </View>
                   </TouchableOpacity>
                 )
               })
@@ -219,7 +208,8 @@ const styles = StyleSheet.create({
   loadingText: { color: '#64748b', marginTop: 12, fontSize: 13 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(105, 246, 184, 0.1)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)' },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(105, 246, 184, 0.1)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)', overflow: 'hidden' },
+  avatarImg: { width: '100%', height: '100%', resizeMode: 'cover' },
   avatarText: { color: '#69f6b8', fontWeight: 'bold' },
   headerRole: { color: '#64748b', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
   headerName: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
@@ -271,9 +261,14 @@ const styles = StyleSheet.create({
   campProgressBarDual: { flex: 1, gap: 6 },
   campBarItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   campBarBg: { flex: 1, height: 3, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 1.5, overflow: 'hidden' },
-  campBarLabel: { color: '#69f6b8', fontSize: 6, fontWeight: '900', width: 35 },
-  campBarLabelPending: { color: '#facc15', fontSize: 6, fontWeight: '900', width: 35 },
+  campBarLabel: { color: '#69f6b8', fontSize: 6, fontWeight: '900', width: 45 },
+  campBarLabelExpense: { color: '#ff4757', fontSize: 6, fontWeight: '900', width: 45 },
+  campBarLabelPending: { color: '#facc15', fontSize: 6, fontWeight: '900', width: 45 },
   campProgressBarFill: { height: '100%', backgroundColor: '#06b77f', borderRadius: 1.5 },
+  socialStats: { flexDirection: 'row', gap: 6, marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.02)' },
+  socialItem: { flex: 1, backgroundColor: 'rgba(255,255,255,0.03)', paddingVertical: 4, paddingHorizontal: 6, borderRadius: 6 },
+  socialLabel: { color: '#94a3b8', fontSize: 9, fontWeight: '800' },
+  socialHero: { color: '#69f6b8', fontSize: 9, fontWeight: '900' },
   campProgressBarFillPendingLine: {
     height: '100%',
     backgroundColor: '#facc15',

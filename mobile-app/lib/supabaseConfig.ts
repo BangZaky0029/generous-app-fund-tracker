@@ -6,12 +6,12 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = (process.env.EXPO_PUBLIC_SUPABASE_URL || '').trim();
 const SUPABASE_ANON_KEY = (process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '').trim();
 
-console.log('[SupabaseConfig] URL initialized:', SUPABASE_URL ? `${SUPABASE_URL.substring(0, 15)}...` : 'EMPTY');
-console.log('[SupabaseConfig] Anon Key initialized:', SUPABASE_ANON_KEY ? 'YES' : 'EMPTY');
+console.log('[SupabaseConfig] Initializing with:');
+console.log('  - URL:', SUPABASE_URL ? `${SUPABASE_URL.substring(0, 20)}...` : '❌ EMPTY (Check .env)');
+console.log('  - Anon Key:', SUPABASE_ANON_KEY ? `${SUPABASE_ANON_KEY.substring(0, 10)}...` : '❌ EMPTY (Check .env)');
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('[SupabaseConfig] CRITICAL: Missing environment variables!');
-  // Jangan throw error keras agar aplikasi tidak crash total, biarkan ditangani oleh pemanggil
+  console.error('[SupabaseConfig] CRITICAL: Missing environment variables! Check your .env file.');
 }
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {

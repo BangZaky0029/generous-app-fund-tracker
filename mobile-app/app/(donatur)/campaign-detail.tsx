@@ -4,7 +4,7 @@ import {
   View, Text, ScrollView, Image, TouchableOpacity,
   StyleSheet, ActivityIndicator, Dimensions, Linking
 } from 'react-native';
-import { ShieldCheck, Receipt, TrendingUp, Info, Newspaper, ArrowLeft, Heart, Share2, Calendar } from 'lucide-react-native';
+import { ShieldCheck, Receipt, TrendingUp, Info, Newspaper, ArrowLeft, Heart, Share2, Calendar, Activity } from 'lucide-react-native';
 const AppColors = { accent: { emerald: '#69f6b8' } };
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -28,17 +28,19 @@ const formatRp = (amount: number) => {
 
 export default function CampaignDetailScreen() {
   const { id } = useLocalSearchParams();
-  const fundData = useFundTrackerContext();
+  const { lastUpdated, activeCampaigns, showAlert } = useFundTrackerContext();
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [updates, setUpdates] = useState<CampaignUpdate[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [currentTxPage, setCurrentTxPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     loadData();
-  }, [id]);
+  }, [id, lastUpdated]);
 
   const loadData = async () => {
     const campaignId = Array.isArray(id) ? id[0] : id;
@@ -69,7 +71,7 @@ export default function CampaignDetailScreen() {
 
       setTransactions(combined);
     } catch (err) {
-      fundData.showAlert('Error', 'Gagal memuat detail campaign.', 'error');
+      showAlert('Error', 'Gagal memuat detail campaign.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -80,9 +82,9 @@ export default function CampaignDetailScreen() {
     setIsExporting(true);
     try {
       await generateAuditPDF(campaign, transactions.slice(0, 20));
-      fundData.showAlert('Audit Selesai', 'Laporan audit telah berhasil diunduh dan siap dibagikan.', 'success');
+      showAlert('Audit Selesai', 'Laporan audit telah berhasil diunduh dan siap dibagikan.', 'success');
     } catch (err) {
-      fundData.showAlert('Error', 'Gagal menghasilkan laporan PDF.', 'error');
+      showAlert('Error', 'Gagal menghasilkan laporan PDF.', 'error');
     } finally {
       setIsExporting(false);
     }
@@ -108,7 +110,7 @@ export default function CampaignDetailScreen() {
   }
 
   // Find the augmented campaign from context if available for real-time totals
-  const augmentedCampaign = fundData.activeCampaigns.find((c: any) => c.id === campaign?.id) || campaign;
+  const augmentedCampaign = activeCampaigns.find((c: any) => c.id === campaign?.id) || campaign;
   const confirmedAmount = augmentedCampaign?.current_amount || 0;
   const pendingAmount = (augmentedCampaign as any)?.pending_amount || 0;
   
@@ -118,6 +120,13 @@ export default function CampaignDetailScreen() {
   
   const totalPercent = confirmedProgress + pendingProgress;
   const displayPercent = totalPercent > 0 && totalPercent < 1 ? "<1" : Math.round(totalPercent);
+
+  // New: Specific Disbursement Logic
+  const disbursementAmount = (augmentedCampaign as any)?.expense_amount || 0;
+  const campaignUsagePercent = confirmedAmount > 0 
+    ? Math.min(Math.round((disbursementAmount / confirmedAmount) * 100), 100) 
+    : 0;
+  const campaignRemaining = confirmedAmount - disbursementAmount;
 
   return (
     <View style={styles.root}>
@@ -139,7 +148,7 @@ export default function CampaignDetailScreen() {
           >
             <ArrowLeft size={24} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareBtn} onPress={() => fundData.showAlert('Info', 'Fitur bagi-bagi segera hadir!', 'info')}>
+          <TouchableOpacity style={styles.shareBtn} onPress={() => showAlert('Info', 'Fitur bagi-bagi segera hadir!', 'info')}>
             <Share2 size={20} color="#fff" />
           </TouchableOpacity>
         </View>
@@ -165,20 +174,42 @@ export default function CampaignDetailScreen() {
               <View style={styles.statItem}>
                 <TrendingUp size={16} color="#69f6b8" />
                 <Text style={styles.statVal}>{displayPercent}%</Text>
-                <Text style={styles.statLbl}>Total Progres</Text>
+                <Text style={styles.statLbl}>Progres</Text>
               </View>
               <View style={styles.statItem}>
-                <ShieldCheck size={16} color="#69f6b8" />
-                <Text style={styles.statVal}>Audit</Text>
-                <Text style={styles.statLbl}>Tervalidasi</Text>
+                <ShieldCheck size={18} color="#69f6b8" />
+                <Text style={styles.statVal}>{(augmentedCampaign as any).total_donors || 0}</Text>
+                <Text style={styles.statLbl}>Donatur</Text>
               </View>
-              <View style={styles.statItem}>
-                <Calendar size={16} color="#69f6b8" />
-                <Text style={styles.statVal}>Aktif</Text>
-                <Text style={styles.statLbl}>Status</Text>
+              <View style={[styles.statItem, { flex: 1.5 }]}>
+                <Text style={[styles.statVal, { color: '#69f6b8' }]} numberOfLines={1}>
+                  👑 {(augmentedCampaign as any).top_donator_name || '-'}
+                </Text>
+                <Text style={styles.statLbl}>Top Contributor</Text>
               </View>
             </View>
           </GlassCard>
+
+          {/* Disbursement Status Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Activity size={18} color="#69f6b8" />
+              <Text style={styles.sectionTitle}>Status Penyaluran Dana</Text>
+            </View>
+            <GlassCard style={styles.disbursementCard}>
+               <View style={styles.disbursementInfoRow}>
+                  <Text style={styles.disbursementLabel}>Dana Tervalidasi Disalurkan</Text>
+                  <Text style={styles.disbursementValue}>{formatRp(disbursementAmount)}</Text>
+               </View>
+               <View style={styles.progressBarBg}>
+                  <View style={[styles.progressBarFill, { width: `${campaignUsagePercent}%`, backgroundColor: '#69f6b8' }]} />
+               </View>
+               <View style={styles.disbursementMetaRow}>
+                  <Text style={styles.disbursementMetaText}>Transparansi: {campaignUsagePercent}% Terpakai</Text>
+                  <Text style={styles.disbursementMetaText}>Sisa Kas: {formatRp(campaignRemaining)}</Text>
+               </View>
+            </GlassCard>
+          </View>
 
           {/* Audit & Transparency Section */}
           <View style={styles.section}>
@@ -187,24 +218,24 @@ export default function CampaignDetailScreen() {
               <Text style={styles.sectionTitle}>Audit & Transparansi</Text>
             </View>
             <GlassCard style={styles.auditCard}>
-              <View style={styles.auditInfo}>
-                <Receipt size={32} color="#69f6b8" />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.auditTitle}>Laporan Akuntabilitas</Text>
-                  <Text style={styles.auditSub}>Validasi KAP Independen untuk periode ini.</Text>
-                </View>
-              </View>
-              <TouchableOpacity 
-                style={[styles.downloadBtn, isExporting && { opacity: 0.7 }]}
-                onPress={handleDownloadAudit}
-                disabled={isExporting}
-              >
-                {isExporting ? (
-                  <ActivityIndicator color="#002919" size="small" />
-                ) : (
-                  <Text style={styles.downloadBtnText}>Unduh Laporan Audit (PDF)</Text>
-                )}
-              </TouchableOpacity>
+               <View style={styles.auditInfo}>
+                 <Receipt size={32} color="#69f6b8" />
+                 <View style={{ flex: 1 }}>
+                   <Text style={styles.auditTitle}>Laporan Akuntabilitas</Text>
+                   <Text style={styles.auditSub}>Validasi KAP Independen untuk periode ini.</Text>
+                 </View>
+               </View>
+               <TouchableOpacity 
+                 style={[styles.downloadBtn, isExporting && { opacity: 0.7 }]}
+                 onPress={handleDownloadAudit}
+                 disabled={isExporting}
+               >
+                 {isExporting ? (
+                   <ActivityIndicator color="#002919" size="small" />
+                 ) : (
+                   <Text style={styles.downloadBtnText}>Unduh Laporan Audit (PDF)</Text>
+                 )}
+               </TouchableOpacity>
             </GlassCard>
           </View>
 
@@ -215,51 +246,6 @@ export default function CampaignDetailScreen() {
               <Text style={styles.sectionTitle}>Cerita Donasi</Text>
             </View>
             <Text style={styles.description}>{campaign.description}</Text>
-          </View>
-
-          {/* Transaction History Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <TrendingUp size={18} color="#64748b" />
-              <Text style={styles.sectionTitle}>Riwayat Transaksi</Text>
-            </View>
-
-            {transactions.length === 0 ? (
-              <Text style={styles.emptyUpdateText}>Belum ada riwayat transaksi.</Text>
-            ) : (
-              transactions.slice(0, 10).map((item, idx) => {
-                const isIncome = item.type === 'income';
-                return (
-                  <View key={item.id || idx} style={styles.transactionItem}>
-                    <View style={[styles.transIconBox, { backgroundColor: isIncome ? 'rgba(105, 246, 184, 0.1)' : 'rgba(255, 255, 255, 0.05)' }]}>
-                      {isIncome ? <TrendingUp size={14} color="#69f6b8" /> : <Receipt size={14} color="#64748b" />}
-                    </View>
-                    <View style={styles.transInfo}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={styles.transName}>{item.display_name}</Text>
-                        {!isIncome && <ShieldCheck size={10} color="#69f6b8" />}
-                      </View>
-                      {item.type === 'expense' && (
-                        <Text style={styles.transDesc} numberOfLines={1}>{item.description}</Text>
-                      )}
-                      <Text style={styles.transDate}>
-                        {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                      </Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={[styles.transAmount, { color: isIncome ? '#69f6b8' : '#fff' }]}>
-                        {isIncome ? '+' : '-'}{formatRp(item.amount)}
-                      </Text>
-                      {item.receipt_url && (
-                        <TouchableOpacity onPress={() => Linking.openURL(item.receipt_url)}>
-                          <Text style={styles.proofLink}>Lihat Bukti ✓</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
-                );
-              })
-            )}
           </View>
 
           {/* Updates Section */}
@@ -289,6 +275,77 @@ export default function CampaignDetailScreen() {
                   </GlassCard>
                 </View>
               ))
+            )}
+          </View>
+
+          {/* Transaction History Section with Pagination */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <TrendingUp size={18} color="#64748b" />
+              <Text style={styles.sectionTitle}>Riwayat Transaksi</Text>
+            </View>
+
+            {transactions.length === 0 ? (
+              <Text style={styles.emptyUpdateText}>Belum ada riwayat transaksi.</Text>
+            ) : (
+              <>
+                {transactions
+                  .slice((currentTxPage - 1) * itemsPerPage, currentTxPage * itemsPerPage)
+                  .map((item, idx) => {
+                    const isIncome = item.type === 'income';
+                    return (
+                      <View key={item.id || idx} style={styles.transactionItem}>
+                        <View style={[styles.transIconBox, { backgroundColor: isIncome ? 'rgba(105, 246, 184, 0.1)' : 'rgba(255, 255, 255, 0.05)' }]}>
+                          {isIncome ? <TrendingUp size={14} color="#69f6b8" /> : <Receipt size={14} color="#64748b" />}
+                        </View>
+                        <View style={styles.transInfo}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={styles.transName}>{item.display_name}</Text>
+                            {!isIncome && <ShieldCheck size={10} color="#69f6b8" />}
+                          </View>
+                          {item.type === 'expense' && (
+                            <Text style={styles.transDesc} numberOfLines={1}>{item.description}</Text>
+                          )}
+                          <Text style={styles.transDate}>
+                            {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                          </Text>
+                        </View>
+                        <View style={{ alignItems: 'flex-end' }}>
+                          <Text style={[styles.transAmount, { color: isIncome ? '#69f6b8' : '#fff' }]}>
+                            {isIncome ? '+' : '-'}{formatRp(item.amount)}
+                          </Text>
+                          {item.receipt_url && (
+                            <TouchableOpacity onPress={() => Linking.openURL(item.receipt_url)}>
+                              <Text style={styles.proofLink}>Lihat Bukti ✓</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })
+                }
+
+                {/* Simplified Pagination Controls */}
+                {transactions.length > itemsPerPage && (
+                  <View style={styles.paginationRow}>
+                    <TouchableOpacity 
+                      style={[styles.pageBtn, currentTxPage === 1 && { opacity: 0.3 }]} 
+                      onPress={() => setCurrentTxPage(p => Math.max(1, p - 1))}
+                      disabled={currentTxPage === 1}
+                    >
+                      <Text style={styles.pageBtnText}>Prev</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.pageIndicator}>Halaman {currentTxPage} dari {Math.ceil(transactions.length / itemsPerPage)}</Text>
+                    <TouchableOpacity 
+                      style={[styles.pageBtn, (currentTxPage * itemsPerPage >= transactions.length) && { opacity: 0.3 }]} 
+                      onPress={() => setCurrentTxPage(p => p + 1)}
+                      disabled={currentTxPage * itemsPerPage >= transactions.length}
+                    >
+                      <Text style={styles.pageBtnText}>Next</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </>
             )}
           </View>
         </View>
@@ -359,7 +416,19 @@ const styles = StyleSheet.create({
   donateBtn: { backgroundColor: '#69f6b8', height: 60, borderRadius: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
   donateBtnText: { color: '#002919', fontSize: 16, fontWeight: 'bold' },
   proofLink: { color: '#69f6b8', fontSize: 10, fontWeight: 'bold', marginTop: 4 },
+  paginationRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
+  pageBtn: { paddingVertical: 8, paddingHorizontal: 16, backgroundColor: 'rgba(105, 246, 184, 0.1)', borderRadius: 10, borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)' },
+  pageBtnText: { color: '#69f6b8', fontSize: 12, fontWeight: 'bold' },
+  pageIndicator: { color: '#64748b', fontSize: 12, fontWeight: '600' },
   auditCard: { padding: 16, backgroundColor: 'rgba(105, 246, 184, 0.05)', borderWidth: 1, borderColor: 'rgba(105, 246, 184, 0.2)' },
+  disbursementCard: { padding: 20, backgroundColor: 'rgba(25, 37, 64, 0.3)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  disbursementInfoRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
+  disbursementLabel: { fontSize: 13, color: '#94a3b8' },
+  disbursementValue: { fontSize: 16, color: '#69f6b8', fontWeight: 'bold' },
+  disbursementMetaRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  disbursementMetaText: { fontSize: 11, color: '#64748b', fontWeight: 'bold' },
+  progressBarBg: { height: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' },
+  progressBarFill: { height: '100%', borderRadius: 4 },
   auditInfo: { flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 16 },
   auditTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   auditSub: { color: '#94a3b8', fontSize: 12 },

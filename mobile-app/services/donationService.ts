@@ -62,6 +62,35 @@ export async function fetchDonationTotalsGroupByCampaign(status: DonationStatus 
   return totals;
 }
 
+// --- Hitung statistik donor per campaign (Top Donor & Total Donors) ---
+export async function fetchCampaignStats(): Promise<Record<string, { total_donors: number, top_donator_name: string, top_donator_amount: number }>> {
+  const { data, error } = await supabase
+    .from('donations')
+    .select('campaign_id, donator_name, amount')
+    .eq('status', 'confirmed');
+
+  if (error) throw new Error(error.message);
+
+  const stats: Record<string, { total_donors: number, top_donator_name: string, top_donator_amount: number, max_donation: number }> = {};
+  
+  (data ?? []).forEach(row => {
+    const campId = String(row.campaign_id || 'umum').trim();
+    if (!stats[campId]) {
+      stats[campId] = { total_donors: 0, top_donator_name: '-', top_donator_amount: 0, max_donation: 0 };
+    }
+    
+    stats[campId].total_donors += 1;
+    const amount = parseFloat(row.amount) || 0;
+    if (amount > stats[campId].max_donation) {
+       stats[campId].max_donation = amount;
+       stats[campId].top_donator_name = row.donator_name || 'Hamba Allah';
+       stats[campId].top_donator_amount = amount;
+    }
+  });
+  
+  return stats as any;
+}
+
 // --- Ambil N donasi terbaru ---
 export async function fetchRecentDonations(limit = 5, campaignId?: string): Promise<Donation[]> {
   let query = supabase

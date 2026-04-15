@@ -24,7 +24,7 @@ const { width } = Dimensions.get('window');
 export default function ManajemenBukti() {
   const { recentExpenses, recentDonations, isLoading, refetch, showAlert } = useFundTrackerContext();
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense' | 'pending'>('all');
-  const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
+  const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('list');
 
   // Auto Refresh saat masuk ke layar ini
   useFocusEffect(

@@ -46,6 +46,7 @@ export async function uploadToStorage(
       if (p < outputLen) bytes[p++] = ((c & 3) << 6) | (d & 63);
     }
 
+    // Percaya langsung pada bucket yang diberikan
     const { error } = await supabase.storage
       .from(bucket)
       .upload(filePath, bytes, {
@@ -54,7 +55,7 @@ export async function uploadToStorage(
       });
 
     if (error) {
-      console.error('[Storage] Error:', error.message);
+      console.error('[Storage] Upload Error Detail:', error);
       return null;
     }
 

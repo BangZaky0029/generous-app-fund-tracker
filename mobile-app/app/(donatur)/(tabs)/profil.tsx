@@ -109,7 +109,8 @@ export default function ProfilDonatur() {
     if (!result.canceled) {
       setIsUpdating(true);
       try {
-        const uploadedUrl = await uploadToStorage(result.assets[0].uri, 'avatars', 'profiles');
+        // Gunakan bucket 'receipts' yang sudah ada, tapi simpan di folder 'avatars'
+        const uploadedUrl = await uploadToStorage(result.assets[0].uri, 'receipts', 'avatars');
         if (uploadedUrl) {
           await updateProfile(tempName, uploadedUrl);
           showAlert('Sukses', 'Foto profil berhasil diperbarui.', 'success');

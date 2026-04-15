@@ -1,5 +1,6 @@
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { cacheDirectory, moveAsync } from 'expo-file-system/legacy';
 import { Campaign, Donation, Expense } from '@/constants/types';
 
 const formatRp = (amount: number) => {
@@ -124,7 +125,26 @@ export const generateAuditPDF = async (campaign: Campaign, transactions: any[]) 
 
   try {
     const { uri } = await Print.printToFileAsync({ html: htmlContent });
-    await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    
+    // Generate custom filename
+    const dateStr = new Date().toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).replace(/\//g, '-');
+    
+    // Clean title for filename (remove special chars)
+    const cleanTitle = campaign.title.replace(/[^a-z0-9]/gi, '_').substring(0, 30);
+    const fileName = `${cleanTitle}_${dateStr}.pdf`;
+    const newUri = `${cacheDirectory}${fileName}`;
+    
+    // Move to identifiable name
+    await moveAsync({
+      from: uri,
+      to: newUri
+    });
+    
+    await Sharing.shareAsync(newUri, { UTI: '.pdf', mimeType: 'application/pdf' });
   } catch (error) {
     console.error('[PDF Service] Generation Error:', error);
     throw error;

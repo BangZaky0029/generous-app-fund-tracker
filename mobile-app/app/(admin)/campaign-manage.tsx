@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Image, RefreshControl
+  ActivityIndicator, Image, RefreshControl, Modal
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { 
   ArrowLeft, PlusCircle, Receipt, TrendingUp, 
   TrendingDown, Newspaper, ChevronRight, Info,
-  History, DollarSign, Wallet
+  History, DollarSign, Wallet, Check, X, Maximize2,
+  Download, ExternalLink
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { AppColors, AppFonts, AppRadius, AppSpacing } from '@/constants/theme';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { getCampaign, fetchCampaignUpdates } from '@/services/campaignService';
-import { fetchTotalDonations, fetchRecentDonations } from '@/services/donationService';
+import { fetchTotalDonations, fetchRecentDonations, confirmDonation } from '@/services/donationService';
 import { fetchExpensesByCategory, fetchRecentExpenses } from '@/services/expenseService';
 import { useFundTrackerContext } from '@/context/FundTrackerContext';
 import type { Campaign, CampaignUpdate, Donation, Expense } from '@/constants/types';
@@ -32,7 +33,7 @@ const formatRp = (amount: number) => {
 
 export default function CampaignManageScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { refetch: refetchGlobal } = useFundTrackerContext();
+  const { refetch: refetchGlobal, lastUpdated } = useFundTrackerContext();
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [updates, setUpdates] = useState<CampaignUpdate[]>([]);
@@ -40,18 +41,22 @@ export default function CampaignManageScreen() {
   const [stats, setStats] = useState({
     totalIn: 0,
     totalOut: 0,
+    totalPending: 0,
     balance: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isConfirming, setIsConfirming] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!id) return;
     try {
-      const [campData, updatesData, totalIn, expensesByCat, recentDonations, recentExpenses] = await Promise.all([
+      const [campData, updatesData, totalIn, totalPending, expensesByCat, recentDonations, recentExpenses] = await Promise.all([
         getCampaign(id),
         fetchCampaignUpdates(id),
-        fetchTotalDonations(id),
+        fetchTotalDonations(id, 'confirmed'),
+        fetchTotalDonations(id, 'pending'),
         fetchExpensesByCategory(id),
         fetchRecentDonations(10, id),
         fetchRecentExpenses(10, id),
@@ -63,6 +68,7 @@ export default function CampaignManageScreen() {
       setUpdates(updatesData);
       setStats({
         totalIn,
+        totalPending,
         totalOut,
         balance: totalIn - totalOut,
       });
@@ -88,12 +94,25 @@ export default function CampaignManageScreen() {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, lastUpdated]);
 
   const onRefresh = () => {
     setRefreshing(true);
     refetchGlobal(); // Juga refresh global context
     loadData();
+  };
+
+  const handleConfirm = async (id: string, status: 'confirmed' | 'rejected') => {
+    setIsConfirming(id);
+    try {
+      await confirmDonation(id, status);
+      await loadData(); // Reload for stats
+      refetchGlobal(); // Sync global state
+    } catch (err) {
+      console.error('[CampaignManage] Confirm Error:', err);
+    } finally {
+      setIsConfirming(null);
+    }
   };
 
   if (isLoading || !campaign) {
@@ -105,7 +124,10 @@ export default function CampaignManageScreen() {
     );
   }
 
-  const progress = Math.min((campaign.current_amount / campaign.target_amount) * 100, 100);
+  const confirmedProgress = Math.min((stats.totalIn / campaign.target_amount) * 100, 100);
+  const expenseProgress = Math.min((stats.totalOut / campaign.target_amount) * 100, 100);
+  const pendingProgress = Math.min((stats.totalPending / campaign.target_amount) * 100, 100);
+  const totalPotentialProgress = Math.min(confirmedProgress + pendingProgress, 100);
 
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
@@ -144,13 +166,30 @@ export default function CampaignManageScreen() {
             </View>
             
             <View style={styles.progressBarWrap}>
-                <View style={[styles.progressBarFull]}>
-                    <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
-                </View>
-                <View style={styles.progressRowText}>
-                  <Text style={styles.progressLabelText}>Progress: {Math.round(progress)}%</Text>
-                  <Text style={styles.targetTotalText}>Target: {formatRp(campaign.target_amount)}</Text>
-                </View>
+                 <View style={styles.progressBarFull}>
+                     {/* Segmented Progress Stack */}
+                     <View style={[styles.progressBarFill, { width: `${totalPotentialProgress}%`, backgroundColor: '#facc15' }]} />
+                     <View style={[styles.progressBarFill, { width: `${confirmedProgress}%`, position: 'absolute' }]} />
+                     <View style={[styles.progressBarFill, { width: `${expenseProgress}%`, backgroundColor: '#ff4757', position: 'absolute' }]} />
+                 </View>
+                 <View style={styles.progressRowText}>
+                   <View style={styles.progressLabels}>
+                     <Text style={styles.progressLabelText}>Progress: {Math.round(confirmedProgress)}%</Text>
+                     {stats.totalOut > 0 && (
+                       <View style={[styles.pendingIndicator, { backgroundColor: 'rgba(255, 71, 87, 0.1)' }]}>
+                         <View style={[styles.pendingDot, { backgroundColor: '#ff4757' }]} />
+                         <Text style={[styles.pendingProgressText, { color: '#ff4757' }]}>-{Math.round(expenseProgress)}% Terpakai</Text>
+                       </View>
+                     )}
+                     {stats.totalPending > 0 && (
+                       <View style={styles.pendingIndicator}>
+                         <View style={styles.pendingDot} />
+                         <Text style={styles.pendingProgressText}>+{Math.round(pendingProgress)}% Menunggu</Text>
+                       </View>
+                     )}
+                   </View>
+                   <Text style={styles.targetTotalText}>Target: {formatRp(campaign.target_amount)}</Text>
+                 </View>
             </View>
           </GlassCard>
           
@@ -271,27 +310,81 @@ export default function CampaignManageScreen() {
           ) : (
             recentTransactions.map((item, idx) => {
               const isIncome = item.type === 'income';
+              const isPending = isIncome && item.status === 'pending';
+              
               return (
-                <TouchableOpacity 
+                <GlassCard 
                   key={item.id || idx} 
-                  style={styles.historyCard}
-                  onPress={() => item.receipt_url && router.push({ pathname: '/(admin)/(tabs)/manajemen-bukti', params: { search: item.description || item.donator_name } })}
+                  style={[
+                    styles.historyCard, 
+                    isPending && styles.pendingCard
+                  ]}
                 >
-                  <View style={[styles.iconWrap, { backgroundColor: isIncome ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)' }]}>
-                    {isIncome ? <TrendingUp size={18} color={AppColors.accent.emerald} /> : <Receipt size={18} color={AppColors.accent.red} />}
-                  </View>
+                  <TouchableOpacity 
+                    style={styles.historyIconBox}
+                    onPress={() => item.receipt_url && setPreviewImage(item.receipt_url)}
+                  >
+                    {item.receipt_url ? (
+                      <View style={styles.thumbnailWrap}>
+                        <Image source={{ uri: item.receipt_url }} style={styles.thumbnail} />
+                        {isPending && (
+                          <View style={styles.previewOverlay}>
+                            <Maximize2 size={10} color="#fff" />
+                          </View>
+                        )}
+                      </View>
+                    ) : (
+                      <View style={[styles.iconWrap, { backgroundColor: isIncome ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)' }]}>
+                        {isIncome ? <TrendingUp size={18} color={AppColors.accent.emerald} /> : <Receipt size={18} color={AppColors.accent.red} />}
+                      </View>
+                    )}
+                  </TouchableOpacity>
+
                   <View style={styles.historyInfo}>
-                    <Text style={styles.historyTitle} numberOfLines={1}>
-                      {isIncome ? `Donasi: ${item.donator_name}` : item.description}
-                    </Text>
+                    <View style={styles.historyTopRow}>
+                      <Text style={styles.historyTitle} numberOfLines={1}>
+                        {isIncome ? `Donasi: ${item.donator_name}` : item.description}
+                      </Text>
+                      {isPending && (
+                        <View style={styles.pendingBadge}>
+                          <Text style={styles.pendingBadgeText}>MENUNGGU</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.historyDate}>
                       {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })}
                     </Text>
                   </View>
-                  <Text style={[styles.historyAmount, { color: isIncome ? AppColors.accent.emerald : '#fff' }]}>
-                    {isIncome ? '+' : '-'}{formatRp(item.amount)}
-                  </Text>
-                </TouchableOpacity>
+
+                  <View style={styles.historyActionArea}>
+                    <Text style={[styles.historyAmount, { color: isIncome ? AppColors.accent.emerald : '#fff' }]}>
+                      {isIncome ? '+' : '-'}{formatRp(item.amount)}
+                    </Text>
+                    
+                    {isPending && (
+                      <View style={styles.historyActions}>
+                        <TouchableOpacity 
+                          style={styles.approveBtn}
+                          onPress={() => handleConfirm(item.id, 'confirmed')}
+                          disabled={!!isConfirming}
+                        >
+                          {isConfirming === item.id ? (
+                            <ActivityIndicator size="small" color="#002919" />
+                          ) : (
+                            <Check size={14} color="#002919" />
+                          )}
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={styles.rejectBtn}
+                          onPress={() => handleConfirm(item.id, 'rejected')}
+                          disabled={!!isConfirming}
+                        >
+                          <X size={14} color="#fff" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </GlassCard>
               )
             })
           )}
@@ -299,9 +392,46 @@ export default function CampaignManageScreen() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Modern Image Preview Modal */}
+      <Modal
+        visible={!!previewImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewImage(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity style={styles.modalCloseArea} onPress={() => setPreviewImage(null)} />
+          <View style={styles.previewContainer}>
+            <View style={styles.previewHeader}>
+              <Text style={styles.previewTitle}>Bukti Transaksi</Text>
+              <TouchableOpacity style={styles.closeModalBtn} onPress={() => setPreviewImage(null)}>
+                <X size={20} color="#fff" />
+              </TouchableOpacity>
+            </View>
+            
+            <Image 
+              source={{ uri: previewImage || '' }} 
+              style={styles.previewFull} 
+              resizeMode="contain" 
+            />
+            
+            <View style={styles.previewActions}>
+              <TouchableOpacity style={styles.modalActionBtn}>
+                <Download size={20} color={AppColors.accent.emerald} />
+                <Text style={styles.modalActionBtnText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalActionBtn}>
+                <ExternalLink size={20} color={AppColors.accent.blue} />
+                <Text style={styles.modalActionBtnText}>Share</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#060e20' },
@@ -322,11 +452,15 @@ const styles = StyleSheet.create({
   statLabelMain: { color: AppColors.text.tertiary, fontSize: 11, fontWeight: '900', letterSpacing: 1 },
   statValueMain: { color: '#fff', fontSize: 28, fontWeight: '900' },
   progressBarWrap: { marginTop: 8, gap: 8 },
-  progressBarFull: { height: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 4, overflow: 'hidden' },
-  progressBarFill: { height: '100%', backgroundColor: AppColors.accent.emerald },
-  progressRowText: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  progressLabelText: { color: AppColors.accent.emerald, fontSize: 10, fontWeight: 'bold' },
-  targetTotalText: { color: AppColors.text.tertiary, fontSize: 10, fontWeight: 'bold' },
+  progressBarFull: { height: 10, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 5, overflow: 'hidden', position: 'relative' },
+  progressBarFill: { height: '100%', backgroundColor: AppColors.accent.emerald, borderRadius: 5 },
+  progressRowText: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, alignItems: 'center' },
+  progressLabels: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  progressLabelText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  pendingIndicator: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(250, 204, 21, 0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  pendingDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#facc15' },
+  pendingProgressText: { color: '#facc15', fontSize: 10, fontWeight: 'bold' },
+  targetTotalText: { color: AppColors.text.tertiary, fontSize: 11, fontWeight: '700' },
   
   secondaryStatsRow: { flexDirection: 'row', gap: 12 },
   secondaryStatBox: { flex: 1, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -356,11 +490,144 @@ const styles = StyleSheet.create({
   updateCardTitle: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
   updateCardDate: { color: AppColors.text.tertiary, fontSize: 11 },
   historyList: { gap: 12 },
-  historyCard: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'rgba(15, 23, 42, 0.3)', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.03)', gap: 16 },
-  iconWrap: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  historyCard: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    padding: 12, 
+    borderRadius: 24, 
+    borderWidth: 1, 
+    borderColor: 'rgba(255,255,255,0.03)', 
+    gap: 12 
+  },
+  pendingCard: {
+    borderColor: 'rgba(250, 204, 21, 0.3)',
+    borderLeftWidth: 4,
+    borderLeftColor: '#facc15',
+  },
+  historyIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  thumbnailWrap: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#0f172a',
+    position: 'relative',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  previewOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrap: { width: 48, height: 48, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   historyInfo: { flex: 1, gap: 2 },
-  historyTitle: { color: '#fff', fontSize: 15, fontWeight: 'bold' },
-  historyDate: { color: AppColors.text.tertiary, fontSize: 11 },
-  historyAmount: { fontSize: 16, fontWeight: '900' },
-  emptyTextCenter: { color: AppColors.text.tertiary, textAlign: 'center', paddingVertical: 40 }
+  historyTopRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  historyTitle: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  pendingBadge: { 
+    paddingHorizontal: 6, 
+    paddingVertical: 2, 
+    borderRadius: 4, 
+    backgroundColor: 'rgba(250, 204, 21, 0.1)',
+    borderWidth: 0.5,
+    borderColor: 'rgba(250, 204, 21, 0.2)',
+  },
+  pendingBadgeText: { color: '#facc15', fontSize: 7, fontWeight: '900' },
+  historyDate: { color: AppColors.text.tertiary, fontSize: 10 },
+  historyActionArea: { alignItems: 'flex-end', gap: 6 },
+  historyAmount: { fontSize: 14, fontWeight: '900' },
+  historyActions: { flexDirection: 'row', gap: 6 },
+  approveBtn: { 
+    width: 28, 
+    height: 28, 
+    borderRadius: 8, 
+    backgroundColor: AppColors.accent.emerald, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  rejectBtn: { 
+    width: 28, 
+    height: 28, 
+    borderRadius: 8, 
+    backgroundColor: 'rgba(244, 63, 94, 0.2)', 
+    borderWidth: 1,
+    borderColor: 'rgba(244, 63, 94, 0.3)',
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  emptyTextCenter: { color: AppColors.text.tertiary, textAlign: 'center', paddingVertical: 40 },
+  
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(6, 14, 32, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseArea: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  previewContainer: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#0f172a',
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+    overflow: 'hidden',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+  },
+  previewTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  closeModalBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewFull: {
+    width: '100%',
+    height: 400,
+    backgroundColor: '#060e20',
+  },
+  previewActions: {
+    flexDirection: 'row',
+    padding: 20,
+    gap: 12,
+  },
+  modalActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  modalActionBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  }
 });

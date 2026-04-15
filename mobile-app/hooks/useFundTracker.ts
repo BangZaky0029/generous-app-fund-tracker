@@ -14,8 +14,8 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { AppRealtime } from '@/lib/supabaseConfig';
-import { fetchTotalDonations, fetchRecentDonations, fetchDonationTotalsGroupByCampaign } from '@/services/donationService';
-import { fetchExpensesByCategory, fetchRecentExpenses } from '@/services/expenseService';
+import { fetchTotalDonations, fetchRecentDonations, fetchDonationTotalsGroupByCampaign, fetchCampaignStats } from '@/services/donationService';
+import { fetchExpensesByCategory, fetchRecentExpenses, fetchExpenseTotalsGroupByCampaign } from '@/services/expenseService';
 import { fetchActiveCampaigns } from '@/services/campaignService'; // New
 import { CATEGORIES } from '@/constants/theme';
 import type { FundTrackerState, CategorySummary, ExpenseCategory, Campaign } from '@/constants/types';
@@ -53,7 +53,9 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         recentDonations,
         activeCampaigns,
         totalsConfirmed,
-        totalsPending
+        totalsPending,
+        totalsExpense,
+        campaignStats
       ] = await Promise.all([
           fetchTotalDonations(undefined, 'confirmed'),
           fetchTotalDonations(undefined, 'pending'),
@@ -63,6 +65,8 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
           fetchActiveCampaigns(),
           fetchDonationTotalsGroupByCampaign('confirmed'),
           fetchDonationTotalsGroupByCampaign('pending'),
+          fetchExpenseTotalsGroupByCampaign(),
+          fetchCampaignStats(),
         ]);
 
       // Augment campaigns with dynamic totals (Safe Mapping)
@@ -70,12 +74,17 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         const campId = String(camp.id).trim();
         const confAmount = totalsConfirmed[campId] || 0;
         const pendAmount = totalsPending[campId] || 0;
+        const expAmount = totalsExpense[campId] || 0;
+        const stats = campaignStats[campId] || { total_donors: 0, top_donator_name: '-', top_donator_amount: 0 };
         
         return {
           ...camp,
-          // Gunakan hasil hitung dinamis jika > 0, atau fallback ke DB current_amount jika hitungan 0
           current_amount: confAmount > 0 ? confAmount : (camp.current_amount || 0),
           pending_amount: pendAmount, 
+          expense_amount: expAmount,
+          total_donors: stats.total_donors,
+          top_donator_name: stats.top_donator_name,
+          top_donator_amount: stats.top_donator_amount,
         };
       });
 
@@ -139,8 +148,9 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
     // Initial load
     calculateFundState();
 
-    // Buat channel untuk subscribe ke perubahan realtime
-    const channel = AppRealtime.channel('fund-tracker-realtime', {
+    // Buat channel untuk subscribe ke perubahan realtime (Unique per instance/mount)
+    const channelId = `fund-tracker-realtime-${Date.now()}`;
+    const channel = AppRealtime.channel(channelId, {
       config: {
         broadcast: { self: true },
       },

@@ -3,7 +3,7 @@
  * CRUD + Upload Receipt ke Supabase Storage
  */
 import { supabase } from '@/lib/supabaseConfig';
-import * as FileSystem from 'expo-file-system/legacy';
+import { uploadToStorage } from '@/lib/upload';
 import type { Expense, ExpenseCategory } from '@/constants/types';
 
 // --- Ambil semua expenses ---
@@ -76,60 +76,21 @@ export async function fetchExpensesByCategory(campaignId?: string): Promise<
   return result as Record<ExpenseCategory, number>;
 }
 
-// --- Upload foto struk ke Supabase Storage ---
-export async function uploadReceipt(
-  localUri: string,
-  adminId: string
-): Promise<string | null> {
-  try {
-    const fileName = `receipt_${adminId}_${Date.now()}.jpg`;
-    const filePath = `${adminId}/${fileName}`;
+// --- Hitung total expenses per campaign ---
+export async function fetchExpenseTotalsGroupByCampaign(): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('campaign_id, amount');
 
-    // Baca file sebagai base64 string
-    const base64 = await FileSystem.readAsStringAsync(localUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+  if (error) throw new Error(error.message);
 
-    // Decode base64 ke Uint8Array tanpa atob() (tidak tersedia di Hermes/RN)
-    const binaryLen = base64.length;
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-    const lookup = new Uint8Array(256);
-    for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
+  const result: Record<string, number> = {};
+  (data ?? []).forEach((row) => {
+    const cid = String(row.campaign_id).trim();
+    result[cid] = (result[cid] ?? 0) + Number(row.amount);
+  });
 
-    const outputLen = Math.floor((binaryLen * 3) / 4) -
-      (base64[binaryLen - 1] === '=' ? 1 : 0) -
-      (base64[binaryLen - 2] === '=' ? 1 : 0);
-    const bytes = new Uint8Array(outputLen);
-    let p = 0;
-    for (let i = 0; i < binaryLen; i += 4) {
-      const a = lookup[base64.charCodeAt(i)];
-      const b = lookup[base64.charCodeAt(i + 1)];
-      const c = lookup[base64.charCodeAt(i + 2)];
-      const d = lookup[base64.charCodeAt(i + 3)];
-      bytes[p++] = (a << 2) | (b >> 4);
-      if (p < outputLen) bytes[p++] = ((b & 15) << 4) | (c >> 2);
-      if (p < outputLen) bytes[p++] = ((c & 3) << 6) | (d & 63);
-    }
-
-    const { error } = await supabase.storage
-      .from('receipts')
-      .upload(filePath, bytes, {
-        contentType: 'image/jpeg',
-        upsert: true,
-      });
-
-    if (error) {
-      console.error('[Upload] Storage error:', error.message);
-      return null;
-    }
-
-    // Dapatkan public URL
-    const { data } = supabase.storage.from('receipts').getPublicUrl(filePath);
-    return data.publicUrl ?? null;
-  } catch (err) {
-    console.error('[Upload] Error:', err);
-    return null;
-  }
+  return result;
 }
 
 // --- Tambah expense baru (dengan optional upload receipt) ---
@@ -144,7 +105,8 @@ export async function createExpense(params: {
   let receiptUrl: string | null = null;
 
   if (params.receiptLocalUri) {
-    receiptUrl = await uploadReceipt(params.receiptLocalUri, params.admin_id);
+    // Gunakan utility uploadToStorage yang sudah ada (folder: adminId, bucket: receipts)
+    receiptUrl = await uploadToStorage(params.receiptLocalUri, 'receipts', params.admin_id);
   }
 
   const { data, error } = await supabase

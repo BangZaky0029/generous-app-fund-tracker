@@ -1,9 +1,10 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { Bell, TrendingUp, PlusSquare, QrCode, Bot, Receipt } from 'lucide-react-native';
+import { TrendingUp, PlusSquare, QrCode, Bot, Receipt } from 'lucide-react-native';
 import { useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AppColors } from '@/constants/theme';
+import { NotificationBell } from '@/components/ui/NotificationBell';
 
 // Helper Formatter
 const formatRp = (amount: number) => {
@@ -49,9 +50,7 @@ export default function AdminDashboard() {
             <Text style={styles.headerName}>{fullName}</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.notifBtn}>
-          <Bell size={20} color="#69f6b8" />
-        </TouchableOpacity>
+        <NotificationBell />
       </View>
 
       {/* Hero Section */}
@@ -113,10 +112,12 @@ export default function AdminDashboard() {
           fundData.activeCampaigns.map((camp: any) => {
             const target = camp.target_amount || 1;
             const confirmedProgress = (camp.current_amount / target) * 100;
+            const expenseProgress = ((camp.expense_amount || 0) / target) * 100;
             const pendingProgress = (camp.pending_amount / target) * 100;
 
-            // Visual Floor: Pastikan bar kelihatan kalau ada uangnya
+            // Visual Floor
             const visualConfirmed = camp.current_amount > 0 ? Math.max(confirmedProgress, 2) : 0;
+            const visualExpense = (camp.expense_amount || 0) > 0 ? Math.max(expenseProgress, 2) : 0;
             const visualPending = camp.pending_amount > 0 ? Math.max(pendingProgress, 2) : 0;
 
             const totalPercent = confirmedProgress + pendingProgress;
@@ -154,6 +155,17 @@ export default function AdminDashboard() {
                     </View>
                     <View style={styles.barBg}>
                       <View style={[styles.progressFill, { width: `${Math.min(visualConfirmed, 100)}%` }]} />
+                    </View>
+                  </View>
+
+                  {/* Expense Progress Bar */}
+                  <View style={styles.barContainer}>
+                    <View style={styles.barLabelRow}>
+                      <Text style={styles.barLabelExpenseText}>PENGELUARAN (TERPAKAI)</Text>
+                      <Text style={styles.barSmallValExpense}>{formatRp(camp.expense_amount || 0)}</Text>
+                    </View>
+                    <View style={styles.barBg}>
+                      <View style={[styles.progressFillExpense, { width: `${Math.min(visualExpense, 100)}%` }]} />
                     </View>
                   </View>
 
@@ -310,11 +322,14 @@ const styles = StyleSheet.create({
   barContainer: { gap: 6 },
   barLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   barLabelText: { color: '#69f6b8', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
+  barLabelExpenseText: { color: '#ff4757', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
   barLabelPendingText: { color: '#facc15', fontSize: 8, fontWeight: '900', letterSpacing: 1 },
   barSmallVal: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
+  barSmallValExpense: { color: '#ff4757', fontSize: 10, fontWeight: 'bold' },
   barSmallValPending: { color: '#facc15', fontSize: 10, fontWeight: 'bold' },
   barBg: { height: 6, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 3, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: '#69f6b8', borderRadius: 3 },
+  progressFillExpense: { height: '100%', backgroundColor: '#ff4757', borderRadius: 3 },
   progressFillPendingLine: { height: '100%', backgroundColor: '#facc15', borderRadius: 3 },
 
   campFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },

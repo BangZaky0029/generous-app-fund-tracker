@@ -15,6 +15,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { AppColors } from '@/constants/theme';
 import { AlertModal } from '@/components/ui/AlertModal';
+import { useNotifications } from '@/hooks/useNotifications';
+
 
 function GlobalAlert() {
   const { alert, hideAlert } = useFundTrackerContext();
@@ -79,10 +81,32 @@ function AuthGate() {
   return null;
 }
 
+function NotificationInitializer() {
+  const {
+    showPermissionModal,
+    setShowPermissionModal,
+    handleAllowNotifications
+  } = useNotifications();
+
+  return (
+    <AlertModal
+      visible={showPermissionModal}
+      title="Aktifkan Notifikasi?"
+      message="Dapatkan info donasi terbaru, kabar progres wadah yang Anda bantu, dan laporan transparansi pengeluaran dana secara real-time."
+      type="info"
+      confirmText="Siap, Aktifkan"
+      cancelText="Nanti Saja"
+      onClose={() => setShowPermissionModal(false)}
+      onConfirm={handleAllowNotifications}
+    />
+  );
+}
+
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <AppProvider>
+        <NotificationInitializer />
         <AuthGate />
         <Stack
           screenOptions={{
