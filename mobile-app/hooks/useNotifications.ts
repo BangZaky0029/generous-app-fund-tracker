@@ -52,11 +52,16 @@ export function useNotifications() {
     checkPermissions();
 
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      console.log('🔔 [Notifications] RECEIVED:', {
+        title: notification.request.content.title,
+        body: notification.request.content.body,
+        data: notification.request.content.data
+      });
       setNotification(notification);
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('[Notifications] Response received:', response);
+      console.log('👆 [Notifications] USER TAPPED:', response.notification.request.content.title);
     });
 
     return () => {
