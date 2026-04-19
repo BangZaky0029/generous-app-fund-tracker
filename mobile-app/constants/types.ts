@@ -26,6 +26,13 @@ export type Campaign = {
   status: 'active' | 'completed';
   admin_id: string | null;
   created_at: string;
+
+  // Augmented fields (computed in useFundTracker)
+  pending_amount?: number;
+  expense_amount?: number;
+  total_donors?: number;
+  top_donator_name?: string;
+  top_donator_amount?: number;
 };
 
 export type CampaignUpdate = {

@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet, FlatList } from 'react-native';
+import { Image } from 'expo-image';
 import { TrendingUp, Heart, ShieldCheck, Receipt, Bot, ChevronRight, Activity } from 'lucide-react-native';
 import { useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
 import { router } from 'expo-router';
@@ -7,12 +8,16 @@ import { NotificationBell } from '@/components/ui/NotificationBell';
 
 // Helper Formatter
 const formatRp = (amount: number) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  try {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch (e) {
+    return `Rp ${amount.toLocaleString('id-ID')}`;
+  }
 };
 
 export default function DonaturDashboard() {
@@ -64,83 +69,79 @@ export default function DonaturDashboard() {
             </View>
           </View>
 
-          <ScrollView 
-            horizontal 
+          <FlatList
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.campaignScroll}
-          >
-            {fundData.activeCampaigns.length === 0 ? (
+            data={fundData.activeCampaigns}
+            keyExtractor={(item) => item.id.toString()}
+            ListEmptyComponent={
               <View style={styles.emptyCampaign}>
                 <Text style={styles.emptyText}>Belum ada wadah aktif.</Text>
               </View>
-            ) : (
-              fundData.activeCampaigns.map((camp: any) => {
-                const target = camp.target_amount || 1;
-                const confirmedProgress = (camp.current_amount / target) * 100;
-                const expenseProgress = ((camp.expense_amount || 0) / target) * 100;
-                const pendingProgress = (camp.pending_amount / target) * 100;
-                
-                // Visual Floor
-                const visualConfirmed = camp.current_amount > 0 ? Math.max(confirmedProgress, 2) : 0;
-                const visualExpense = (camp.expense_amount || 0) > 0 ? Math.max(expenseProgress, 2) : 0;
-                const visualPending = camp.pending_amount > 0 ? Math.max(pendingProgress, 2) : 0;
-                
-                const totalPercent = confirmedProgress + pendingProgress;
-                const displayPercent = totalPercent > 0 && totalPercent < 1 ? "<1" : Math.round(totalPercent);
+            }
+            renderItem={({ item: camp }) => {
+              const target = camp.target_amount || 1;
+              const confirmedProgress = (camp.current_amount / target) * 100;
+              const expenseProgress = ((camp.expense_amount || 0) / target) * 100;
+              const pendingProgress = ((camp.pending_amount || 0) / target) * 100;
+              
+              const visualConfirmed = camp.current_amount > 0 ? Math.max(confirmedProgress, 2) : 0;
+              const visualExpense = (camp.expense_amount || 0) > 0 ? Math.max(expenseProgress, 2) : 0;
+              
+              const totalPercent = confirmedProgress + pendingProgress;
+              const displayPercent = totalPercent > 0 && totalPercent < 1 ? "<1" : Math.round(totalPercent);
 
-                return (
-                  <TouchableOpacity 
-                    key={camp.id} 
-                    style={styles.campaignCard}
-                    onPress={() => router.push({
-                      pathname: '/(donatur)/campaign-detail',
-                      params: { id: camp.id }
-                    })}
-                  >
-                    <Image 
-                      source={{ uri: camp.poster_url || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800&auto=format&fit=crop' }} 
-                      style={styles.campaignPoster} 
-                    />
-                    <View style={styles.campaignInfo}>
-                       <Text style={styles.campaignTitle} numberOfLines={2}>{camp.title}</Text>
-                       <Text style={styles.campaignCat}>{camp.category}</Text>
-                       
-                        <View style={styles.campProgressRow}>
-                           <View style={styles.campProgressBarDual}>
-                              {/* Upper: Confirmed */}
-                              <View style={styles.campBarItem}>
-                                 <View style={styles.campBarBg}>
-                                    <View style={[styles.campProgressBarFill, { width: `${Math.min(visualConfirmed, 100)}%` }]} />
-                                 </View>
-                                 <Text style={styles.campBarLabel}>VERIFIED</Text>
-                              </View>
-                              
-                              {/* Middle: Disbursed/Spent */}
-                              <View style={styles.campBarItem}>
-                                 <View style={styles.campBarBg}>
-                                    <View style={[styles.campProgressBarFill, { width: `${Math.min(visualExpense, 100)}%`, backgroundColor: '#ff4757' }]} />
-                                 </View>
-                                 <Text style={styles.campBarLabelExpense}>DISBURSED</Text>
-                              </View>
-                           </View>
-                           <Text style={styles.campProgressText}>{displayPercent}%</Text>
-                        </View>
+              return (
+                <TouchableOpacity 
+                  style={styles.campaignCard}
+                  onPress={() => router.push({
+                    pathname: '/(donatur)/campaign-detail',
+                    params: { id: camp.id }
+                  })}
+                >
+                  <Image 
+                    source={{ uri: camp.poster_url || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800&auto=format&fit=crop' }} 
+                    style={styles.campaignPoster}
+                    contentFit="cover"
+                    transition={200}
+                  />
+                  <View style={styles.campaignInfo}>
+                     <Text style={styles.campaignTitle} numberOfLines={2}>{camp.title}</Text>
+                     <Text style={styles.campaignCat}>{camp.category}</Text>
+                     
+                      <View style={styles.campProgressRow}>
+                         <View style={styles.campProgressBarDual}>
+                            <View style={styles.campBarItem}>
+                               <View style={styles.campBarBg}>
+                                  <View style={[styles.campProgressBarFill, { width: `${Math.min(visualConfirmed, 100)}%` }]} />
+                               </View>
+                               <Text style={styles.campBarLabel}>VERIFIED</Text>
+                            </View>
+                            
+                            <View style={styles.campBarItem}>
+                               <View style={styles.campBarBg}>
+                                  <View style={[styles.campProgressBarFill, { width: `${Math.min(visualExpense, 100)}%`, backgroundColor: '#ff4757' }]} />
+                               </View>
+                               <Text style={styles.campBarLabelExpense}>DISBURSED</Text>
+                            </View>
+                         </View>
+                         <Text style={styles.campProgressText}>{displayPercent}%</Text>
+                      </View>
 
-                        {/* Social Proof: Total Donors & Top Hero */}
-                        <View style={styles.socialStats}>
-                           <View style={styles.socialItem}>
-                              <Text style={styles.socialLabel}>🚀 {camp.total_donors || 0} Donatur</Text>
-                           </View>
-                           <View style={styles.socialItem}>
-                              <Text style={styles.socialHero} numberOfLines={1}>👑 {camp.top_donator_name || '-'}</Text>
-                           </View>
-                        </View>
-                     </View>
-                  </TouchableOpacity>
-                )
-              })
-            )}
-          </ScrollView>
+                      <View style={styles.socialStats}>
+                         <View style={styles.socialItem}>
+                            <Text style={styles.socialLabel}>🚀 {camp.total_donors || 0} Donatur</Text>
+                         </View>
+                         <View style={styles.socialItem}>
+                            <Text style={styles.socialHero} numberOfLines={1}>👑 {camp.top_donator_name || '-'}</Text>
+                         </View>
+                      </View>
+                   </View>
+                </TouchableOpacity>
+              );
+            }}
+          />
        </View>
 
       {/* Aktivitas Terkini */}

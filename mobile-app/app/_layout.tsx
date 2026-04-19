@@ -1,22 +1,74 @@
-/**
- * Root Layout — Wrap seluruh app dengan AppProvider
- *
- * CATATAN ARSITEKTUR:
- * - Tidak ada unstable_settings.anchor di sini
- * - Semua auth routing dihandle oleh app/index.tsx (gatekeeper)
- * - AppProvider di sini hanya provide Context, tidak trigger redirect
- */
 import { Stack, useSegments, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import React, { useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import 'react-native-reanimated';
 import { AppProvider, useFundTrackerContext, useAuthContext } from '@/context/FundTrackerContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { AppColors } from '@/constants/theme';
 import { AlertModal } from '@/components/ui/AlertModal';
 import { useNotifications } from '@/hooks/useNotifications';
+import { RefreshCw, AlertCircle } from 'lucide-react-native';
 
+// ========== ERROR BOUNDARY COMPONENT ==========
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class GlobalErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[GlobalErrorBoundary] Caught error:', error, errorInfo);
+  }
+
+  handleRestart = () => {
+    // Reset state dan paksa reload (Expo Router akan re-sync)
+    this.setState({ hasError: false, error: null });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <AlertCircle size={64} color="#ff4757" />
+          <Text style={styles.errorTitle}>Oopss! Ada Kendala Teknis</Text>
+          <Text style={styles.errorSubtitle}>
+            Aplikasi mengalami kesalahan saat memproses data. Hal ini bisa terjadi karena koneksi tidak stabil atau masalah render.
+          </Text>
+          
+          <TouchableOpacity style={styles.retryBtn} onPress={this.handleRestart}>
+            <RefreshCw size={20} color="#002919" />
+            <Text style={styles.retryBtnText}>Muat Ulang Aplikasi</Text>
+          </TouchableOpacity>
+
+          {__DEV__ && (
+            <View style={styles.devErrorBox}>
+              <Text style={styles.devErrorText}>{this.state.error?.message}</Text>
+            </View>
+          )}
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// ========== REST OF THE LAYOUT ==========
 
 function GlobalAlert() {
   const { alert, hideAlert } = useFundTrackerContext();
@@ -59,9 +111,6 @@ function AuthGate() {
         router.replace('/(auth)/login');
       }
     } else {
-      // Jika user ada tapi profil belum ter-fetch (jarang terjadi dengan fetchProfile di hooks)
-      // Kita tetap izinkan masuk ke dashboard donatur sebagai default (aman) 
-      // daripada stuck loading selamanya.
       const userRole = user.profile?.role || 'donatur';
       const isActuallyAdmin = userRole === 'admin';
 
@@ -108,36 +157,87 @@ function NotificationInitializer() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
-      <AppProvider>
-        <NotificationInitializer />
-        <AuthGate />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: AppColors.bg.primary },
-            animation: 'fade',
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-          <Stack.Screen name="(donatur)" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'none' }} />
-          <Stack.Screen
-            name="modal/add-expense"
-            options={{
-              presentation: 'modal',
+      <GlobalErrorBoundary>
+        <AppProvider>
+          <NotificationInitializer />
+          <AuthGate />
+          <Stack
+            screenOptions={{
               headerShown: false,
-              animation: 'slide_from_bottom',
+              contentStyle: { backgroundColor: AppColors.bg.primary },
+              animation: 'fade',
             }}
-          />
-        </Stack>
-        <GlobalAlert />
-        <StatusBar style="light" backgroundColor={AppColors.bg.primary} />
-      </AppProvider>
+          >
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+            <Stack.Screen name="(donatur)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'none' }} />
+            <Stack.Screen
+              name="modal/add-expense"
+              options={{
+                presentation: 'modal',
+                headerShown: false,
+                animation: 'slide_from_bottom',
+              }}
+            />
+          </Stack>
+          <GlobalAlert />
+          <StatusBar style="light" backgroundColor={AppColors.bg.primary} />
+        </AppProvider>
+      </GlobalErrorBoundary>
     </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
+  // Error Styles
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#060e20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 30,
+  },
+  errorTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 24,
+    textAlign: 'center',
+  },
+  errorSubtitle: {
+    color: '#64748b',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 12,
+    lineHeight: 20,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#69f6b8',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    marginTop: 32,
+  },
+  retryBtnText: {
+    color: '#002919',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  devErrorBox: {
+    marginTop: 40,
+    padding: 12,
+    backgroundColor: 'rgba(255, 71, 87, 0.1)',
+    borderRadius: 8,
+    width: '100%',
+  },
+  devErrorText: {
+    color: '#ff4757',
+    fontSize: 12,
+    fontFamily: 'monospace',
+  }
 });

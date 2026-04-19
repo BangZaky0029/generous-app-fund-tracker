@@ -8,12 +8,17 @@ import { NotificationBell } from '@/components/ui/NotificationBell';
 
 // Helper Formatter
 const formatRp = (amount: number) => {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  try {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch (e) {
+    // Fallback if Intl fails on some Android builds
+    return `Rp ${amount.toLocaleString('id-ID')}`;
+  }
 };
 
 export default function AdminDashboard() {

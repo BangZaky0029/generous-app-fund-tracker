@@ -40,9 +40,13 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
   const channelRef = useRef<ReturnType<typeof AppRealtime.channel> | null>(null);
 
   // ========== AGENTIC CALCULATION ENGINE ==========
-  const calculateFundState = useCallback(async () => {
+  const calculateFundState = useCallback(async (isInitial = false) => {
     try {
-      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      // Hanya set loading jika ini initial load, 
+      // untuk data updates kita biarkan background update agar UI tidak flickering
+      if (isInitial) {
+        setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      }
 
       // Fetch semua data secara paralel (efisien)
       const [
@@ -57,25 +61,25 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         totalsExpense,
         campaignStats
       ] = await Promise.all([
-          fetchTotalDonations(undefined, 'confirmed'),
-          fetchTotalDonations(undefined, 'pending'),
-          fetchExpensesByCategory(),
-          fetchRecentExpenses(20),
-          fetchRecentDonations(20),
-          fetchActiveCampaigns(),
-          fetchDonationTotalsGroupByCampaign('confirmed'),
-          fetchDonationTotalsGroupByCampaign('pending'),
-          fetchExpenseTotalsGroupByCampaign(),
-          fetchCampaignStats(),
+          fetchTotalDonations(undefined, 'confirmed').catch(() => 0),
+          fetchTotalDonations(undefined, 'pending').catch(() => 0),
+          fetchExpensesByCategory().catch(() => ({})),
+          fetchRecentExpenses(20).catch(() => []),
+          fetchRecentDonations(20).catch(() => []),
+          fetchActiveCampaigns().catch(() => []),
+          fetchDonationTotalsGroupByCampaign('confirmed').catch(() => ({})),
+          fetchDonationTotalsGroupByCampaign('pending').catch(() => ({})),
+          fetchExpenseTotalsGroupByCampaign().catch(() => ({})),
+          fetchCampaignStats().catch(() => ({})),
         ]);
 
       // Augment campaigns with dynamic totals (Safe Mapping)
       const augmentedCampaigns = activeCampaigns.map(camp => {
         const campId = String(camp.id).trim();
-        const confAmount = totalsConfirmed[campId] || 0;
-        const pendAmount = totalsPending[campId] || 0;
-        const expAmount = totalsExpense[campId] || 0;
-        const stats = campaignStats[campId] || { total_donors: 0, top_donator_name: '-', top_donator_amount: 0 };
+        const confAmount = (totalsConfirmed as Record<string, number>)[campId] || 0;
+        const pendAmount = (totalsPending as Record<string, number>)[campId] || 0;
+        const expAmount = (totalsExpense as Record<string, number>)[campId] || 0;
+        const stats = (campaignStats as Record<string, any>)[campId] || { total_donors: 0, top_donator_name: '-', top_donator_amount: 0 };
         
         return {
           ...camp,
@@ -90,20 +94,20 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
 
       // Hitung total expenses
       const totalExpenses = Object.values(expensesByCategory).reduce(
-        (sum, val) => sum + val,
+        (sum, val) => (typeof val === 'number' ? sum + val : sum),
         0
       );
 
       // Kalkulasi persentase per kategori
       const categories: CategorySummary[] = CATEGORIES.map((cat) => {
-        const catTotal = expensesByCategory[cat.name as ExpenseCategory] ?? 0;
+        const catTotal = (expensesByCategory as any)[cat.name] ?? 0;
         const percentage =
           totalDonations > 0
             ? Math.min(Math.round((catTotal / totalDonations) * 100 * 10) / 10, 100)
             : 0;
 
         return {
-          name: cat.name,
+          name: cat.name as ExpenseCategory,
           total: catTotal,
           percentage,
           color: cat.color,
@@ -127,7 +131,7 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
         categories,
         recentExpenses,
         recentDonations,
-        activeCampaigns: augmentedCampaigns as any,
+        activeCampaigns: augmentedCampaigns,
         isLoading: false,
         error: null,
         lastUpdated: new Date(),
@@ -143,12 +147,24 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
     }
   }, []);
 
+  // Debouce Ref
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const debouncedCalculate = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      calculateFundState(false);
+    }, 1000); // Debounce 1 detik untuk menghindari spam fetch saat batch update
+  }, [calculateFundState]);
+
   // ========== REALTIME SUBSCRIPTION (AGENTIC TRIGGER) ==========
   useEffect(() => {
     // Initial load
-    calculateFundState();
+    calculateFundState(true);
 
-    // Buat channel untuk subscribe ke perubahan realtime (Unique per instance/mount)
+    // Buat channel untuk subscribe ke perubahan realtime
     const channelId = `fund-tracker-realtime-${Date.now()}`;
     const channel = AppRealtime.channel(channelId, {
       config: {
@@ -168,8 +184,8 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
           table: table,
         },
         (payload: any) => {
-          console.log(`[Agent] ${table} changed:`, payload.eventType, '→ Recalculating...');
-          calculateFundState(); // Auto recalculate for any change
+          console.log(`[Agent] ${table} changed:`, payload.eventType, '→ Queueing Recalculate...');
+          debouncedCalculate(); // Gunakan debounced version
         }
       );
     });
@@ -181,14 +197,17 @@ export function useFundTracker(): FundTrackerState & { refetch: () => void } {
 
     channelRef.current = channel;
 
-    // Cleanup: unsubscribe saat komponen unmount
+    // Cleanup
     return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
       if (channelRef.current) {
         AppRealtime.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-  }, [calculateFundState]);
+  }, [calculateFundState, debouncedCalculate]);
 
   return {
     ...state,
