@@ -49,20 +49,20 @@ export default function ManajemenBukti() {
 
   // Simplified Unified List Logic
   const unifiedItems = useMemo(() => {
-    const expenses = recentExpenses.map(e => ({ ...e, type: 'expense' as const }));
-    const donations = recentDonations.map(d => ({ 
+    const expenses = (recentExpenses || []).map(e => ({ ...e, type: 'expense' as const }));
+    const donations = (recentDonations || []).map(d => ({ 
       ...d, 
       type: 'income' as const, 
       category: 'Donasi',
-      receipt_url: d.payment_proof_url // Normalize field name for unified UI
+      receipt_url: (d as any).payment_proof_url // Normalize field name for unified UI
     }));
     
     let combined = [...expenses, ...donations];
     
     // Global filter by Type
-    if (filterType === 'income') combined = combined.filter(i => i.type === 'income' && i.status === 'confirmed');
-    if (filterType === 'expense') combined = combined.filter(i => i.type === 'expense');
-    if (filterType === 'pending') combined = combined.filter(i => i.type === 'income' && i.status === 'pending');
+    if (filterType === 'income') combined = combined.filter(i => i && i.type === 'income' && (i as any).status === 'confirmed');
+    if (filterType === 'expense') combined = combined.filter(i => i && i.type === 'expense');
+    if (filterType === 'pending') combined = combined.filter(i => i && i.type === 'income' && (i as any).status === 'pending');
 
     // Search and Category Filter
     return combined.filter(item => {

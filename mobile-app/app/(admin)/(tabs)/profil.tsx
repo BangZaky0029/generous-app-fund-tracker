@@ -57,6 +57,8 @@ export default function AdminProfil() {
     showAlert('Coming Soon', 'Modul pengaturan lanjutan sedang dikalibrasi oleh agen AI.', 'info');
   };
 
+  if (!user) return null;
+
   return (
     <SafeAreaView style={styles.root} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -111,7 +113,7 @@ export default function AdminProfil() {
         <View style={styles.statsRow}>
           <GlassCard style={styles.statItem}>
             <BarChart3 size={20} color={AppColors.accent.electric} />
-            <Text style={styles.statValue}>{recentExpenses.length}</Text>
+            <Text style={styles.statValue}>{(recentExpenses || []).length}</Text>
             <Text style={styles.statLabel}>Total Assets</Text>
           </GlassCard>
           <GlassCard style={styles.statItem}>

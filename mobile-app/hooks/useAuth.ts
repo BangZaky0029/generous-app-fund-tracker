@@ -56,26 +56,39 @@ export function useAuth(): AuthState & AuthActions {
 
   const updateFromSession = useCallback(
     async (session: Session | null) => {
+      // Safety timeout to ensure loading state doesn't hang forever
+      const timeoutId = setTimeout(() => {
+        setState(prev => prev.isLoading ? { ...prev, isLoading: false } : prev);
+      }, 5000);
+
       if (!session?.user) {
         console.log('[useAuth] No session found, clearing state');
         setState({ user: null, session: null, isLoading: false, isVerifying: false, isAdmin: false });
+        clearTimeout(timeoutId);
         return;
       }
 
-      const profile = await fetchProfile(session.user.id);
-      const authUser: AuthUser = {
-        id: session.user.id,
-        email: session.user.email ?? null,
-        profile,
-      };
+      try {
+        const profile = await fetchProfile(session.user.id);
+        const authUser: AuthUser = {
+          id: session.user.id,
+          email: session.user.email ?? null,
+          profile,
+        };
 
-      setState(prev => ({
-        ...prev,
-        user: authUser,
-        session,
-        isLoading: false,
-        isAdmin: profile?.role === 'admin',
-      }));
+        setState(prev => ({
+          ...prev,
+          user: authUser,
+          session,
+          isLoading: false,
+          isAdmin: profile?.role === 'admin',
+        }));
+      } catch (err) {
+        console.error('[useAuth] Error in updateFromSession:', err);
+        setState(prev => ({ ...prev, isLoading: false }));
+      } finally {
+        clearTimeout(timeoutId);
+      }
     },
     [fetchProfile]
   );
@@ -178,21 +191,17 @@ export function useAuth(): AuthState & AuthActions {
 
   const signOut = useCallback(async () => {
     console.log('[useAuth] User initiated signOut');
-    // Segera bersihkan state lokal agar UI langsung bereaksi (mencegah leakage)
-    setState({ user: null, session: null, isLoading: true, isVerifying: false, isAdmin: false });
     
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('[useAuth] SignOut error:', error.message);
-        setState(prev => ({ ...prev, isLoading: false }));
-        throw new Error(error.message);
-      }
-      setState(prev => ({ ...prev, isLoading: false }));
-      console.log('[useAuth] SignOut complete');
+      // 1. Matikan sesi di server
+      await supabase.auth.signOut();
     } catch (err) {
-      setState(prev => ({ ...prev, isLoading: false }));
-      throw err;
+      console.error('[useAuth] Supabase SignOut error:', err);
+    } finally {
+      // 2. Bersihkan state lokal APAPUN yang terjadi di server
+      // Kita set isLoading true sebentar untuk trigger transisi di AuthGate
+      setState({ user: null, session: null, isLoading: false, isVerifying: false, isAdmin: false });
+      console.log('[useAuth] Local state cleared, redirect should follow');
     }
   }, []);
 

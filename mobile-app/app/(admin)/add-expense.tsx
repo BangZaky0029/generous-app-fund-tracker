@@ -158,7 +158,7 @@ export default function AddExpenseScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Pilih Wadah Donasi</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.campaignList}>
-                  {fundData.activeCampaigns.map((camp: any) => (
+                  {(fundData?.activeCampaigns || []).map((camp: any) => (
                     <TouchableOpacity
                       key={camp.id}
                       onPress={() => {

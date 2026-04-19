@@ -59,10 +59,13 @@ function AuthGate() {
         router.replace('/(auth)/login');
       }
     } else {
-      // Tunggu sampai profil ada di dalam user object sebelum melakukan pengalihan
-      if (!user.profile) return;
+      // Jika user ada tapi profil belum ter-fetch (jarang terjadi dengan fetchProfile di hooks)
+      // Kita tetap izinkan masuk ke dashboard donatur sebagai default (aman) 
+      // daripada stuck loading selamanya.
+      const userRole = user.profile?.role || 'donatur';
+      const isActuallyAdmin = userRole === 'admin';
 
-      if (isAdmin) {
+      if (isActuallyAdmin) {
         if (!inAdminGroup) {
           if (!rootSegment || inDonaturGroup || inAuthGroup) {
             router.replace('/(admin)/(tabs)/dashboard');
